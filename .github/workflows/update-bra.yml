@@ -1,0 +1,67 @@
+name: Update BRÅ reported crime data
+
+on:
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: "Hämta om hela historiken från 1996"
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Weekly check on Sunday. BRÅ publishes preliminary monthly data with
+    # roughly 10 days lag, so daily polling gives little practical benefit.
+    - cron: "23 6 * * 0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bra-anmalda-brott-lulea-boden
+  cancel-in-progress: false
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch BRÅ data
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.full_refresh }}" == "true" ]]; then
+            export FULL_REFRESH=1
+          else
+            export FULL_REFRESH=0
+          fi
+          python scrape_bra.py
+
+      - name: Commit changed data
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.csv data/latest.csv data/categories.csv data/revisions.csv
+
+          if git diff --cached --quiet; then
+            echo "No data changes. Nothing to commit."
+            exit 0
+          fi
+
+          git commit -m "Update BRÅ reported crime data"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
