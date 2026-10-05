@@ -39,50 +39,75 @@ if MODE not in {"update", "bootstrap", "refresh"}:
 
 
 def annual_topic(scraper: BRA):
-    return select_topics(scraper).yearly
+    matches = []
+    for topic in scraper.topics:
+        try:
+            if topic.level != "brottstyp":
+                continue
+        except Exception:
+            continue
+        label = normalize_text(topic.label)
+        if "kommun" in label and "1996" in label and "årsvis" in label and "månads" not in label:
+            matches.append(topic)
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"Kunde inte entydigt välja BRÅ:s årsvisa kommun-topic. "
+            f"Matchningar: {[getattr(x, 'label', '') for x in matches]}"
+        )
+    print(f"Vald års-topic: {matches[0].label}")
+    return matches[0]
+
+
+def clean_region_name(region) -> str:
+    label = str(getattr(region, "label_short", "") or getattr(region, "label", ""))
+    # BRÅ has two Heby categories because the municipality changed county in 2007.
+    # Both should map to the same municipality name and be used in their respective years.
+    label = re.sub(r"\s*\([^)]*(?:län|lan)[^)]*\)\s*$", "", label, flags=re.IGNORECASE)
+    label = re.sub(r"\s+kommun\s*$", "", label, flags=re.IGNORECASE)
+    if normalize_text(label) in {"region gotland", "gotland"}:
+        return "Gotland"
+    return label.strip()
 
 
 def municipality_regions(topic) -> list[object]:
     rows = []
     excluded = []
     for region in topic.regions:
-        if bool(getattr(region, "ceased", False)):
-            continue
-        labels = [
-            str(getattr(region, "label", "") or ""),
-            str(getattr(region, "label_short", "") or ""),
-        ]
-        norm = " | ".join(normalize_text(x) for x in labels)
+        label = str(getattr(region, "label", "") or "")
+        short = str(getattr(region, "label_short", "") or "")
+        norm = normalize_text(label + " | " + short)
 
-        # The annual topic also contains Stockholm/Goteborg/Malmo city areas.
-        # Most municipalities end with "kommun". Gotland is exposed by BRÅ as
-        # Region Gotland/Gotland rather than with the ordinary kommun suffix, so
-        # handle that current municipality explicitly.
-        is_kommun = any(re.search(r"\bkommun\s*$", x, flags=re.IGNORECASE) for x in labels)
-        is_gotland = ("gotland" in norm) and ("stadsområde" not in norm) and ("stadsomrade" not in norm)
+        # Exclude metropolitan subareas explicitly.
+        if any(x in norm for x in ["stadsområde", "stadsomrade", "stadsdelsområde", "stadsdelsomrade"]):
+            excluded.append(label)
+            continue
+
+        is_kommun = bool(re.search(r"\bkommun(?:\s*\([^)]*\))?\s*$", label, flags=re.IGNORECASE)) or bool(
+            re.search(r"\bkommun(?:\s*\([^)]*\))?\s*$", short, flags=re.IGNORECASE)
+        )
+        is_gotland = "gotland" in norm and "kommun" not in norm
 
         if is_kommun or is_gotland:
             rows.append(region)
         else:
-            excluded.append(getattr(region, "label", ""))
+            excluded.append(label)
 
-    # Deduplicate by BRÅ region id in case both a long and short representation
-    # matches the special-case logic.
-    unique = {}
-    for r in rows:
-        unique[str(getattr(r, "id", ""))] = r
-    rows = list(unique.values())
-
-    # Sweden has 290 municipalities. Fail loudly rather than silently publishing
-    # an incomplete municipality set if BRÅ changes the page structure.
-    if len(rows) != 290:
-        sample = [getattr(x, "label", "") for x in rows[:30]]
+    # BRÅ exposes Heby twice (Uppsala län from 2007 and Västmanlands län through 2006).
+    # That is correct for a 1996- series. Validate 290 unique municipality names,
+    # while allowing more than 290 raw BRÅ region categories.
+    municipality_names = {clean_region_name(r) for r in rows}
+    if len(municipality_names) != 290:
         raise RuntimeError(
-            f"Expected 290 current municipalities in BRÅ annual topic, found {len(rows)}. "
-            f"Selected sample: {sample}. Excluded sample: {excluded[:40]}"
+            f"Expected 290 unique municipalities in BRÅ annual topic, found {len(municipality_names)} "
+            f"from {len(rows)} BRÅ region categories. "
+            f"Missing/duplicate diagnosis: selected sample={[getattr(x,'label','') for x in rows[:35]]}; "
+            f"excluded sample={excluded[:40]}"
         )
+    print(
+        f"Kommunurval: {len(municipality_names)} kommuner via {len(rows)} BRÅ-regionkategorier "
+        "(Heby har separata historiska länskategorier)."
+    )
     return rows
-
 
 def available_years(topic) -> list[int]:
     years = sorted(
@@ -96,11 +121,6 @@ def available_years(topic) -> list[int]:
     if not years:
         raise RuntimeError("No annual BRÅ periods from 1996 onward were found")
     return years
-
-
-def clean_region_name(region) -> str:
-    label = str(getattr(region, "label_short", "") or getattr(region, "label", ""))
-    return re.sub(r"\s+kommun\s*$", "", label, flags=re.IGNORECASE).strip()
 
 
 def write_lookups(topic, regions: list[object], years: list[int]) -> None:
@@ -182,21 +202,29 @@ def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
         raw = raw[raw["periodicity"] == "yearly"].copy()
         if raw.empty:
             raise RuntimeError(f"BRÅ returned no yearly rows for {year}, batch starting {i + 1}")
-        all_parts.append(transform(raw, meta))
+        part = transform(raw, meta)
+        region_name_by_id = {str(getattr(r, "id", "")): clean_region_name(r) for r in regions}
+        part["Kommun"] = part["Region_ID"].astype(str).map(region_name_by_id).fillna(part["Kommun"])
+        all_parts.append(part)
 
     df = pd.concat(all_parts, ignore_index=True, sort=False)
     df = df[df["År"] == year].copy()
 
     # Validation: every selected municipality should occur in the result. Some
     # individual crime categories may be unavailable historically; that is valid.
-    region_ids_expected = {str(getattr(r, "id", "")) for r in regions}
-    region_ids_found = set(df["Region_ID"].astype(str).unique())
-    missing = region_ids_expected - region_ids_found
+    # Remove completely empty rows; BRÅ can return inactive historical region
+    # categories outside their valid years (notably Heby before/after the 2007 county change).
+    df = df[df[["Antal", "Per100000"]].notna().any(axis=1)].copy()
+
+    expected_names = {clean_region_name(r) for r in regions}
+    found_names = set(df["Kommun"].astype(str).unique())
+    missing = expected_names - found_names
     if missing:
-        raise RuntimeError(f"{year}: missing {len(missing)} municipalities in result")
+        raise RuntimeError(f"{year}: missing {len(missing)} municipalities in result: {sorted(missing)[:20]}")
 
     if df.duplicated(["År", "Kommun", "Brott_ID"]).any():
-        raise RuntimeError(f"{year}: duplicate municipality/crime keys after transform")
+        dup = df[df.duplicated(["År", "Kommun", "Brott_ID"], keep=False)].head(20)
+        raise RuntimeError(f"{year}: duplicate municipality/crime keys after transform:\n{dup.to_string(index=False)}")
 
     # Parquet compresses repeated municipality/category metadata well and avoids
     # GitHub's 100 MB single-file limit that a national CSV can approach.
