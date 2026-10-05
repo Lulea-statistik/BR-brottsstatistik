@@ -71,6 +71,20 @@ def clean_region_name(region) -> str:
     return label.strip()
 
 
+def region_valid_for_year(region, year: int) -> bool:
+    """Honor explicit validity windows embedded in BRÅ region labels."""
+    label = normalize_text(getattr(region, "label", ""))
+
+    start_match = re.search(r"(?:from|från|fran)\s+(\d{4})", label)
+    end_match = re.search(r"(?:tom|t\.o\.m\.?|t o m)\s+(\d{4})", label)
+
+    if start_match and year < int(start_match.group(1)):
+        return False
+    if end_match and year > int(end_match.group(1)):
+        return False
+    return True
+
+
 def municipality_regions(topic) -> list[object]:
     rows = []
     excluded = []
@@ -204,12 +218,20 @@ def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
     all_parts = []
     meta = category_meta(topic.crimes)
 
-    for i in range(0, len(regions), REGION_BATCH_SIZE):
-        batch = regions[i : i + REGION_BATCH_SIZE]
+    year_regions = [r for r in regions if region_valid_for_year(r, year)]
+    if not year_regions:
+        raise RuntimeError(f"{year}: no valid municipality region categories after year filtering")
+
+    excluded_for_year = [getattr(r, "label", "") for r in regions if r not in year_regions]
+    if excluded_for_year:
+        print(f"{year}: excluded historical region categories outside validity period: {excluded_for_year}")
+
+    for i in range(0, len(year_regions), REGION_BATCH_SIZE):
+        batch = year_regions[i : i + REGION_BATCH_SIZE]
         labels = [r.label for r in batch]
         print(
-            f"{year}: kommunbatch {i + 1}-{min(i + len(batch), len(regions))} "
-            f"av {len(regions)}"
+            f"{year}: kommunbatch {i + 1}-{min(i + len(batch), len(year_regions))} "
+            f"av {len(year_regions)}"
         )
         result = topic.query(
             regions=labels,
@@ -227,7 +249,7 @@ def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
         if raw.empty:
             raise RuntimeError(f"BRÅ returned no yearly rows for {year}, batch starting {i + 1}")
         part = transform(raw, meta)
-        region_name_by_id = {str(getattr(r, "id", "")): clean_region_name(r) for r in regions}
+        region_name_by_id = {str(getattr(r, "id", "")): clean_region_name(r) for r in year_regions}
         part["Kommun"] = part["Region_ID"].astype(str).map(region_name_by_id).fillna(part["Kommun"])
         all_parts.append(part)
 
