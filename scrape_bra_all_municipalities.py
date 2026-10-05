@@ -34,6 +34,13 @@ REGION_BATCH_SIZE = int(os.getenv("REGION_BATCH_SIZE", "25"))
 
 SOURCE_URL = "https://statistik.bra.se/solwebb/action/anmalda/urval/urval?menyid=101"
 
+# Municipalities created after the start of the BRÅ series. They should not be
+# required in years before they existed as municipalities.
+MUNICIPALITY_START_YEAR = {
+    "Nykvarn": 1999,
+    "Knivsta": 2003,
+}
+
 if MODE not in {"update", "bootstrap", "refresh"}:
     raise SystemExit("BRA_ALL_MODE must be update, bootstrap or refresh")
 
@@ -168,7 +175,7 @@ def write_lookups(topic, regions: list[object], years: list[int]) -> None:
         "start_year": START_YEAR,
         "available_years": years,
         "municipalities": len(regions),
-        "storage": "One Parquet file per year, all current municipalities",
+        "storage": "Annual-only dataset; one Parquet file per year for municipalities existing in that year",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
     METADATA_PATH.write_text(
@@ -216,11 +223,23 @@ def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
     # categories outside their valid years (notably Heby before/after the 2007 county change).
     df = df[df[["Antal", "Per100000"]].notna().any(axis=1)].copy()
 
-    expected_names = {clean_region_name(r) for r in regions}
+    all_names = {clean_region_name(r) for r in regions}
+    expected_names = {
+        name for name in all_names
+        if year >= MUNICIPALITY_START_YEAR.get(name, START_YEAR)
+    }
     found_names = set(df["Kommun"].astype(str).unique())
     missing = expected_names - found_names
+    unexpected = found_names - expected_names
     if missing:
-        raise RuntimeError(f"{year}: missing {len(missing)} municipalities in result: {sorted(missing)[:20]}")
+        raise RuntimeError(
+            f"{year}: missing {len(missing)} municipalities that should exist that year: "
+            f"{sorted(missing)[:20]}"
+        )
+    if unexpected:
+        print(f"{year}: note: BRÅ returned {len(unexpected)} historical/extra region names: {sorted(unexpected)[:20]}")
+
+    print(f"{year}: validated {len(found_names)} municipalities (expected at least {len(expected_names)})")
 
     if df.duplicated(["År", "Kommun", "Brott_ID"]).any():
         dup = df[df.duplicated(["År", "Kommun", "Brott_ID"], keep=False)].head(20)
@@ -258,7 +277,7 @@ def main() -> int:
     write_lookups(topic, regions, years)
 
     print(f"BRÅ annual topic: {topic.label}")
-    print(f"Municipalities: {len(regions)}")
+    print(f"Municipalities: 290 unique names via {len(regions)} BRÅ region categories")
     print(f"Available annual years: {years[0]}-{years[-1]}")
     print(f"Years to fetch this run: {targets}")
 
