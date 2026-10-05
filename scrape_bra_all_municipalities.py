@@ -44,6 +44,7 @@ def annual_topic(scraper: BRA):
 
 def municipality_regions(topic) -> list[object]:
     rows = []
+    excluded = []
     for region in topic.regions:
         if bool(getattr(region, "ceased", False)):
             continue
@@ -51,10 +52,26 @@ def municipality_regions(topic) -> list[object]:
             str(getattr(region, "label", "") or ""),
             str(getattr(region, "label_short", "") or ""),
         ]
+        norm = " | ".join(normalize_text(x) for x in labels)
+
         # The annual topic also contains Stockholm/Goteborg/Malmo city areas.
-        # Keep municipality categories only.
-        if any(re.search(r"\bkommun\s*$", x, flags=re.IGNORECASE) for x in labels):
+        # Most municipalities end with "kommun". Gotland is exposed by BRÅ as
+        # Region Gotland/Gotland rather than with the ordinary kommun suffix, so
+        # handle that current municipality explicitly.
+        is_kommun = any(re.search(r"\bkommun\s*$", x, flags=re.IGNORECASE) for x in labels)
+        is_gotland = ("gotland" in norm) and ("stadsområde" not in norm) and ("stadsomrade" not in norm)
+
+        if is_kommun or is_gotland:
             rows.append(region)
+        else:
+            excluded.append(getattr(region, "label", ""))
+
+    # Deduplicate by BRÅ region id in case both a long and short representation
+    # matches the special-case logic.
+    unique = {}
+    for r in rows:
+        unique[str(getattr(r, "id", ""))] = r
+    rows = list(unique.values())
 
     # Sweden has 290 municipalities. Fail loudly rather than silently publishing
     # an incomplete municipality set if BRÅ changes the page structure.
@@ -62,7 +79,7 @@ def municipality_regions(topic) -> list[object]:
         sample = [getattr(x, "label", "") for x in rows[:30]]
         raise RuntimeError(
             f"Expected 290 current municipalities in BRÅ annual topic, found {len(rows)}. "
-            f"Sample: {sample}"
+            f"Selected sample: {sample}. Excluded sample: {excluded[:40]}"
         )
     return rows
 
