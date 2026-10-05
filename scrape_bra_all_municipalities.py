@@ -183,7 +183,8 @@ def write_lookups(topic, regions: list[object], years: list[int]) -> None:
         "topic": getattr(topic, "label", ""),
         "start_year": START_YEAR,
         "available_years": years,
-        "municipalities": len(regions),
+        "municipalities": len({clean_region_name(r) for r in regions}),
+        "bra_region_categories": len(regions),
         "storage": "Annual-only dataset; one Parquet file per year for municipalities existing in that year",
         "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
