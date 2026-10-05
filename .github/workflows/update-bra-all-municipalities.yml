@@ -1,0 +1,82 @@
+name: Update BRÅ annual all municipalities
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "update = senaste 2 årsperioderna, bootstrap = hela historiken 1996-, refresh = hämta om hela historiken"
+        required: true
+        type: choice
+        options:
+          - update
+          - bootstrap
+          - refresh
+        default: update
+      target_year:
+        description: "Valfritt enskilt år, t.ex. 2025. Lämna tomt för normalt läge."
+        required: false
+        type: string
+        default: ""
+  schedule:
+    # Weekly annual-data refresh. If bootstrap has not been run yet the script
+    # still discovers the source, but only update years are fetched.
+    - cron: "43 7 * * 0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bra-annual-all-municipalities
+  cancel-in-progress: false
+
+jobs:
+  update-annual-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch annual BRÅ data for all municipalities
+        env:
+          BRA_ALL_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'update' }}
+          TARGET_YEAR: ${{ github.event_name == 'workflow_dispatch' && inputs.target_year || '' }}
+          REGION_BATCH_SIZE: "25"
+        run: python scrape_bra_all_municipalities.py
+
+      - name: Validate file sizes
+        shell: bash
+        run: |
+          if find data/annual_all -type f -size +95M -print -quit 2>/dev/null | grep -q .; then
+            echo "At least one generated file is larger than 95 MB:"
+            find data/annual_all -type f -size +95M -print
+            exit 1
+          fi
+
+      - name: Commit annual municipality data
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/annual_all
+
+          if git diff --cached --quiet; then
+            echo "No annual municipality changes. Nothing to commit."
+            exit 0
+          fi
+
+          git commit -m "Update BRÅ annual data for all municipalities"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
