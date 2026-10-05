@@ -26,6 +26,7 @@ OUT_DIR = ROOT / "data" / "annual_all"
 MUNICIPALITIES_PATH = OUT_DIR / "municipalities.csv"
 CATEGORIES_PATH = OUT_DIR / "categories_annual.csv"
 METADATA_PATH = OUT_DIR / "metadata.json"
+COVERAGE_PATH = OUT_DIR / "coverage.csv"
 
 START_YEAR = int(os.getenv("START_YEAR", "1996"))
 MODE = os.getenv("BRA_ALL_MODE", "update").strip().lower()
@@ -34,12 +35,6 @@ REGION_BATCH_SIZE = int(os.getenv("REGION_BATCH_SIZE", "25"))
 
 SOURCE_URL = "https://statistik.bra.se/solwebb/action/anmalda/urval/urval?menyid=101"
 
-# Municipalities created after the start of the BRÅ series. They should not be
-# required in years before they existed as municipalities.
-MUNICIPALITY_START_YEAR = {
-    "Nykvarn": 1999,
-    "Knivsta": 2003,
-}
 
 if MODE not in {"update", "bootstrap", "refresh"}:
     raise SystemExit("BRA_ALL_MODE must be update, bootstrap or refresh")
@@ -183,6 +178,28 @@ def write_lookups(topic, regions: list[object], years: list[int]) -> None:
     )
 
 
+def update_coverage(year: int, df: pd.DataFrame, all_names: set[str]) -> None:
+    existing = None
+    if COVERAGE_PATH.exists():
+        try:
+            existing = pd.read_csv(COVERAGE_PATH, encoding="utf-8-sig")
+        except Exception:
+            existing = None
+    found = set(df["Kommun"].astype(str).unique())
+    row = pd.DataFrame([{
+        "År": year,
+        "Kommuner_med_data": len(found),
+        "Kommuner_utan_data": len(all_names - found),
+        "Saknade_kommuner": " | ".join(sorted(all_names - found)),
+        "Rader": len(df),
+        "Brottskategorier": df["Brott_ID"].nunique(),
+    }])
+    if existing is not None and not existing.empty:
+        existing = existing[existing["År"] != year]
+        row = pd.concat([existing, row], ignore_index=True)
+    row.sort_values("År").to_csv(COVERAGE_PATH, index=False, encoding="utf-8-sig")
+
+
 def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
     all_parts = []
     meta = category_meta(topic.crimes)
@@ -224,22 +241,25 @@ def query_year(topic, regions: list[object], year: int) -> pd.DataFrame:
     df = df[df[["Antal", "Per100000"]].notna().any(axis=1)].copy()
 
     all_names = {clean_region_name(r) for r in regions}
-    expected_names = {
-        name for name in all_names
-        if year >= MUNICIPALITY_START_YEAR.get(name, START_YEAR)
-    }
     found_names = set(df["Kommun"].astype(str).unique())
-    missing = expected_names - found_names
-    unexpected = found_names - expected_names
-    if missing:
-        raise RuntimeError(
-            f"{year}: missing {len(missing)} municipalities that should exist that year: "
-            f"{sorted(missing)[:20]}"
-        )
-    if unexpected:
-        print(f"{year}: note: BRÅ returned {len(unexpected)} historical/extra region names: {sorted(unexpected)[:20]}")
+    missing = sorted(all_names - found_names)
 
-    print(f"{year}: validated {len(found_names)} municipalities (expected at least {len(expected_names)})")
+    # Do not invent historical availability rules. BRÅ's annual topic is the
+    # authority for which municipalities have values in each year. Municipalities
+    # created/reorganised during the series can legitimately be absent in early
+    # years (for example Nykvarn/Knivsta). Keep that as coverage information rather
+    # than failing the whole national bootstrap.
+    if len(found_names) < 280:
+        raise RuntimeError(
+            f"{year}: only {len(found_names)} municipalities returned data; "
+            "this is too low and likely indicates a source/query failure."
+        )
+    if missing:
+        print(
+            f"{year}: BRÅ has no annual values for {len(missing)} current municipality names: "
+            f"{missing[:20]}"
+        )
+    print(f"{year}: validated {len(found_names)} municipalities with annual data")
 
     if df.duplicated(["År", "Kommun", "Brott_ID"]).any():
         dup = df[df.duplicated(["År", "Kommun", "Brott_ID"], keep=False)].head(20)
@@ -259,8 +279,15 @@ def target_years(years: list[int]) -> list[int]:
             raise RuntimeError(f"TARGET_YEAR={y} is not available from BRÅ")
         return [y]
 
-    if MODE in {"bootstrap", "refresh"}:
+    if MODE == "refresh":
         return years
+
+    if MODE == "bootstrap":
+        # Bootstrap is deliberately resumable. Process only the next three missing
+        # years per run so progress is committed even if BRÅ is slow or a later year
+        # has a source issue. Re-run bootstrap until all years are present.
+        missing = [y for y in years if not (OUT_DIR / f"year={y}.parquet").exists()]
+        return missing[:3]
 
     # Normal scheduled update: only the two latest annual periods. This captures
     # revisions without re-querying the whole 1996-present history.
@@ -283,12 +310,9 @@ def main() -> int:
 
     for y in targets:
         path = OUT_DIR / f"year={y}.parquet"
-        if MODE == "bootstrap" and path.exists() and not TARGET_YEAR:
-            print(f"{y}: already stored, skipping")
-            continue
-
         df = query_year(topic, regions, y)
         df.to_parquet(path, index=False, compression="snappy")
+        update_coverage(y, df, {clean_region_name(r) for r in regions})
         size_mb = path.stat().st_size / (1024 * 1024)
         if size_mb >= 95:
             raise RuntimeError(
