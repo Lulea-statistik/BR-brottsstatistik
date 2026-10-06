@@ -6,7 +6,7 @@
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="icon" type="image/png" href="favicon.png?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 <header class="topbar">
@@ -28,6 +28,7 @@
   <button class="tab active" data-page="overview">Översikt</button>
   <button class="tab" data-page="trends">Trender</button>
   <button class="tab" data-page="map">Årskarta</button>
+  <button class="tab" data-page="profile">Områdesprofil</button>
   <button class="tab" data-page="method">Metod & data</button>
 </nav>
 <main>
@@ -106,6 +107,46 @@
     </div>
   </section>
 
+
+  <section id="page-profile" class="page">
+    <div class="controls">
+      <label>Kommun<select id="profileMunicipality"></select></label>
+      <label class="year-range-label">Årintervall
+        <div id="profileYearControl" class="year-range-control">
+          <div class="year-range-head">
+            <span class="year-side"><small>Från</small><strong id="profileYearStartLabel">–</strong></span>
+            <span id="profileYearPeriod" class="year-period">–</span>
+            <span class="year-side right"><small>Till</small><strong id="profileYearEndLabel">–</strong></span>
+          </div>
+          <div class="dual-range">
+            <div class="range-track"></div>
+            <div class="range-selected"></div>
+            <input id="profileYearStart" type="range" step="1" aria-label="Från år">
+            <input id="profileYearEnd" type="range" step="1" aria-label="Till år">
+          </div>
+        </div>
+      </label>
+      <label>Län<select id="profileCounty"></select></label>
+      <label>SKR-kommungrupp<select id="profileSkrGroup"></select></label>
+      <label>Mått<select id="profileMetric">
+        <option value="Antal">Antal brott</option>
+        <option value="Per100000">Antal brott per 100 000</option>
+        <option value="AvgAntal">Medelantal brott</option>
+        <option value="AvgPer100000">Medelantal brott per 100 000</option>
+      </select></label>
+    </div>
+    <div class="panel profile-panel">
+      <div class="profile-heading">
+        <div>
+          <h2 id="profileTitle">Områdesprofil</h2>
+          <p id="profileStatus" class="muted">Välj område och period för att se brottens fördelning.</p>
+        </div>
+        <div class="profile-note">Rutornas storlek visar andelen av valt mått. Totalt antal brott ingår inte som egen kategori.</div>
+      </div>
+      <div id="profileTreemap" class="profile-treemap" aria-label="Treemap över brottskategorier"></div>
+    </div>
+  </section>
+
   <section id="page-method" class="page">
     <div class="panel prose">
       <h2>Metod & data</h2>
@@ -117,6 +158,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=20"></script>
+<script type="module" src="app.js?v=21"></script>
 </body>
 </html>
