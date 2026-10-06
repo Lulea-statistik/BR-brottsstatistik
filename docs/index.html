@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BRÅ brottsstatistik – Sveriges kommuner</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>BRÅ brottsstatistik – Sveriges kommuner</h1>
+    <p>Årsdata 1996–senaste tillgängliga år</p>
+  </div>
+</header>
+<nav class="tabs">
+  <button class="tab active" data-page="overview">Översikt</button>
+  <button class="tab" data-page="trends">Trender</button>
+  <button class="tab" data-page="map">Årskarta</button>
+  <button class="tab" data-page="method">Metod & data</button>
+</nav>
+<main>
+  <section id="page-overview" class="page active">
+    <div class="controls">
+      <label>Kommun<select id="overviewMunicipality"></select></label>
+      <label>Brottskategori<select id="overviewCrime"></select></label>
+      <label>År<select id="overviewYear"></select></label>
+    </div>
+    <div class="cards">
+      <article><span>Antal brott</span><strong id="cardCount">–</strong></article>
+      <article><span>Per 100 000 inv.</span><strong id="cardRate">–</strong></article>
+      <article><span>Ranking</span><strong id="cardRank">–</strong></article>
+      <article><span>Kommuner med data</span><strong id="cardCoverage">–</strong></article>
+    </div>
+    <div class="panel">
+      <h2>Snabbtrend</h2>
+      <canvas id="overviewChart"></canvas>
+    </div>
+  </section>
+
+  <section id="page-trends" class="page">
+    <div class="controls">
+      <label>Kommun<select id="trendMunicipality"></select></label>
+      <label>Brottskategori<select id="trendCrime"></select></label>
+      <label>Mått<select id="trendMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option></select></label>
+    </div>
+    <div class="panel tall">
+      <h2 id="trendTitle">Trend</h2>
+      <canvas id="trendChart"></canvas>
+    </div>
+  </section>
+
+  <section id="page-map" class="page">
+    <div class="controls">
+      <label>År<select id="mapYear"></select></label>
+      <label>Brottskategori<select id="mapCrime"></select></label>
+      <label>Mått<select id="mapMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option></select></label>
+    </div>
+    <div class="map-layout">
+      <div id="crimeMap" class="map"></div>
+      <aside class="map-side">
+        <h2 id="mapTitle">Årskarta</h2>
+        <p id="mapStatus" class="muted">Laddar…</p>
+        <div id="mapLegend" class="legend"></div>
+        <p><span class="swatch lulea"></span>Luleå markerad med röd kant</p>
+        <p><span class="swatch boden"></span>Boden markerad med gul kant</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="page-method" class="page">
+    <div class="panel prose">
+      <h2>Metod & data</h2>
+      <p>Rapporten bygger på Brå:s årsvisa kommunstatistik över anmälda brott. Data lagras årsvis i Parquet och läses direkt i webbläsaren med DuckDB-Wasm.</p>
+      <p>Årskartan använder kommunpolygoner som i första hand byggs från SCB:s öppna geodata. Om den hämtningen misslyckas används en förenklad reservgeometri enbart för visualisering.</p>
+      <div id="methodMeta"></div>
+    </div>
+  </section>
+</main>
+<div id="loading" class="loading">Laddar rapportdata…</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="app.js?v=1"></script>
+</body>
+</html>
