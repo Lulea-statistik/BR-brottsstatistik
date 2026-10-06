@@ -1,23 +1,23 @@
-name: Build and deploy BRÅ dashboard
+name: Build BRÅ dashboard data
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "docs/**"
+      - "docs/index.html"
+      - "docs/app.js"
+      - "docs/style.css"
       - "data/annual_all/**"
       - "build_crime_dashboard.py"
       - "requirements.txt"
       - ".github/workflows/deploy-dashboard.yml"
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: bra-dashboard-pages
+  group: bra-dashboard-build
   cancel-in-progress: true
 
 jobs:
@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,21 +42,18 @@ jobs:
       - name: Build dashboard data
         run: python build_crime_dashboard.py
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+      - name: Commit generated dashboard data
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
+          if git diff --cached --quiet; then
+            echo "No dashboard data changes. Nothing to commit."
+            exit 0
+          fi
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git commit -m "Build BRÅ dashboard data"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
