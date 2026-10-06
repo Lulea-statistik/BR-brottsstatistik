@@ -383,14 +383,21 @@ async function renderTrend(){
     const crimeId=el('trendCrime').value;
     const metric=el('trendMetric').value;
     const cohort=filteredMunicipalityNames('trendCounty','trendSkrGroup');
-    const data=await trendRows(municipality,crimeId,metric,cohort);
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
     const info=metricInfo(metric);
     const county=el('trendCounty').value;
     const skr=el('trendSkrGroup').value;
     const scope=[county,skr].filter(Boolean).join(' · ');
-    el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott')+(scope?' · '+scope:'');
-    drawLine('trendChart',data,metric,info.label);
+
+    if(municipality==='__ALL__'){
+      const data=await allTrendRows(crimeId,metric,cohort);
+      el('trendTitle').textContent='Alla kommuner – '+(category?.Brott||'Brott')+(scope?' · '+scope:'');
+      drawAllTrends('trendChart',data,metric,info.label);
+    }else{
+      const data=await trendRows(municipality,crimeId,metric,cohort);
+      el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott')+(scope?' · '+scope:'');
+      drawLine('trendChart',data,metric,info.label);
+    }
   }finally{setLoading(null);}
 }
 
@@ -555,10 +562,124 @@ function continuousLegendHtml(values,metric){
   const info=metricInfo(metric);
   const [low,midColor,high]=info.style.gradient;
   const colors=info.isRank?[high,midColor,low]:[low,midColor,high];
-  const fmt=v=>info.isRank?fmt0.format(v):(metric==='Antal'?fmt0.format(v):fmt1.format(v));
-  const suffix=metric==='Per100000'?' /100 000':'';
+  const fmt=v=>info.isRank?fmt0.format(v):((metric==='Antal')?fmt0.format(v):fmt1.format(v));
+  const suffix=(metric==='Per100000'||metric==='AvgPer100000')?' /100 000':'';
   return '<div class="gradient-legend" style="background:linear-gradient(90deg,'+colors.join(',')+')"></div>'+
     '<div class="gradient-labels"><span>'+fmt(min)+suffix+'</span><span>'+fmt(mid)+suffix+'</span><span>'+fmt(max)+suffix+'</span></div>';
+}
+
+function mapYearRange(){
+  let start=Number(el('mapYearStart').value);
+  let end=Number(el('mapYearEnd').value);
+  if(start>end)[start,end]=[end,start];
+  return {start,end,multi:start!==end};
+}
+
+function updateMapYearUi(){
+  const {start,end,multi}=mapYearRange();
+  el('mapYearStartLabel').textContent=String(start);
+  el('mapYearEndLabel').textContent=String(end);
+
+  const select=el('mapMetric');
+  const countOpt=select.querySelector('option[value="Antal"]');
+  const rateOpt=select.querySelector('option[value="Per100000"]');
+  const avgCountOpt=select.querySelector('option[value="AvgAntal"]');
+  const avgRateOpt=select.querySelector('option[value="AvgPer100000"]');
+
+  countOpt.textContent=multi?'Summa brott':'Antal brott';
+  rateOpt.textContent=multi?'Summa antal brott per 100 000':'Antal brott per 100 000';
+  [avgCountOpt,avgRateOpt].forEach(opt=>{
+    opt.hidden=!multi;
+    opt.disabled=!multi;
+  });
+  if(!multi && (select.value==='AvgAntal' || select.value==='AvgPer100000')){
+    select.value=select.value==='AvgAntal'?'Antal':'Per100000';
+  }
+}
+
+function handleMapYearRange(which){
+  let start=Number(el('mapYearStart').value);
+  let end=Number(el('mapYearEnd').value);
+  if(start>end){
+    if(which==='start'){
+      end=start;
+      el('mapYearEnd').value=String(end);
+    }else{
+      start=end;
+      el('mapYearStart').value=String(start);
+    }
+  }
+  updateMapYearUi();
+  renderMap();
+}
+
+function parquetSqlForRange(start,end){
+  const years=META.available_years.filter(y=>y>=start && y<=end);
+  return '['+years.map(y=>"'"+parquetUrl(y)+"'").join(',')+']';
+}
+
+async function allTrendRows(crimeId,metric,cohortNames){
+  let all=await query(`
+    SELECT CAST("År" AS INTEGER) AS year,
+           "Kommun",
+           CAST("Antal" AS DOUBLE) AS count,
+           CAST("Per100000" AS DOUBLE) AS rate
+    FROM read_parquet(${allParquetSql()})
+    WHERE "Brott_ID"=${Number(crimeId)}
+      AND "Antal">-555
+    ORDER BY "År","Kommun"
+  `);
+  const cohort=new Set(cohortNames||[]);
+  all=all.filter(r=>cohort.has(r.Kommun));
+  if(metric==='RankAntal' || metric==='RankPer100000'){
+    const grouped=new Map();
+    all.forEach(row=>{
+      if(!grouped.has(row.year))grouped.set(row.year,[]);
+      grouped.get(row.year).push(row);
+    });
+    grouped.forEach(rowsForYear=>addRanks(rowsForYear));
+  }
+  return all;
+}
+
+function drawAllTrends(id,data,metric,label){
+  const info=metricInfo(metric);
+  destroyChart(id);
+  const years=[...new Set(data.map(r=>Number(r.year)))].sort((x,y)=>x-y);
+  const names=[...new Set(data.map(r=>r.Kommun))].sort((x,y)=>x.localeCompare(y,'sv'));
+  const byKey=new Map(data.map(r=>[r.Kommun+'|'+r.year,r]));
+  const datasets=names.map(name=>({
+    label:name,
+    data:years.map(year=>metricValue(byKey.get(name+'|'+year),metric)),
+    borderColor:info.style.line+'55',
+    backgroundColor:'transparent',
+    borderWidth:1,
+    pointRadius:0,
+    tension:.12,
+    fill:false,
+    spanGaps:true
+  }));
+  charts[id]=new Chart(el(id),{
+    type:'line',
+    data:{labels:years,datasets},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      interaction:{mode:'nearest',intersect:false},
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{
+          beginAtZero:false,
+          reverse:info.isRank,
+          suggestedMin:info.isRank?1:undefined,
+          title:{display:true,text:label},
+          ticks:info.isRank?{precision:0}:undefined
+        }
+      }
+    }
+  });
 }
 
 function initMap(){
@@ -597,33 +718,40 @@ function fitMapToVisible(){
 async function renderMap(){
   setLoading('Laddar årskarta…');
   try{
-    const year=Number(el('mapYear').value);
+    const {start,end,multi}=mapYearRange();
     const crimeId=el('mapCrime').value;
     const metric=el('mapMetric').value;
     const info=metricInfo(metric);
+    const parquetFiles=parquetSqlForRange(start,end);
+
     let data=await query(`
       SELECT "Kommun",
-             CAST("Antal" AS DOUBLE) AS count,
-             CAST("Per100000" AS DOUBLE) AS rate
-      FROM read_parquet('${parquetUrl(year)}')
+             CAST(SUM(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS count,
+             CAST(SUM(CAST("Per100000" AS DOUBLE)) AS DOUBLE) AS rate,
+             CAST(AVG(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS avgCount,
+             CAST(AVG(CAST("Per100000" AS DOUBLE)) AS DOUBLE) AS avgRate
+      FROM read_parquet(${parquetFiles})
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
+      GROUP BY "Kommun"
     `);
+
     const visibleNames=mapFilterNames();
     data=data.filter(r=>visibleNames.has(r.Kommun));
     addRanks(data);
+
     const byName=new Map(data.map(r=>[r.Kommun,r]));
     const municipalitiesWithCrime=new Set(
-      data
-        .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
-        .map(r=>r.Kommun)
+      data.filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0).map(r=>r.Kommun)
     );
     mapAutoBounds=boundsForMunicipalities(municipalitiesWithCrime) || swedenBounds();
+
     const values=data
       .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
       .map(r=>Number(metricValue(r,metric)))
       .filter(Number.isFinite);
     const minValue=values.length?Math.min(...values):NaN;
     const maxValue=values.length?Math.max(...values):NaN;
+
     if(geoLayer)geoLayer.remove();
     geoLayer=L.geoJSON(GEO,{
       filter:f=>visibleNames.has(f.properties.Kommun),
@@ -644,13 +772,20 @@ async function renderMap(){
         const name=f.properties.Kommun;
         const row=byName.get(name);
         const value=row?metricValue(row,metric):null;
-        const rankedTotal=data.filter(r=>Number.isFinite(Number(info.isCount?r.count:r.rate))).length;
+        const rankField=info.isCount?'count':'rate';
+        const rankedTotal=data.filter(r=>Number.isFinite(Number(r[rankField]))).length;
         const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
         let label=noCrime?'0 brott':'Data saknas';
         if(!noCrime && value!=null){
-          label=info.isRank
-            ? 'Placering '+fmt0.format(value)+' av '+rankedTotal
-            : (metric==='Antal'?fmt0.format(value):fmt1.format(value)+' per 100 000');
+          if(info.isRank){
+            label='Placering '+fmt0.format(value)+' av '+rankedTotal;
+          }else if(info.isAverage){
+            label=fmt1.format(value)+(info.isCount?' brott i medel':' per 100 000 i medel');
+          }else if(metric==='Antal'){
+            label=fmt0.format(value)+(multi?' brott totalt':' brott');
+          }else{
+            label=fmt1.format(value)+(multi?' per 100 000, summa':' per 100 000');
+          }
         }
         const meta=municipalityMeta(name);
         const extra=[
@@ -660,14 +795,18 @@ async function renderMap(){
         layer.bindTooltip('<b>'+name+'</b><br>'+label+(extra?'<br>'+extra:''));
       }
     }).addTo(map);
+
     if(el('page-map').classList.contains('active')){
       setTimeout(()=>{
         map.invalidateSize();
         fitMapToVisible();
       },30);
     }
+
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
-    el('mapTitle').textContent=year+' – '+(category?.Brott||'Brott');
+    const yearText=multi?start+'–'+end:String(start);
+    el('mapTitle').textContent=yearText+' – '+(category?.Brott||'Brott');
+
     const county=el('mapCounty').value;
     const skr=el('mapSkrGroup').value;
     const filterText=[county,skr].filter(Boolean).join(' · ');
@@ -676,12 +815,13 @@ async function renderMap(){
       +(filterText?' · '+filterText:'')
       +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ')
       +(info.isRank && valueCount>0?'Placering 1 = högst värde inom visat urval.':'');
+
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=9',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=10',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -694,11 +834,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=9',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=9',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=9',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=9',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=9',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=10',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=10',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=10',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=10',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=10',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
