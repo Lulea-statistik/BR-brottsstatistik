@@ -510,6 +510,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       responsive:true,
       maintainAspectRatio:false,
       animation:false,
+      layout:{padding:{bottom:n<=20 ? 24 : 14}},
       plugins:{
         legend:{display:false},
         tooltip:{
@@ -532,7 +533,13 @@ function drawFunnel(id,data,metric,selectedMunicipality){
         x:{
           stacked:true,
           grid:{display:false},
-          ticks:{autoSkip:true,maxRotation:n>35 ? 90 : 45,minRotation:0,font:{size:n>100 ? 8 : 10}}
+          ticks:{
+            autoSkip:n>20,
+            maxRotation:n<=12 ? 0 : n<=35 ? 45 : 90,
+            minRotation:n<=12 ? 0 : n<=35 ? 45 : 90,
+            padding:10,
+            font:{size:n>100 ? 8 : n>40 ? 9 : 11}
+          }
         },
         y:{
           stacked:true,
@@ -868,7 +875,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=11',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=12',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -881,11 +888,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=11',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=11',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=11',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=11',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=11',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=12',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=12',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=12',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=12',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=12',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
