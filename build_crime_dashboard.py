@@ -281,39 +281,54 @@ def fetch_skr_groups(valid_names: set[str]) -> list[dict]:
     response.raise_for_status()
     pdf_path.write_bytes(response.content)
 
+    groups = {
+        "A1": ("Storstäder och storstadsnära kommuner", "Storstäder"),
+        "A2": ("Storstäder och storstadsnära kommuner", "Pendlingskommun nära storstad"),
+        "B3": ("Större städer och kommuner nära större stad", "Större stad"),
+        "B4": ("Större städer och kommuner nära större stad", "Pendlingskommun nära större stad"),
+        "B5": ("Större städer och kommuner nära större stad", "Lågpendlingskommun nära större stad"),
+        "C6": ("Mindre städer/tätorter och landsbygdskommuner", "Mindre stad/tätort"),
+        "C7": ("Mindre städer/tätorter och landsbygdskommuner", "Pendlingskommun nära mindre tätort"),
+        "C8": ("Mindre städer/tätorter och landsbygdskommuner", "Landsbygdskommun"),
+        "C9": ("Mindre städer/tätorter och landsbygdskommuner", "Landsbygdskommun med besöksnäring"),
+    }
+
     rows: list[dict] = []
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            for page in pdf.pages:
-                for table in page.extract_tables() or []:
-                    for row in table or []:
-                        cells = [" ".join(str(x or "").split()) for x in row]
-                        if len(cells) < 5:
-                            continue
-                        code = cells[0].replace(" ", "")
-                        kommun_code = cells[1].replace(" ", "")
-                        if not re.fullmatch(r"[ABC][1-9]", code):
-                            continue
-                        if not re.fullmatch(r"\\d{4}", kommun_code):
-                            continue
-                        name = clean_municipality(cells[2])
-                        rows.append({
-                            "Gruppkod": code,
-                            "Kommunkod": kommun_code,
-                            "Kommun": name,
-                            "Huvudgrupp": cells[3],
-                            "Kommungrupp": cells[4],
-                        })
+            # Bilaga 1 starts on report page 38/39 and contains all 290 municipalities.
+            for page in pdf.pages[38:48]:
+                text = page.extract_text(x_tolerance=2, y_tolerance=2) or ""
+                for raw_line in text.splitlines():
+                    line = " ".join(raw_line.split())
+                    m = re.match(r"^([ABC][1-9])\s+(\d{4})\s+(.+)$", line)
+                    if not m:
+                        continue
+                    code, kommun_code, rest = m.groups()
+                    if code not in groups:
+                        continue
+                    main_group, kommun_group = groups[code]
+                    suffix = f"{main_group} {kommun_group}"
+                    if not rest.endswith(suffix):
+                        continue
+                    name = clean_municipality(rest[:-len(suffix)].strip())
+                    rows.append({
+                        "Gruppkod": code,
+                        "Kommunkod": kommun_code,
+                        "Kommun": name,
+                        "Huvudgrupp": main_group,
+                        "Kommungrupp": kommun_group,
+                    })
     finally:
         pdf_path.unlink(missing_ok=True)
 
-    # Keep one row per municipality and validate against the 290-current-municipality list.
     by_name = {row["Kommun"]: row for row in rows if row["Kommun"] in valid_names}
     if len(by_name) != 290:
         missing = sorted(valid_names - set(by_name))
+        found_sample = sorted(set(by_name))[:20]
         raise RuntimeError(
             f"SKR 2023 classification extraction matched {len(by_name)} of 290 municipalities; "
-            f"missing sample: {missing[:20]}"
+            f"missing sample: {missing[:20]}; found sample: {found_sample}"
         )
     print(f"SKR 2023 classification: {len(by_name)} municipalities from {pdf_url}")
     return [by_name[name] for name in sorted(by_name)]
