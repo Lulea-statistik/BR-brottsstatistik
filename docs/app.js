@@ -208,7 +208,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json').then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=2',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -221,10 +221,10 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,GEO]=await Promise.all([
-      fetch('data/metadata.json').then(r=>r.json()),
-      fetch('data/categories.json').then(r=>r.json()),
-      fetch('data/municipalities.json').then(r=>r.json()),
-      fetch('data/municipalities.geojson').then(r=>r.json())
+      fetch('data/metadata.json?v=2',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=2',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=2',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=2',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
