@@ -443,8 +443,8 @@ function drawFunnel(id,data,metric,selectedMunicipality){
     ? ranked
     : ranked.filter((r,i)=>i<15 || r.Kommun===selectedMunicipality);
   const n=Math.max(shown.length,1);
-  const barPct=n<=6?.72:n<=20?.78:n<=80?.86:.96;
-  const catPct=n<=6?.82:n<=20?.88:n<=80?.92:1;
+  const barPct=n<=6 ? .72 : n<=20 ? .78 : n<=80 ? .86 : .96;
+  const catPct=n<=6 ? .82 : n<=20 ? .88 : n<=80 ? .92 : 1;
   const values=shown.map(r=>metricValue(r,metric));
 
   charts[id]=new Chart(el(id),{
@@ -455,11 +455,11 @@ function drawFunnel(id,data,metric,selectedMunicipality){
         data:values,
         backgroundColor:shown.map(r=>r.Kommun===selectedMunicipality?info.style.line:info.style.fill),
         borderColor:info.style.line,
-        borderWidth:n>120?.4:1,
-        borderRadius:n>80?0:3,
+        borderWidth:n>120 ? .4 : 1,
+        borderRadius:n>80 ? 0 : 3,
         barPercentage:barPct,
         categoryPercentage:catPct,
-        maxBarThickness:n<=6?120:n<=20?70:undefined
+        maxBarThickness:n<=6 ? 120 : n<=20 ? 70 : undefined
       }]
     },
     options:{
@@ -486,7 +486,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       scales:{
         x:{
           grid:{display:false},
-          ticks:{autoSkip:true,maxRotation:n>35?90:45,minRotation:0,font:{size:n>100?8:10}}
+          ticks:{autoSkip:true,maxRotation:n>35 ? 90 : 45,minRotation:0,font:{size:n>100 ? 8 : 10}}
         },
         y:{
           beginAtZero:!info.isRank,
