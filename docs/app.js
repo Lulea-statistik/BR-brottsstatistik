@@ -878,18 +878,16 @@ async function renderMap(){
 
     const visibleNames=mapFilterNames();
     data=data.filter(r=>visibleNames.has(r.Kommun));
-    addRanks(data);
+
+    const activeData=data.filter(r=>{
+      const count=Number(r.count);
+      return Number.isFinite(count) && count>0;
+    });
+    addRanks(activeData);
 
     const byName=new Map(data.map(r=>[r.Kommun,r]));
     mapAutoBounds=null;
-    const municipalitiesWithCrime=new Set(
-      data
-        .filter(r=>{
-          const count=Number(r.count);
-          return Number.isFinite(count) && count>0;
-        })
-        .map(r=>r.Kommun)
-    );
+    const municipalitiesWithCrime=new Set(activeData.map(r=>r.Kommun));
     const crimeBounds=boundsForMunicipalities(municipalitiesWithCrime);
     mapAutoBounds=(crimeBounds && crimeBounds.isValid()) ? crimeBounds : swedenBounds();
 
@@ -922,7 +920,7 @@ async function renderMap(){
         const row=byName.get(name);
         const value=row?metricValue(row,metric):null;
         const rankField=info.isCount?'count':'rate';
-        const rankedTotal=data.filter(r=>Number.isFinite(Number(r[rankField]))).length;
+        const rankedTotal=activeData.filter(r=>Number.isFinite(Number(r[rankField]))).length;
         const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
         let label=noCrime?'0 brott':'Data saknas';
         if(!noCrime && value!=null){
@@ -966,7 +964,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=16',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=17',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -979,11 +977,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=16',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=16',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=16',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=16',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=16',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=17',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=17',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=17',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=17',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=17',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
