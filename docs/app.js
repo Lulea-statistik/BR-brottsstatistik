@@ -414,8 +414,7 @@ function refreshOverviewMunicipalities(){
   const names=filteredMunicipalityNames('overviewCounty','overviewSkrGroup')
     .sort((a,b)=>a.localeCompare(b,'sv'));
   const items=[{value:'__ALL__',text:'Alla'},...names.map(x=>({value:x,text:x}))];
-  const selected=current==='__ALL__'?'__ALL__':
-    (names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:'__ALL__'));
+  const selected=(current && items.some(i=>i.value===current)) ? current : '__ALL__';
   fillSelect('overviewMunicipality',items,selected);
 }
 
@@ -424,43 +423,88 @@ function refreshTrendMunicipalities(){
   const names=filteredMunicipalityNames('trendCounty','trendSkrGroup')
     .sort((a,b)=>a.localeCompare(b,'sv'));
   const items=[{value:'__ALL__',text:'Alla'},...names.map(x=>({value:x,text:x}))];
-  const selected=current==='__ALL__'?'__ALL__':
-    (names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:'__ALL__'));
+  const selected=(current && items.some(i=>i.value===current)) ? current : '__ALL__';
   fillSelect('trendMunicipality',items,selected);
 }
 
 function drawFunnel(id,data,metric,selectedMunicipality){
   const info=metricInfo(metric);
   destroyChart(id);
+
   const ranked=data
-    .filter(r=>Number.isFinite(Number(metricValue(r,metric))))
+    .filter(r=>{
+      const value=Number(metricValue(r,metric));
+      const count=Number(r.count ?? 0);
+      return Number.isFinite(value) && Number.isFinite(count) && count>0;
+    })
     .slice()
     .sort((x,y)=>info.isRank
       ? Number(metricValue(x,metric))-Number(metricValue(y,metric))
       : Number(metricValue(y,metric))-Number(metricValue(x,metric)));
 
-  const shown=selectedMunicipality==='__ALL__'
-    ? ranked
-    : ranked.filter((r,i)=>i<15 || r.Kommun===selectedMunicipality);
+  let shown;
+  if(selectedMunicipality==='__ALL__'){
+    shown=ranked;
+  }else{
+    shown=ranked.filter((r,i)=>
+      i<15 ||
+      r.Kommun===selectedMunicipality ||
+      r.Kommun==='Luleå' ||
+      r.Kommun==='Boden'
+    );
+  }
+
   const n=Math.max(shown.length,1);
+  const values=shown.map(r=>Number(metricValue(r,metric)));
+  const maxValue=Math.max(...values,0);
+  const capSize=maxValue>0 ? maxValue*0.035 : 1;
+
+  const mainColors=shown.map(r=>{
+    if(r.Kommun==='Luleå')return '#dc2626';
+    if(r.Kommun==='Boden')return '#d4a800';
+    if(selectedMunicipality!=='__ALL__' && r.Kommun===selectedMunicipality)return info.style.line;
+    return info.style.fill;
+  });
+  const borderColors=shown.map(r=>{
+    if(r.Kommun==='Luleå')return '#b91c1c';
+    if(r.Kommun==='Boden')return '#a16207';
+    return info.style.line;
+  });
+  const capData=shown.map(r=>(r.Kommun==='Luleå'||r.Kommun==='Boden')?capSize:0);
+  const capColors=shown.map(r=>r.Kommun==='Luleå'?'#dc2626':r.Kommun==='Boden'?'#d4a800':'rgba(0,0,0,0)');
+
   const barPct=n<=6 ? .72 : n<=20 ? .78 : n<=80 ? .86 : .96;
   const catPct=n<=6 ? .82 : n<=20 ? .88 : n<=80 ? .92 : 1;
-  const values=shown.map(r=>metricValue(r,metric));
 
   charts[id]=new Chart(el(id),{
     type:'bar',
     data:{
       labels:shown.map(r=>r.Kommun),
-      datasets:[{
-        data:values,
-        backgroundColor:shown.map(r=>r.Kommun===selectedMunicipality?info.style.line:info.style.fill),
-        borderColor:info.style.line,
-        borderWidth:n>120 ? .4 : 1,
-        borderRadius:n>80 ? 0 : 3,
-        barPercentage:barPct,
-        categoryPercentage:catPct,
-        maxBarThickness:n<=6 ? 120 : n<=20 ? 70 : undefined
-      }]
+      datasets:[
+        {
+          label:'Värde',
+          data:values,
+          backgroundColor:mainColors,
+          borderColor:borderColors,
+          borderWidth:n>120 ? .4 : 1,
+          borderRadius:n>80 ? 0 : 3,
+          barPercentage:barPct,
+          categoryPercentage:catPct,
+          maxBarThickness:n<=6 ? 120 : n<=20 ? 70 : undefined,
+          stack:'total'
+        },
+        {
+          label:'Markering',
+          data:capData,
+          backgroundColor:capColors,
+          borderColor:capColors,
+          borderWidth:0,
+          barPercentage:barPct,
+          categoryPercentage:catPct,
+          maxBarThickness:n<=6 ? 120 : n<=20 ? 70 : undefined,
+          stack:'total'
+        }
+      ]
     },
     options:{
       responsive:true,
@@ -469,6 +513,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       plugins:{
         legend:{display:false},
         tooltip:{
+          filter:ctx=>ctx.datasetIndex===0,
           callbacks:{
             label:ctx=>{
               const value=ctx.raw;
@@ -485,10 +530,12 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       },
       scales:{
         x:{
+          stacked:true,
           grid:{display:false},
           ticks:{autoSkip:true,maxRotation:n>35 ? 90 : 45,minRotation:0,font:{size:n>100 ? 8 : 10}}
         },
         y:{
+          stacked:true,
           beginAtZero:!info.isRank,
           reverse:info.isRank,
           suggestedMin:info.isRank?1:undefined,
@@ -821,7 +868,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=10',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=11',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -834,11 +881,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=10',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=10',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=10',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=10',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=10',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=11',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=11',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=11',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=11',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=11',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
