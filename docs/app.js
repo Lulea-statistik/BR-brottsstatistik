@@ -86,6 +86,9 @@ function setupControls(){
   fillSelect('mapSkrGroup',skrItems,'');
   fillSelect('overviewCounty',countyItems,'');
   fillSelect('overviewSkrGroup',skrItems,'');
+  refreshOverviewMunicipalities();
+  fillSelect('trendCounty',countyItems,'');
+  fillSelect('trendSkrGroup',skrItems,'');
 
   el('overviewMunicipality').addEventListener('change',renderOverview);
   el('overviewCrime').addEventListener('change',renderOverview);
@@ -96,6 +99,8 @@ function setupControls(){
   el('trendMunicipality').addEventListener('change',renderTrend);
   el('trendCrime').addEventListener('change',renderTrend);
   el('trendMetric').addEventListener('change',renderTrend);
+  el('trendCounty').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
+  el('trendSkrGroup').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
   el('mapYear').addEventListener('change',renderMap);
   el('mapCrime').addEventListener('change',renderMap);
   el('mapMetric').addEventListener('change',renderMap);
@@ -116,10 +121,10 @@ function setupTabs(){
 }
 
 const METRIC_STYLES = {
-  Antal: {line:'#2563eb', fill:'rgba(37,99,235,.15)'},
-  Per100000: {line:'#0f766e', fill:'rgba(15,118,110,.15)'},
-  RankAntal: {line:'#d97706', fill:'rgba(217,119,6,.15)'},
-  RankPer100000: {line:'#7c3aed', fill:'rgba(124,58,237,.15)'}
+  Antal: {line:'#2563eb', fill:'rgba(37,99,235,.15)', gradient:['#dbeafe','#60a5fa','#1e3a8a']},
+  Per100000: {line:'#0f766e', fill:'rgba(15,118,110,.15)', gradient:['#ccfbf1','#2dd4bf','#134e4a']},
+  RankAntal: {line:'#d97706', fill:'rgba(217,119,6,.15)', gradient:['#fef3c7','#f59e0b','#78350f']},
+  RankPer100000: {line:'#7c3aed', fill:'rgba(124,58,237,.15)', gradient:['#ede9fe','#a78bfa','#4c1d95']}
 };
 
 function metricInfo(metric){
@@ -156,7 +161,7 @@ function addRanks(data){
   return data;
 }
 
-async function trendRows(municipality,crimeId,metric){
+async function trendRows(municipality,crimeId,metric,cohortNames=null){
   const info=metricInfo(metric);
   if(!info.isRank){
     return query(`
@@ -172,7 +177,7 @@ async function trendRows(municipality,crimeId,metric){
     `);
   }
 
-  const all=await query(`
+  let all=await query(`
     SELECT CAST("År" AS INTEGER) AS year,
            "Kommun",
            CAST("Antal" AS DOUBLE) AS count,
@@ -182,6 +187,10 @@ async function trendRows(municipality,crimeId,metric){
       AND "Antal">-555
     ORDER BY "År"
   `);
+  if(cohortNames){
+    const cohort=new Set(cohortNames);
+    all=all.filter(r=>cohort.has(r.Kommun));
+  }
   const grouped=new Map();
   all.forEach(row=>{
     if(!grouped.has(row.year)) grouped.set(row.year,[]);
@@ -201,7 +210,7 @@ async function trendRows(municipality,crimeId,metric){
       });
     }
   }
-  return out.sort((a,b)=>a.year-b.year);
+  return out.sort((x,y)=>x.year-y.year);
 }
 
 function metricValue(row,metric){
@@ -226,7 +235,7 @@ function drawLine(id,data,metric,label){
       pointRadius:2,
       pointBackgroundColor:info.style.line,
       tension:.18,
-      fill:'origin'
+      fill:info.isRank?'end':'origin'
     }]},
     options:{
       responsive:true,
@@ -253,10 +262,14 @@ async function renderTrend(){
     const municipality=el('trendMunicipality').value;
     const crimeId=el('trendCrime').value;
     const metric=el('trendMetric').value;
-    const data=await trendRows(municipality,crimeId,metric);
+    const cohort=filteredMunicipalityNames('trendCounty','trendSkrGroup');
+    const data=await trendRows(municipality,crimeId,metric,cohort);
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
     const info=metricInfo(metric);
-    el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott');
+    const county=el('trendCounty').value;
+    const skr=el('trendSkrGroup').value;
+    const scope=[county,skr].filter(Boolean).join(' · ');
+    el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott')+(scope?' · '+scope:'');
     drawLine('trendChart',data,metric,info.label);
   }finally{setLoading(null);}
 }
@@ -273,8 +286,18 @@ function refreshOverviewMunicipalities(){
   const current=el('overviewMunicipality').value;
   const names=filteredMunicipalityNames('overviewCounty','overviewSkrGroup')
     .sort((a,b)=>a.localeCompare(b,'sv'));
+  const items=[{value:'__ALL__',text:'Alla'},...names.map(x=>({value:x,text:x}))];
+  const selected=current==='__ALL__'?'__ALL__':
+    (names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:'__ALL__'));
+  fillSelect('overviewMunicipality',items,selected);
+}
+
+function refreshTrendMunicipalities(){
+  const current=el('trendMunicipality').value;
+  const names=filteredMunicipalityNames('trendCounty','trendSkrGroup')
+    .sort((a,b)=>a.localeCompare(b,'sv'));
   fillSelect(
-    'overviewMunicipality',
+    'trendMunicipality',
     names.map(x=>({value:x,text:x})),
     names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:names[0])
   );
@@ -290,9 +313,11 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       ? Number(metricValue(a,metric))-Number(metricValue(b,metric))
       : Number(metricValue(b,metric))-Number(metricValue(a,metric)));
 
-  let shown=ranked.slice(0,15);
+  let shown=selectedMunicipality==='__ALL__' ? ranked : ranked.slice(0,15);
   const selected=ranked.find(r=>r.Kommun===selectedMunicipality);
   if(selected && !shown.some(r=>r.Kommun===selectedMunicipality)) shown=[...shown,selected];
+  const wrap=el('overviewChartWrap');
+  if(wrap) wrap.style.height=Math.max(500,shown.length*22)+'px';
 
   const total=ranked.length;
   const widths=shown.map(r=>{
@@ -367,7 +392,7 @@ async function renderOverview(){
     `);
     data=data.filter(r=>visibleNames.has(r.Kommun));
     addRanks(data);
-    const chosen=data.find(r=>r.Kommun===municipality);
+    const chosen=municipality==='__ALL__'?null:data.find(r=>r.Kommun===municipality);
     const rankValue=chosen?(info.isCount?chosen.rankCount:chosen.rankRate):null;
     const rankedCount=data.filter(r=>Number.isFinite(Number(info.isCount?r.count:r.rate))).length;
     el('cardCount').textContent=chosen?fmt0.format(chosen.count):'–';
@@ -384,46 +409,37 @@ async function renderOverview(){
   }finally{setLoading(null);}
 }
 
-function quantiles(values,n=7){
-  const v=values.filter(Number.isFinite).sort((a,b)=>a-b);
-  if(!v.length)return [];
-  const out=[];for(let i=1;i<n;i++){out.push(v[Math.min(v.length-1,Math.floor(i*v.length/n))]);}
-  return [...new Set(out)];
+function hexToRgb(hex){
+  const h=hex.replace('#','');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
 }
-const palette=['#eff6ff','#dbeafe','#bfdbfe','#93c5fd','#60a5fa','#3b82f6','#1d4ed8','#1e3a8a'];
-function colorFor(v,cuts){
-  if(!Number.isFinite(v))return '#e5e7eb';
-  let i=0;while(i<cuts.length&&v>cuts[i])i++;
-  return palette[Math.min(i,palette.length-1)];
+function rgbToHex(rgb){
+  return '#'+rgb.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
 }
-function legendHtml(cuts,metric){
+function mixHex(a,b,t){
+  const ra=hexToRgb(a), rb=hexToRgb(b);
+  return rgbToHex(ra.map((v,i)=>v+(rb[i]-v)*t));
+}
+function continuousColor(value,min,max,metric){
+  if(!Number.isFinite(value))return '#e5e7eb';
   const info=metricInfo(metric);
-  if(info.isRank){
-    let prev=null;
-    return [...cuts,null].map((cut,i)=>{
-      const label=i===0?('Placering 1–'+fmt0.format(cuts[0]))
-        :(cut==null?('Placering '+(fmt0.format(cuts[cuts.length-1]+1))+'+')
-        :('Placering '+fmt0.format(prev+1)+'–'+fmt0.format(cut)));
-      prev=cut;
-      const color=palette[Math.max(0,palette.length-1-i)];
-      return '<div class="legend-row"><span class="legend-box" style="background:'+color+'"></span><span>'+label+'</span></div>';
-    }).join('');
-  }
-  const unit=metric==='Antal'?'':' /100 000';
-  let prev=null;
-  return [...cuts,null].map((cut,i)=>{
-    const label=i===0?('≤ '+fmt1.format(cuts[0])):(cut==null?('> '+fmt1.format(cuts[cuts.length-1])):(fmt1.format(prev)+'–'+fmt1.format(cut)));
-    prev=cut;
-    return '<div class="legend-row"><span class="legend-box" style="background:'+palette[i]+'"></span><span>'+label+unit+'</span></div>';
-  }).join('');
+  let t=max===min?.5:(value-min)/(max-min);
+  t=Math.max(0,Math.min(1,t));
+  if(info.isRank)t=1-t;
+  const [low,mid,high]=info.style.gradient;
+  return t<=.5?mixHex(low,mid,t*2):mixHex(mid,high,(t-.5)*2);
 }
-
-function colorForMetric(v,cuts,metric){
+function continuousLegendHtml(values,metric){
+  const valid=values.filter(Number.isFinite);
+  if(!valid.length)return '';
+  const min=Math.min(...valid), max=Math.max(...valid), mid=(min+max)/2;
   const info=metricInfo(metric);
-  if(!Number.isFinite(v))return '#e5e7eb';
-  let i=0;while(i<cuts.length&&v>cuts[i])i++;
-  if(info.isRank) return palette[Math.max(0,palette.length-1-i)];
-  return palette[Math.min(i,palette.length-1)];
+  const [low,midColor,high]=info.style.gradient;
+  const colors=info.isRank?[high,midColor,low]:[low,midColor,high];
+  const fmt=v=>info.isRank?fmt0.format(v):(metric==='Antal'?fmt0.format(v):fmt1.format(v));
+  const suffix=metric==='Per100000'?' /100 000':'';
+  return '<div class="gradient-legend" style="background:linear-gradient(90deg,'+colors.join(',')+')"></div>'+
+    '<div class="gradient-labels"><span>'+fmt(min)+suffix+'</span><span>'+fmt(mid)+suffix+'</span><span>'+fmt(max)+suffix+'</span></div>';
 }
 
 function initMap(){
@@ -466,7 +482,8 @@ async function renderMap(){
     addRanks(data);
     const byName=new Map(data.map(r=>[r.Kommun,r]));
     const values=data.map(r=>Number(metricValue(r,metric))).filter(Number.isFinite);
-    const cuts=quantiles(values,7);
+    const minValue=values.length?Math.min(...values):NaN;
+    const maxValue=values.length?Math.max(...values):NaN;
     if(geoLayer)geoLayer.remove();
     geoLayer=L.geoJSON(GEO,{
       filter:f=>visibleNames.has(f.properties.Kommun),
@@ -475,7 +492,7 @@ async function renderMap(){
         const row=byName.get(name);
         const value=row?Number(metricValue(row,metric)):NaN;
         const special=name==='Luleå'?'#dc2626':name==='Boden'?'#d4a800':'#667085';
-        return {color:special,weight:(name==='Luleå'||name==='Boden')?3:0.7,fillColor:colorForMetric(value,cuts,metric),fillOpacity:.78};
+        return {color:special,weight:(name==='Luleå'||name==='Boden')?3:0.7,fillColor:continuousColor(value,minValue,maxValue,metric),fillOpacity:.82};
       },
       onEachFeature:(f,layer)=>{
         const name=f.properties.Kommun;
@@ -510,12 +527,12 @@ async function renderMap(){
     el('mapStatus').textContent=data.length+' kommuner med värde'
       +(filterText?' · '+filterText:'')
       +'. '+(info.isRank?'Placering 1 = högst värde inom visat urval.':'');
-    el('mapLegend').innerHTML=legendHtml(cuts,metric);
+    el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=6',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=7',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -528,11 +545,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=6',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=6',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=6',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=6',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=6',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=7',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=7',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=7',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=7',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=7',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
