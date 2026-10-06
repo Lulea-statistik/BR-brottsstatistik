@@ -404,6 +404,21 @@ async function trendRows(municipality,crimeId,metric,cohortNames=null){
   return out.sort((x,y)=>x.year-y.year);
 }
 
+function addMetricRank(rows,metric){
+  const valid=rows
+    .filter(r=>Number.isFinite(Number(metricValue(r,metric))))
+    .sort((a,b)=>Number(metricValue(b,metric))-Number(metricValue(a,metric)));
+  let previous=null;
+  let rank=0;
+  valid.forEach((row,i)=>{
+    const value=Number(metricValue(row,metric));
+    if(previous===null || value!==previous)rank=i+1;
+    row.metricRank=rank;
+    previous=value;
+  });
+  return valid;
+}
+
 function metricValue(row,metric){
   if(!row)return null;
   if(metric==='Antal')return row.count;
@@ -899,6 +914,7 @@ async function renderMap(){
       return Number.isFinite(count) && count>0;
     });
     addRanks(activeData);
+    const rankedForMetric=addMetricRank(activeData,metric);
 
     const byName=new Map(data.map(r=>[r.Kommun,r]));
     mapAutoBounds=null;
@@ -936,14 +952,11 @@ async function renderMap(){
         const name=f.properties.Kommun;
         const row=byName.get(name);
         const value=row?metricValue(row,metric):null;
-        const rankField=info.isCount?'count':'rate';
-        const rankedTotal=activeData.filter(r=>Number.isFinite(Number(r[rankField]))).length;
+        const rankedTotal=rankedForMetric.length;
         const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
         let label=noCrime?'0 brott':'Data saknas';
         if(!noCrime && value!=null){
-          if(info.isRank){
-            label='Placering '+fmt0.format(value)+' av '+rankedTotal;
-          }else if(info.isAverage){
+          if(info.isAverage){
             label=fmt1.format(value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år');
           }else if(metric==='Antal'){
             label=fmt0.format(value)+(multi?' brott totalt':' brott');
@@ -952,7 +965,10 @@ async function renderMap(){
           }
         }
         const periodText=multi ? start+'-'+end : String(start);
-        layer.bindTooltip('<b>'+name+'</b><br>'+label+'<br>Period: '+periodText);
+        const rankText=(!noCrime && row?.metricRank)
+          ? '<br>Placering: '+fmt0.format(row.metricRank)+' av '+rankedTotal
+          : '';
+        layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText);
       }
     }).addTo(map);
 
@@ -973,15 +989,14 @@ async function renderMap(){
     const valueCount=municipalitiesWithCrime.size;
     el('mapStatus').textContent=valueCount+' kommuner med brott'
       +(filterText?' · '+filterText:'')
-      +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ')
-      +(info.isRank && valueCount>0?'Placering 1 = högst antal brott inom visat urval.':'');
+      +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ');
 
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=18',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=19',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -994,11 +1009,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=18',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=18',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=18',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=18',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=18',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=19',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=19',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=19',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=19',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=19',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
