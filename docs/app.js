@@ -1,7 +1,7 @@
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm';
 
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
-let db, conn, map, geoLayer;
+let db, conn, map, geoLayer, mapAutoBounds;
 const charts = {};
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:1});
@@ -554,11 +554,23 @@ function mapFilterNames(){
   return new Set(filteredMunicipalityNames('mapCounty','mapSkrGroup'));
 }
 
+function swedenBounds(){
+  const layer=L.geoJSON(GEO);
+  return layer.getBounds();
+}
+
+function boundsForMunicipalities(names){
+  if(!names || !names.size)return null;
+  const layer=L.geoJSON(GEO,{filter:f=>names.has(f.properties.Kommun)});
+  const bounds=layer.getBounds();
+  return bounds && bounds.isValid()?bounds:null;
+}
+
 function fitMapToVisible(){
-  if(!map || !geoLayer)return;
-  const bounds=geoLayer.getBounds();
+  if(!map)return;
+  const bounds=(mapAutoBounds && mapAutoBounds.isValid()) ? mapAutoBounds : swedenBounds();
   if(bounds && bounds.isValid()){
-    map.fitBounds(bounds,{padding:[12,12],maxZoom:7,animate:false});
+    map.fitBounds(bounds,{padding:[18,18],maxZoom:9,animate:false});
   }
 }
 
@@ -580,7 +592,16 @@ async function renderMap(){
     data=data.filter(r=>visibleNames.has(r.Kommun));
     addRanks(data);
     const byName=new Map(data.map(r=>[r.Kommun,r]));
-    const values=data.map(r=>Number(metricValue(r,metric))).filter(Number.isFinite);
+    const municipalitiesWithCrime=new Set(
+      data
+        .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
+        .map(r=>r.Kommun)
+    );
+    mapAutoBounds=boundsForMunicipalities(municipalitiesWithCrime) || swedenBounds();
+    const values=data
+      .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
+      .map(r=>Number(metricValue(r,metric)))
+      .filter(Number.isFinite);
     const minValue=values.length?Math.min(...values):NaN;
     const maxValue=values.length?Math.max(...values):NaN;
     if(geoLayer)geoLayer.remove();
@@ -630,15 +651,17 @@ async function renderMap(){
     const county=el('mapCounty').value;
     const skr=el('mapSkrGroup').value;
     const filterText=[county,skr].filter(Boolean).join(' · ');
-    el('mapStatus').textContent=data.length+' kommuner med värde'
+    const valueCount=municipalitiesWithCrime.size;
+    el('mapStatus').textContent=valueCount+' kommuner med brott'
       +(filterText?' · '+filterText:'')
-      +'. '+(info.isRank?'Placering 1 = högst värde inom visat urval.':'');
+      +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ')
+      +(info.isRank && valueCount>0?'Placering 1 = högst värde inom visat urval.':'');
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=8',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=9',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -651,11 +674,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=8',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=8',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=8',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=8',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=8',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=9',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=9',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=9',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=9',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=9',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
