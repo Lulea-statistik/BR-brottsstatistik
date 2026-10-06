@@ -69,7 +69,7 @@ function fillSelect(id,items,selected){
     s.appendChild(o);
   });
 }
-function buildCrimeTree(selectId){
+function buildCrimeTree(selectId,availableIds=null){
   const select=el(selectId);
   if(!select)return;
   select.classList.add('native-crime-select');
@@ -87,8 +87,9 @@ function buildCrimeTree(selectId){
   picker.append(button,menu);
   select.insertAdjacentElement('afterend',picker);
 
+  const allowed=availableIds ? new Set([...availableIds].map(String)) : null;
   const byParent=new Map();
-  CATEGORIES.forEach(cat=>{
+  CATEGORIES.filter(cat=>!allowed || allowed.has(String(cat.Brott_ID))).forEach(cat=>{
     const parent=cat['Förälder_ID'];
     const key=parent==null?'ROOT':String(Math.trunc(Number(parent)));
     if(!byParent.has(key))byParent.set(key,[]);
@@ -163,8 +164,70 @@ function buildCrimeTree(selectId){
 }
 
 function setupCrimeTrees(){
-  ['overviewCrime','trendCrime','mapCrime'].forEach(buildCrimeTree);
+  ['overviewCrime','trendCrime','mapCrime'].forEach(id=>buildCrimeTree(id));
   document.addEventListener('click',()=>document.querySelectorAll('.crime-tree-menu').forEach(m=>m.classList.add('hidden')));
+}
+
+function sqlStringList(values){
+  return values.map(v=>"'"+esc(v)+"'").join(',');
+}
+
+function currentPageMunicipalities(page){
+  if(page==='overview'){
+    const municipality=el('overviewMunicipality').value;
+    if(municipality && municipality!=='__ALL__')return [municipality];
+    return filteredMunicipalityNames('overviewCounty','overviewSkrGroup');
+  }
+  if(page==='map'){
+    return filteredMunicipalityNames('mapCounty','mapSkrGroup');
+  }
+  if(page==='trend'){
+    const municipality=el('trendMunicipality').value;
+    if(municipality && municipality!=='__ALL__')return [municipality];
+    return filteredMunicipalityNames('trendCounty','trendSkrGroup');
+  }
+  return [];
+}
+
+async function availableCrimeIds(page){
+  let files;
+  if(page==='overview'){
+    files="'"+parquetUrl(Number(el('overviewYear').value))+"'";
+  }else if(page==='map'){
+    const {start,end}=mapYearRange();
+    files=parquetSqlForRange(start,end);
+  }else{
+    files=allParquetSql();
+  }
+
+  const municipalities=currentPageMunicipalities(page);
+  const allMunicipalities=municipalities.length===MUNICIPAL_META.length;
+  const municipalityWhere=(!municipalities.length || allMunicipalities)
+    ? ''
+    : ' AND "Kommun" IN ('+sqlStringList(municipalities)+')';
+
+  const result=await query(`
+    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId
+    FROM read_parquet(${files})
+    WHERE "Antal">0${municipalityWhere}
+    GROUP BY "Brott_ID"
+    HAVING SUM(CAST("Antal" AS DOUBLE))>0
+  `);
+  return new Set(result.map(r=>String(r.crimeId)));
+}
+
+async function refreshCrimeTreeForPage(page){
+  const selectId=page==='overview'?'overviewCrime':page==='map'?'mapCrime':'trendCrime';
+  const select=el(selectId);
+  const ids=await availableCrimeIds(page);
+  const current=String(select.value);
+  if(!ids.has(current)){
+    const fallback=ids.has(String(META.default_crime_id))
+      ? String(META.default_crime_id)
+      : (CATEGORIES.find(cat=>ids.has(String(cat.Brott_ID)))?.Brott_ID ?? '');
+    if(fallback!=='')select.value=String(fallback);
+  }
+  buildCrimeTree(selectId,ids);
 }
 
 function setupControls(){
@@ -207,25 +270,25 @@ function setupControls(){
   refreshTrendMunicipalities();
   setupCrimeTrees();
 
-  el('overviewMunicipality').addEventListener('change',renderOverview);
+  el('overviewMunicipality').addEventListener('change',async()=>{await refreshCrimeTreeForPage('overview');await renderOverview();});
   el('overviewCrime').addEventListener('change',renderOverview);
-  el('overviewYear').addEventListener('change',renderOverview);
+  el('overviewYear').addEventListener('change',async()=>{await refreshCrimeTreeForPage('overview');await renderOverview();});
   el('overviewMetric').addEventListener('change',renderOverview);
-  el('overviewCounty').addEventListener('change',async()=>{refreshOverviewMunicipalities();await renderOverview();});
-  el('overviewSkrGroup').addEventListener('change',async()=>{refreshOverviewMunicipalities();await renderOverview();});
-  el('trendMunicipality').addEventListener('change',renderTrend);
+  el('overviewCounty').addEventListener('change',async()=>{refreshOverviewMunicipalities();await refreshCrimeTreeForPage('overview');await renderOverview();});
+  el('overviewSkrGroup').addEventListener('change',async()=>{refreshOverviewMunicipalities();await refreshCrimeTreeForPage('overview');await renderOverview();});
+  el('trendMunicipality').addEventListener('change',async()=>{await refreshCrimeTreeForPage('trend');await renderTrend();});
   el('trendCrime').addEventListener('change',renderTrend);
   el('trendMetric').addEventListener('change',renderTrend);
-  el('trendCounty').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
-  el('trendSkrGroup').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
+  el('trendCounty').addEventListener('change',async()=>{refreshTrendMunicipalities();await refreshCrimeTreeForPage('trend');await renderTrend();});
+  el('trendSkrGroup').addEventListener('change',async()=>{refreshTrendMunicipalities();await refreshCrimeTreeForPage('trend');await renderTrend();});
   el('mapYearStart').addEventListener('input',()=>handleMapYearRange('start',false));
   el('mapYearEnd').addEventListener('input',()=>handleMapYearRange('end',false));
   el('mapYearStart').addEventListener('change',()=>handleMapYearRange('start',true));
   el('mapYearEnd').addEventListener('change',()=>handleMapYearRange('end',true));
   el('mapCrime').addEventListener('change',renderMap);
   el('mapMetric').addEventListener('change',renderMap);
-  el('mapCounty').addEventListener('change',renderMap);
-  el('mapSkrGroup').addEventListener('change',renderMap);
+  el('mapCounty').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
+  el('mapSkrGroup').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
 }
 
 function setupTabs(){
@@ -688,7 +751,7 @@ function handleMapYearRange(which,shouldRender){
     }
   }
   updateMapYearUi();
-  if(shouldRender)renderMap();
+  if(shouldRender)(async()=>{await refreshCrimeTreeForPage('map');await renderMap();})();
 }
 
 function parquetSqlForRange(start,end){
@@ -847,8 +910,9 @@ async function renderMap(){
         const special=name==='Luleå'?'#dc2626':name==='Boden'?'#d4a800':'#667085';
         const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
         return {
-          color:special,
-          weight:(name==='Luleå'||name==='Boden')?3:0.7,
+          color:noCrime?'transparent':special,
+          weight:noCrime?0:((name==='Luleå'||name==='Boden')?3:0.7),
+          opacity:noCrime?0:1,
           fillColor:noCrime?'transparent':continuousColor(value,minValue,maxValue,metric),
           fillOpacity:noCrime?0:.82
         };
@@ -902,7 +966,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=15',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=16',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -915,14 +979,17 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=15',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=15',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=15',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=15',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=15',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=16',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=16',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=16',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=16',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=16',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
+    await refreshCrimeTreeForPage('overview');
+    await refreshCrimeTreeForPage('trend');
+    await refreshCrimeTreeForPage('map');
     await renderOverview();
     await renderTrend();
     await renderMap();
