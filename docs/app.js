@@ -1312,24 +1312,18 @@ async function renderProfile(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=21',{cache:'no-store'}).then(r=>r.json()).then(b=>{
-    el('methodMeta').innerHTML=
-      '<p><b>Källa:</b> '+META.source+'</p>'+
-      '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
-      '<p><b>Geometri:</b> '+b.geometry_source+'</p>'+
-      '<p><b>Kommunpolygoner:</b> '+b.geometry_municipalities+'</p>';
-  });
+  // Method & data text is maintained directly in index.html.
 }
 
 async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=21',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=21',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=21',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=21',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=21',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=22',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=22',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=22',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=22',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=22',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
@@ -1344,4 +1338,11 @@ async function main(){
     setLoading('Fel: '+err.message);
   }
 }
+let profileResizeTimer=null;
+window.addEventListener('resize',()=>{
+  if(!el('page-profile')?.classList.contains('active') || !profileRendered)return;
+  clearTimeout(profileResizeTimer);
+  profileResizeTimer=setTimeout(()=>renderProfile(),180);
+});
+
 main();
