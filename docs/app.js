@@ -38,7 +38,10 @@ async function query(sql){
 function setLoading(msg){
   const x=el('loading'); if(!x)return;
   if(!msg){x.classList.add('hidden');return;}
-  x.textContent=msg;x.classList.remove('hidden');
+  const t=el('loadingText');
+  if(t)t.textContent=msg;
+  else x.textContent=msg;
+  x.classList.remove('hidden');
 }
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 
@@ -892,14 +895,14 @@ async function renderMap(){
     el('mapStatus').textContent=valueCount+' kommuner med brott'
       +(filterText?' · '+filterText:'')
       +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ')
-      +(info.isRank && valueCount>0?'Placering 1 = högst värde inom visat urval.':'');
+      +(info.isRank && valueCount>0?'Placering 1 = högst antal brott inom visat urval.':'');
 
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=14',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=15',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -912,11 +915,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=14',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=14',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=14',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=14',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=14',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=15',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=15',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=15',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=15',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=15',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
