@@ -80,13 +80,19 @@ function setupControls(){
   ['overviewCrime','trendCrime','mapCrime'].forEach(id=>fillSelect(id,cats,META.default_crime_id));
   ['overviewMunicipality','trendMunicipality'].forEach(id=>fillSelect(id,mun,META.default_municipality));
   ['overviewYear','mapYear'].forEach(id=>fillSelect(id,years,META.latest_year));
-  fillSelect('mapCounty',[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))],'');
-  fillSelect('mapSkrGroup',[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))],'');
+  const countyItems=[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))];
+  const skrItems=[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))];
+  fillSelect('mapCounty',countyItems,'');
+  fillSelect('mapSkrGroup',skrItems,'');
+  fillSelect('overviewCounty',countyItems,'');
+  fillSelect('overviewSkrGroup',skrItems,'');
 
   el('overviewMunicipality').addEventListener('change',renderOverview);
   el('overviewCrime').addEventListener('change',renderOverview);
   el('overviewYear').addEventListener('change',renderOverview);
   el('overviewMetric').addEventListener('change',renderOverview);
+  el('overviewCounty').addEventListener('change',async()=>{refreshOverviewMunicipalities();await renderOverview();});
+  el('overviewSkrGroup').addEventListener('change',async()=>{refreshOverviewMunicipalities();await renderOverview();});
   el('trendMunicipality').addEventListener('change',renderTrend);
   el('trendCrime').addEventListener('change',renderTrend);
   el('trendMetric').addEventListener('change',renderTrend);
@@ -109,6 +115,13 @@ function setupTabs(){
   }));
 }
 
+const METRIC_STYLES = {
+  Antal: {line:'#2563eb', fill:'rgba(37,99,235,.15)'},
+  Per100000: {line:'#0f766e', fill:'rgba(15,118,110,.15)'},
+  RankAntal: {line:'#d97706', fill:'rgba(217,119,6,.15)'},
+  RankPer100000: {line:'#7c3aed', fill:'rgba(124,58,237,.15)'}
+};
+
 function metricInfo(metric){
   const isCount = metric === 'Antal' || metric === 'RankAntal';
   const isRank = metric === 'RankAntal' || metric === 'RankPer100000';
@@ -117,6 +130,7 @@ function metricInfo(metric){
     isCount,
     isRank,
     field: isCount ? 'count' : 'rate',
+    style: METRIC_STYLES[metric] || METRIC_STYLES.Per100000,
     label: metric === 'Antal' ? 'Antal brott'
       : metric === 'Per100000' ? 'Brott per 100 000 inv.'
       : metric === 'RankAntal' ? 'Placering efter antal'
@@ -203,7 +217,17 @@ function drawLine(id,data,metric,label){
   destroyChart(id);
   charts[id]=new Chart(el(id),{
     type:'line',
-    data:{labels:data.map(r=>r.year),datasets:[{label,data:data.map(r=>metricValue(r,metric)),borderWidth:2,pointRadius:2,tension:.18}]},
+    data:{labels:data.map(r=>r.year),datasets:[{
+      label,
+      data:data.map(r=>metricValue(r,metric)),
+      borderColor:info.style.line,
+      backgroundColor:info.style.fill,
+      borderWidth:2,
+      pointRadius:2,
+      pointBackgroundColor:info.style.line,
+      tension:.18,
+      fill:'origin'
+    }]},
     options:{
       responsive:true,
       maintainAspectRatio:false,
@@ -237,6 +261,93 @@ async function renderTrend(){
   }finally{setLoading(null);}
 }
 
+function filteredMunicipalityNames(countyId,skrId){
+  const county=el(countyId)?.value || '';
+  const skr=el(skrId)?.value || '';
+  return MUNICIPAL_META
+    .filter(x=>(!county || x.Lan===county) && (!skr || x.SKR_Gruppkod===skr))
+    .map(x=>x.Kommun);
+}
+
+function refreshOverviewMunicipalities(){
+  const current=el('overviewMunicipality').value;
+  const names=filteredMunicipalityNames('overviewCounty','overviewSkrGroup')
+    .sort((a,b)=>a.localeCompare(b,'sv'));
+  fillSelect(
+    'overviewMunicipality',
+    names.map(x=>({value:x,text:x})),
+    names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:names[0])
+  );
+}
+
+function drawFunnel(id,data,metric,selectedMunicipality){
+  const info=metricInfo(metric);
+  destroyChart(id);
+  const ranked=data
+    .filter(r=>Number.isFinite(Number(metricValue(r,metric))))
+    .slice()
+    .sort((a,b)=>info.isRank
+      ? Number(metricValue(a,metric))-Number(metricValue(b,metric))
+      : Number(metricValue(b,metric))-Number(metricValue(a,metric)));
+
+  let shown=ranked.slice(0,15);
+  const selected=ranked.find(r=>r.Kommun===selectedMunicipality);
+  if(selected && !shown.some(r=>r.Kommun===selectedMunicipality)) shown=[...shown,selected];
+
+  const total=ranked.length;
+  const widths=shown.map(r=>{
+    if(info.isRank){
+      const rank=Number(metricValue(r,metric));
+      return Math.max(1,total-rank+1);
+    }
+    return Math.max(0,Number(metricValue(r,metric)));
+  });
+  const maxWidth=Math.max(...widths,1);
+  const bars=widths.map(v=>[-v/(2*maxWidth),v/(2*maxWidth)]);
+  const values=shown.map(r=>metricValue(r,metric));
+
+  charts[id]=new Chart(el(id),{
+    type:'bar',
+    data:{
+      labels:shown.map(r=>r.Kommun),
+      datasets:[{
+        data:bars,
+        backgroundColor:shown.map(r=>r.Kommun===selectedMunicipality?info.style.line:info.style.fill),
+        borderColor:info.style.line,
+        borderWidth:1.2,
+        borderRadius:3,
+        barPercentage:.82,
+        categoryPercentage:.88
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:ctx=>{
+              const value=values[ctx.dataIndex];
+              return info.isRank
+                ? 'Placering '+fmt0.format(value)+' av '+total
+                : info.isCount
+                  ? fmt0.format(value)+' brott'
+                  : fmt1.format(value)+' per 100 000';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{display:false,stacked:false,min:-.52,max:.52},
+        y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11}}}
+      }
+    }
+  });
+}
+
 async function renderOverview(){
   setLoading('Laddar översikt…');
   try{
@@ -245,14 +356,16 @@ async function renderOverview(){
     const year=Number(el('overviewYear').value);
     const metric=el('overviewMetric').value;
     const info=metricInfo(metric);
+    const visibleNames=new Set(filteredMunicipalityNames('overviewCounty','overviewSkrGroup'));
     const file="'"+parquetUrl(year)+"'";
-    const data=await query(`
+    let data=await query(`
       SELECT "Kommun",
              CAST("Antal" AS DOUBLE) AS count,
              CAST("Per100000" AS DOUBLE) AS rate
       FROM read_parquet(${file})
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
+    data=data.filter(r=>visibleNames.has(r.Kommun));
     addRanks(data);
     const chosen=data.find(r=>r.Kommun===municipality);
     const rankValue=chosen?(info.isCount?chosen.rankCount:chosen.rankRate):null;
@@ -263,8 +376,11 @@ async function renderOverview(){
     el('cardRank').textContent=rankValue?rankValue+' av '+rankedCount:'–';
     el('cardCoverage').textContent=String(data.length);
 
-    const trend=await trendRows(municipality,crimeId,metric);
-    drawLine('overviewChart',trend,metric,info.label);
+    const county=el('overviewCounty').value;
+    const skr=el('overviewSkrGroup').value;
+    const scope=[county,skr].filter(Boolean).join(' · ') || 'Sverige';
+    el('overviewChartTitle').textContent='Kommunjämförelse – '+scope;
+    drawFunnel('overviewChart',data,metric,municipality);
   }finally{setLoading(null);}
 }
 
@@ -320,13 +436,7 @@ function municipalityMeta(name){
 }
 
 function mapFilterNames(){
-  const county=el('mapCounty')?.value || '';
-  const skr=el('mapSkrGroup')?.value || '';
-  return new Set(
-    MUNICIPAL_META
-      .filter(x=>(!county || x.Lan===county) && (!skr || x.SKR_Gruppkod===skr))
-      .map(x=>x.Kommun)
-  );
+  return new Set(filteredMunicipalityNames('mapCounty','mapSkrGroup'));
 }
 
 function fitMapToVisible(){
@@ -405,7 +515,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=5',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=6',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -418,11 +528,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=5',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=5',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=5',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=5',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=5',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=6',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=6',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=6',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=6',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=6',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
