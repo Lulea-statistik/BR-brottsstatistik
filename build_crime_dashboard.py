@@ -31,8 +31,17 @@ def clean_municipality(value: object) -> str:
 
 
 def json_records(df: pd.DataFrame) -> list[dict]:
-    clean = df.where(pd.notna(df), None)
-    return clean.to_dict(orient="records")
+    records = df.to_dict(orient="records")
+    def clean_value(value):
+        if value is None:
+            return None
+        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+            return None
+        return value
+    return [
+        {key: clean_value(value) for key, value in row.items()}
+        for row in records
+    ]
 
 
 def build_metadata() -> dict:
@@ -54,7 +63,7 @@ def build_metadata() -> dict:
         "default_municipality": "Luleå",
     }
     (OUT / "metadata.json").write_text(
-        json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(out, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
     )
     return out
 
@@ -68,7 +77,7 @@ def build_categories() -> None:
     df["Brottsnivå"] = pd.to_numeric(df["Brottsnivå"], errors="coerce").fillna(1).astype(int)
     df = df.sort_values(["Brottsnivå", "Brott"], kind="stable")
     (OUT / "categories.json").write_text(
-        json.dumps(json_records(df), ensure_ascii=False, separators=(",", ":")),
+        json.dumps(json_records(df), ensure_ascii=False, separators=(",", ":"), allow_nan=False),
         encoding="utf-8",
     )
 
@@ -79,7 +88,7 @@ def build_municipalities() -> set[str]:
     if len(names) != 290:
         raise RuntimeError(f"Expected 290 unique municipalities, found {len(names)}")
     (OUT / "municipalities.json").write_text(
-        json.dumps(names, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(names, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
     )
     return set(names)
 
@@ -235,7 +244,7 @@ def main() -> None:
 
     geo = fetch_geometry(municipalities)
     (OUT / "municipalities.geojson").write_text(
-        json.dumps(geo, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(geo, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
     )
     build_info = {
         "geometry_source": geo.get("properties", {}).get("source"),
@@ -243,7 +252,7 @@ def main() -> None:
         "parquet_years": len(meta["available_years"]),
     }
     (OUT / "build.json").write_text(
-        json.dumps(build_info, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(build_info, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
     )
     print(json.dumps(build_info, ensure_ascii=False))
 
