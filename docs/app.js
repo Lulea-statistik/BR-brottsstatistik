@@ -193,6 +193,12 @@ function setupControls(){
   fillSelect('overviewCounty',countyItems,'');
   fillSelect('overviewSkrGroup',skrItems,'');
   refreshOverviewMunicipalities();
+  el('overviewMunicipality').value='__ALL__';
+  el('overviewCrime').value=String(META.default_crime_id);
+  el('overviewYear').value=String(META.latest_year);
+  el('overviewCounty').value='';
+  el('overviewSkrGroup').value='';
+  el('overviewMetric').value='Per100000';
   fillSelect('trendCounty',countyItems,'');
   fillSelect('trendSkrGroup',skrItems,'');
   refreshTrendMunicipalities();
@@ -856,19 +862,15 @@ async function renderMap(){
           if(info.isRank){
             label='Placering '+fmt0.format(value)+' av '+rankedTotal;
           }else if(info.isAverage){
-            label=fmt1.format(value)+(info.isCount?' brott i medel':' per 100 000 i medel');
+            label=fmt1.format(value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år');
           }else if(metric==='Antal'){
             label=fmt0.format(value)+(multi?' brott totalt':' brott');
           }else{
             label=fmt1.format(value)+(multi?' per 100 000, summa':' per 100 000');
           }
         }
-        const meta=municipalityMeta(name);
-        const extra=[
-          meta?.Lan,
-          meta?.SKR_Gruppkod && meta?.SKR_Kommungrupp ? meta.SKR_Gruppkod+' – '+meta.SKR_Kommungrupp : null
-        ].filter(Boolean).join('<br>');
-        layer.bindTooltip('<b>'+name+'</b><br>'+label+(extra?'<br>'+extra:''));
+        const periodText=multi ? start+'-'+end : String(start);
+        layer.bindTooltip('<b>'+name+'</b><br>'+label+'<br>Period: '+periodText);
       }
     }).addTo(map);
 
@@ -897,7 +899,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=13',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=14',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -910,11 +912,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=13',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=13',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=13',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=13',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=13',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=14',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=14',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=14',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=14',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=14',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
