@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <header class="topbar">
@@ -58,11 +58,26 @@
 
   <section id="page-map" class="page">
     <div class="controls">
-      <label>År<select id="mapYear"></select></label>
+      <label class="year-range-label">År
+        <div class="year-range-control">
+          <div class="year-range-values"><span id="mapYearStartLabel">–</span><span id="mapYearEndLabel">–</span></div>
+          <div class="dual-range">
+            <input id="mapYearStart" type="range" step="1">
+            <input id="mapYearEnd" type="range" step="1">
+          </div>
+        </div>
+      </label>
       <label>Brottskategori<select id="mapCrime"></select></label>
       <label>Län<select id="mapCounty"></select></label>
       <label>SKR-kommungrupp<select id="mapSkrGroup"></select></label>
-      <label>Mått<select id="mapMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option><option value="RankAntal">Placering antal</option><option value="RankPer100000">Placering antal per 100 000</option></select></label>
+      <label>Mått<select id="mapMetric">
+        <option value="Per100000">Antal brott per 100 000</option>
+        <option value="Antal">Antal brott</option>
+        <option value="AvgAntal">Medelantal brott</option>
+        <option value="AvgPer100000">Medelantal brott per 100 000</option>
+        <option value="RankAntal">Placering antal</option>
+        <option value="RankPer100000">Placering antal per 100 000</option>
+      </select></label>
     </div>
     <div class="map-layout">
       <div id="crimeMap" class="map"></div>
@@ -88,6 +103,6 @@
 <div id="loading" class="loading">Laddar rapportdata…</div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=9"></script>
+<script type="module" src="app.js?v=10"></script>
 </body>
 </html>
