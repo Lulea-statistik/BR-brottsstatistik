@@ -96,9 +96,9 @@ function setupTabs(){
 
 async function trendRows(municipality,crimeId){
   return query(`
-    SELECT "År" AS year,
-           MAX("Antal") AS count,
-           MAX("Per100000") AS rate
+    SELECT CAST("År" AS INTEGER) AS year,
+           CAST(MAX("Antal") AS DOUBLE) AS count,
+           CAST(MAX("Per100000") AS DOUBLE) AS rate
     FROM read_parquet(${allParquetSql()})
     WHERE "Kommun"='${esc(municipality)}'
       AND "Brott_ID"=${Number(crimeId)}
@@ -138,7 +138,9 @@ async function renderOverview(){
     const year=Number(el('overviewYear').value);
     const file="'"+parquetUrl(year)+"'";
     const data=await query(`
-      SELECT "Kommun", "Antal" AS count, "Per100000" AS rate
+      SELECT "Kommun",
+             CAST("Antal" AS DOUBLE) AS count,
+             CAST("Per100000" AS DOUBLE) AS rate
       FROM read_parquet(${file})
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
@@ -189,7 +191,9 @@ async function renderMap(){
     const crimeId=el('mapCrime').value;
     const metric=el('mapMetric').value;
     const data=await query(`
-      SELECT "Kommun", "Antal" AS count, "Per100000" AS rate
+      SELECT "Kommun",
+             CAST("Antal" AS DOUBLE) AS count,
+             CAST("Per100000" AS DOUBLE) AS rate
       FROM read_parquet('${parquetUrl(year)}')
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
@@ -221,7 +225,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=2',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=3',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -234,10 +238,10 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=2',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=2',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=2',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=2',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=3',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=3',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=3',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=3',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
