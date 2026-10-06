@@ -1,6 +1,6 @@
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm';
 
-let META, CATEGORIES, MUNICIPALITIES, GEO;
+let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
 let db, conn, map, geoLayer;
 const charts = {};
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
@@ -70,9 +70,18 @@ function setupControls(){
   const cats=CATEGORIES.map(categoryOption);
   const mun=MUNICIPALITIES.map(x=>({value:x,text:x}));
   const years=META.available_years.slice().sort((a,b)=>b-a).map(y=>({value:String(y),text:String(y)}));
+  const counties=[...new Set(MUNICIPAL_META.map(x=>x.Lan).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'sv'));
+  const skrGroups=[...new Map(
+    MUNICIPAL_META.filter(x=>x.SKR_Gruppkod).map(x=>[
+      x.SKR_Gruppkod,
+      x.SKR_Gruppkod+' – '+x.SKR_Kommungrupp
+    ])
+  ).entries()].sort((a,b)=>a[0].localeCompare(b[0],'sv'));
   ['overviewCrime','trendCrime','mapCrime'].forEach(id=>fillSelect(id,cats,META.default_crime_id));
   ['overviewMunicipality','trendMunicipality'].forEach(id=>fillSelect(id,mun,META.default_municipality));
   ['overviewYear','mapYear'].forEach(id=>fillSelect(id,years,META.latest_year));
+  fillSelect('mapCounty',[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))],'');
+  fillSelect('mapSkrGroup',[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))],'');
 
   el('overviewMunicipality').addEventListener('change',renderOverview);
   el('overviewCrime').addEventListener('change',renderOverview);
@@ -84,6 +93,8 @@ function setupControls(){
   el('mapYear').addEventListener('change',renderMap);
   el('mapCrime').addEventListener('change',renderMap);
   el('mapMetric').addEventListener('change',renderMap);
+  el('mapCounty').addEventListener('change',renderMap);
+  el('mapSkrGroup').addEventListener('change',renderMap);
 }
 
 function setupTabs(){
@@ -91,7 +102,10 @@ function setupTabs(){
     document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
     el('page-'+btn.dataset.page).classList.add('active');
-    if(btn.dataset.page==='map'&&map)setTimeout(()=>map.invalidateSize(),30);
+    if(btn.dataset.page==='map'&&map)setTimeout(()=>{
+      map.invalidateSize();
+      fitMapToVisible();
+    },60);
   }));
 }
 
@@ -301,6 +315,28 @@ function initMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 }
 
+function municipalityMeta(name){
+  return MUNICIPAL_META.find(x=>x.Kommun===name);
+}
+
+function mapFilterNames(){
+  const county=el('mapCounty')?.value || '';
+  const skr=el('mapSkrGroup')?.value || '';
+  return new Set(
+    MUNICIPAL_META
+      .filter(x=>(!county || x.Lan===county) && (!skr || x.SKR_Gruppkod===skr))
+      .map(x=>x.Kommun)
+  );
+}
+
+function fitMapToVisible(){
+  if(!map || !geoLayer)return;
+  const bounds=geoLayer.getBounds();
+  if(bounds && bounds.isValid()){
+    map.fitBounds(bounds,{padding:[12,12],maxZoom:7});
+  }
+}
+
 async function renderMap(){
   setLoading('Laddar årskarta…');
   try{
@@ -308,19 +344,22 @@ async function renderMap(){
     const crimeId=el('mapCrime').value;
     const metric=el('mapMetric').value;
     const info=metricInfo(metric);
-    const data=await query(`
+    let data=await query(`
       SELECT "Kommun",
              CAST("Antal" AS DOUBLE) AS count,
              CAST("Per100000" AS DOUBLE) AS rate
       FROM read_parquet('${parquetUrl(year)}')
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
+    const visibleNames=mapFilterNames();
+    data=data.filter(r=>visibleNames.has(r.Kommun));
     addRanks(data);
     const byName=new Map(data.map(r=>[r.Kommun,r]));
     const values=data.map(r=>Number(metricValue(r,metric))).filter(Number.isFinite);
     const cuts=quantiles(values,7);
     if(geoLayer)geoLayer.remove();
     geoLayer=L.geoJSON(GEO,{
+      filter:f=>visibleNames.has(f.properties.Kommun),
       style:f=>{
         const name=f.properties.Kommun;
         const row=byName.get(name);
@@ -339,19 +378,34 @@ async function renderMap(){
             ? 'Placering '+fmt0.format(value)+' av '+rankedTotal
             : (metric==='Antal'?fmt0.format(value):fmt1.format(value)+' per 100 000');
         }
-        layer.bindTooltip('<b>'+name+'</b><br>'+label);
+        const meta=municipalityMeta(name);
+        const extra=[
+          meta?.Lan,
+          meta?.SKR_Gruppkod && meta?.SKR_Kommungrupp ? meta.SKR_Gruppkod+' – '+meta.SKR_Kommungrupp : null
+        ].filter(Boolean).join('<br>');
+        layer.bindTooltip('<b>'+name+'</b><br>'+label+(extra?'<br>'+extra:''));
       }
     }).addTo(map);
-    if(!map._crimeFitDone){map.fitBounds(geoLayer.getBounds(),{padding:[6,6]});map._crimeFitDone=true;}
+    if(el('page-map').classList.contains('active')){
+      setTimeout(()=>{
+        map.invalidateSize();
+        fitMapToVisible();
+      },30);
+    }
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
     el('mapTitle').textContent=year+' – '+(category?.Brott||'Brott');
-    el('mapStatus').textContent=data.length+' kommuner med värde. '+(info.isRank?'Placering 1 = högst värde.':'');
+    const county=el('mapCounty').value;
+    const skr=el('mapSkrGroup').value;
+    const filterText=[county,skr].filter(Boolean).join(' · ');
+    el('mapStatus').textContent=data.length+' kommuner med värde'
+      +(filterText?' · '+filterText:'')
+      +'. '+(info.isRank?'Placering 1 = högst värde inom visat urval.':'');
     el('mapLegend').innerHTML=legendHtml(cuts,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=4',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=5',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -363,11 +417,12 @@ function renderMethod(){
 async function main(){
   try{
     setLoading('Förbereder rapport…');
-    [META,CATEGORIES,MUNICIPALITIES,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=4',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=4',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=4',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=4',{cache:'no-store'}).then(r=>r.json())
+    [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
+      fetch('data/metadata.json?v=5',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=5',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=5',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=5',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=5',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
