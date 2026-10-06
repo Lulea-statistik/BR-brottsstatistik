@@ -323,6 +323,29 @@ def fetch_skr_groups(valid_names: set[str]) -> list[dict]:
         pdf_path.unlink(missing_ok=True)
 
     by_name = {row["Kommun"]: row for row in rows if row["Kommun"] in valid_names}
+
+    # These C9 rows are split across PDF lines by the source layout and can be
+    # missed by plain text extraction. Values are copied from SKR:s own 2023 appendix.
+    c9_overrides = {
+        "Mora": "2062",
+        "Åre": "2321",
+        "Härjedalen": "2361",
+        "Storuman": "2421",
+        "Sorsele": "2422",
+        "Arjeplog": "2506",
+        "Jokkmokk": "2510",
+        "Gällivare": "2523",
+    }
+    for name, kommun_code in c9_overrides.items():
+        if name in valid_names and name not in by_name:
+            by_name[name] = {
+                "Gruppkod": "C9",
+                "Kommunkod": kommun_code,
+                "Kommun": name,
+                "Huvudgrupp": groups["C9"][0],
+                "Kommungrupp": groups["C9"][1],
+            }
+
     if len(by_name) != 290:
         missing = sorted(valid_names - set(by_name))
         found_sample = sorted(set(by_name))[:20]
