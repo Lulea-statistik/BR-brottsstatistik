@@ -415,19 +415,22 @@ function metricValue(row,metric){
   return null;
 }
 
-function drawLine(id,data,metric,label){
+function drawLine(id,data,metric,label,municipality=null){
   const info=metricInfo(metric);
+  const highlight=municipality?municipalityHighlight(municipality):null;
+  const lineColor=highlight?.line || info.style.line;
+  const fillColor=highlight?.soft || info.style.fill;
   destroyChart(id);
   charts[id]=new Chart(el(id),{
     type:'line',
     data:{labels:data.map(r=>r.year),datasets:[{
       label,
       data:data.map(r=>metricValue(r,metric)),
-      borderColor:info.style.line,
-      backgroundColor:info.style.fill,
+      borderColor:lineColor,
+      backgroundColor:fillColor,
       borderWidth:2,
       pointRadius:2,
-      pointBackgroundColor:info.style.line,
+      pointBackgroundColor:lineColor,
       tension:.18,
       fill:info.isRank?'end':'origin'
     }]},
@@ -470,7 +473,7 @@ async function renderTrend(){
     }else{
       const data=await trendRows(municipality,crimeId,metric,cohort);
       el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott')+(scope?' · '+scope:'');
-      drawLine('trendChart',data,metric,info.label);
+      drawLine('trendChart',data,metric,info.label,municipality);
     }
   }finally{setLoading(null);}
 }
@@ -534,18 +537,17 @@ function drawFunnel(id,data,metric,selectedMunicipality){
   const capSize=maxValue>0 ? maxValue*0.035 : 1;
 
   const mainColors=shown.map(r=>{
-    if(r.Kommun==='Luleå')return '#dc2626';
-    if(r.Kommun==='Boden')return '#d4a800';
+    const h=municipalityHighlight(r.Kommun);
+    if(h)return h.soft;
     if(selectedMunicipality!=='__ALL__' && r.Kommun===selectedMunicipality)return info.style.line;
     return info.style.fill;
   });
   const borderColors=shown.map(r=>{
-    if(r.Kommun==='Luleå')return '#b91c1c';
-    if(r.Kommun==='Boden')return '#a16207';
-    return info.style.line;
+    const h=municipalityHighlight(r.Kommun);
+    return h?.line || info.style.line;
   });
-  const capData=shown.map(r=>(r.Kommun==='Luleå'||r.Kommun==='Boden')?capSize:0);
-  const capColors=shown.map(r=>r.Kommun==='Luleå'?'#dc2626':r.Kommun==='Boden'?'#d4a800':'rgba(0,0,0,0)');
+  const capData=shown.map(r=>municipalityHighlight(r.Kommun)?capSize:0);
+  const capColors=shown.map(r=>municipalityHighlight(r.Kommun)?.line || 'rgba(0,0,0,0)');
 
   const barPct=n<=6 ? .72 : n<=20 ? .78 : n<=80 ? .86 : .96;
   const catPct=n<=6 ? .82 : n<=20 ? .88 : n<=80 ? .92 : 1;
@@ -789,17 +791,20 @@ function drawAllTrends(id,data,metric,label){
   const years=[...new Set(data.map(r=>Number(r.year)))].sort((x,y)=>x-y);
   const names=[...new Set(data.map(r=>r.Kommun))].sort((x,y)=>x.localeCompare(y,'sv'));
   const byKey=new Map(data.map(r=>[r.Kommun+'|'+r.year,r]));
-  const datasets=names.map(name=>({
-    label:name,
-    data:years.map(year=>metricValue(byKey.get(name+'|'+year),metric)),
-    borderColor:info.style.line+'55',
-    backgroundColor:'transparent',
-    borderWidth:1,
-    pointRadius:0,
-    tension:.12,
-    fill:false,
-    spanGaps:true
-  }));
+  const datasets=names.map(name=>{
+    const h=municipalityHighlight(name);
+    return {
+      label:name,
+      data:years.map(year=>metricValue(byKey.get(name+'|'+year),metric)),
+      borderColor:h?.line || (info.style.line+'55'),
+      backgroundColor:'transparent',
+      borderWidth:h ? (h.kind==='norrbotten'?1.8:2.4) : 1,
+      pointRadius:0,
+      tension:.12,
+      fill:false,
+      spanGaps:true
+    };
+  });
   charts[id]=new Chart(el(id),{
     type:'line',
     data:{labels:years,datasets},
@@ -830,6 +835,16 @@ function initMap(){
 
 function municipalityMeta(name){
   return MUNICIPAL_META.find(x=>x.Kommun===name);
+}
+
+function municipalityHighlight(name){
+  if(name==='Luleå')return {line:'#dc2626',fill:'#dc2626',soft:'rgba(220,38,38,.22)',kind:'lulea'};
+  if(name==='Boden')return {line:'#d4a800',fill:'#d4a800',soft:'rgba(212,168,0,.22)',kind:'boden'};
+  const meta=municipalityMeta(name);
+  if(meta?.Lan==='Norrbottens län'){
+    return {line:'#6b7280',fill:'#6b7280',soft:'rgba(107,114,128,.24)',kind:'norrbotten'};
+  }
+  return null;
 }
 
 function mapFilterNames(){
@@ -905,11 +920,13 @@ async function renderMap(){
         const name=f.properties.Kommun;
         const row=byName.get(name);
         const value=row?Number(metricValue(row,metric)):NaN;
-        const special=name==='Luleå'?'#dc2626':name==='Boden'?'#d4a800':'#667085';
+        const h=municipalityHighlight(name);
         const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
+        const outline=h?.line || '#aab2bd';
+        const outlineWeight=h ? (h.kind==='norrbotten'?1.7:3) : 0.7;
         return {
-          color:noCrime?'transparent':special,
-          weight:noCrime?0:((name==='Luleå'||name==='Boden')?3:0.7),
+          color:noCrime?'transparent':outline,
+          weight:noCrime?0:outlineWeight,
           opacity:noCrime?0:1,
           fillColor:noCrime?'transparent':continuousColor(value,minValue,maxValue,metric),
           fillOpacity:noCrime?0:.82
@@ -964,7 +981,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=17',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=18',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -977,11 +994,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=17',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=17',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=17',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=17',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=17',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=18',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=18',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=18',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=18',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=18',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
