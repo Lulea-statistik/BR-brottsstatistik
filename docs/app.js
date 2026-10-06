@@ -1,7 +1,8 @@
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm';
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
-let db, conn, map, geoLayer, mapAutoBounds;
+let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false;
 const charts = {};
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:1});
@@ -246,16 +247,19 @@ function setupControls(){
   fillSelect('overviewYear',years,META.latest_year);
   const minYear=Math.min(...META.available_years);
   const maxYear=Math.max(...META.available_years);
-  ['mapYearStart','mapYearEnd'].forEach(id=>{
+  ['mapYearStart','mapYearEnd','profileYearStart','profileYearEnd'].forEach(id=>{
     el(id).min=String(minYear);
     el(id).max=String(maxYear);
     el(id).value=String(maxYear);
   });
   updateMapYearUi();
+  updateProfileYearUi();
   const countyItems=[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))];
   const skrItems=[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))];
   fillSelect('mapCounty',countyItems,'');
   fillSelect('mapSkrGroup',skrItems,'');
+  fillSelect('profileCounty',countyItems,'');
+  fillSelect('profileSkrGroup',skrItems,'');
   fillSelect('overviewCounty',countyItems,'');
   fillSelect('overviewSkrGroup',skrItems,'');
   refreshOverviewMunicipalities();
@@ -268,6 +272,7 @@ function setupControls(){
   fillSelect('trendCounty',countyItems,'');
   fillSelect('trendSkrGroup',skrItems,'');
   refreshTrendMunicipalities();
+  refreshProfileMunicipalities();
   setupCrimeTrees();
 
   el('overviewMunicipality').addEventListener('change',async()=>{await refreshCrimeTreeForPage('overview');await renderOverview();});
@@ -289,6 +294,15 @@ function setupControls(){
   el('mapMetric').addEventListener('change',renderMap);
   el('mapCounty').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
   el('mapSkrGroup').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
+
+  el('profileMunicipality').addEventListener('change',renderProfile);
+  el('profileMetric').addEventListener('change',renderProfile);
+  el('profileCounty').addEventListener('change',async()=>{refreshProfileMunicipalities();await renderProfile();});
+  el('profileSkrGroup').addEventListener('change',async()=>{refreshProfileMunicipalities();await renderProfile();});
+  el('profileYearStart').addEventListener('input',()=>handleProfileYearRange('start',false));
+  el('profileYearEnd').addEventListener('input',()=>handleProfileYearRange('end',false));
+  el('profileYearStart').addEventListener('change',()=>handleProfileYearRange('start',true));
+  el('profileYearEnd').addEventListener('change',()=>handleProfileYearRange('end',true));
 }
 
 function setupTabs(){
@@ -300,6 +314,9 @@ function setupTabs(){
       map.invalidateSize();
       await renderMap();
     },60);
+    if(btn.dataset.page==='profile')setTimeout(async()=>{
+      await renderProfile();
+    },20);
   }));
 }
 
@@ -519,6 +536,15 @@ function refreshTrendMunicipalities(){
   fillSelect('trendMunicipality',items,selected);
 }
 
+function refreshProfileMunicipalities(){
+  const current=el('profileMunicipality')?.value || '__ALL__';
+  const names=filteredMunicipalityNames('profileCounty','profileSkrGroup')
+    .sort((a,b)=>a.localeCompare(b,'sv'));
+  const items=[{value:'__ALL__',text:'Alla'},...names.map(x=>({value:x,text:x}))];
+  const selected=(current && items.some(i=>i.value===current)) ? current : '__ALL__';
+  fillSelect('profileMunicipality',items,selected);
+}
+
 function drawFunnel(id,data,metric,selectedMunicipality){
   const info=metricInfo(metric);
   destroyChart(id);
@@ -711,6 +737,58 @@ function continuousLegendHtml(values,metric){
   const suffix=(metric==='Per100000'||metric==='AvgPer100000')?' /100 000':'';
   return '<div class="gradient-legend" style="background:linear-gradient(90deg,'+colors.join(',')+')"></div>'+
     '<div class="gradient-labels"><span>'+fmt(min)+suffix+'</span><span>'+fmt(mid)+suffix+'</span><span>'+fmt(max)+suffix+'</span></div>';
+}
+
+function profileYearRange(){
+  let start=Number(el('profileYearStart').value);
+  let end=Number(el('profileYearEnd').value);
+  if(start>end)[start,end]=[end,start];
+  return {start,end,multi:start!==end};
+}
+
+function updateProfileYearUi(){
+  const {start,end,multi}=profileYearRange();
+  el('profileYearStartLabel').textContent=String(start);
+  el('profileYearEndLabel').textContent=String(end);
+  el('profileYearPeriod').textContent=multi ? start+'–'+end : String(start);
+
+  const min=Number(el('profileYearStart').min);
+  const max=Number(el('profileYearStart').max);
+  const span=Math.max(1,max-min);
+  const left=((start-min)/span)*100;
+  const right=((end-min)/span)*100;
+  const control=el('profileYearControl');
+  control.style.setProperty('--range-left',left+'%');
+  control.style.setProperty('--range-right',right+'%');
+
+  const metric=el('profileMetric');
+  const countOpt=metric.querySelector('option[value="Antal"]');
+  const rateOpt=metric.querySelector('option[value="Per100000"]');
+  const avgCountOpt=metric.querySelector('option[value="AvgAntal"]');
+  const avgRateOpt=metric.querySelector('option[value="AvgPer100000"]');
+  countOpt.textContent=multi?'Summa brott':'Antal brott';
+  rateOpt.textContent=multi?'Summa antal brott per 100 000':'Antal brott per 100 000';
+  [avgCountOpt,avgRateOpt].forEach(opt=>{
+    opt.hidden=!multi;
+    opt.disabled=!multi;
+  });
+  if(!multi && (metric.value==='AvgAntal'||metric.value==='AvgPer100000')){
+    metric.value=metric.value==='AvgAntal'?'Antal':'Per100000';
+  }
+}
+
+function handleProfileYearRange(which,shouldRender){
+  let start=Number(el('profileYearStart').value);
+  let end=Number(el('profileYearEnd').value);
+  if(start>end){
+    if(which==='start'){
+      end=start;el('profileYearEnd').value=String(end);
+    }else{
+      start=end;el('profileYearStart').value=String(start);
+    }
+  }
+  updateProfileYearUi();
+  if(shouldRender)renderProfile();
 }
 
 function mapYearRange(){
@@ -995,8 +1073,246 @@ async function renderMap(){
   }finally{setLoading(null);}
 }
 
+function profileMunicipalityNames(){
+  const selected=el('profileMunicipality').value;
+  if(selected && selected!=='__ALL__')return [selected];
+  return filteredMunicipalityNames('profileCounty','profileSkrGroup');
+}
+
+function categoryParentId(cat){
+  const p=cat?.['Förälder_ID'];
+  return p==null || p==='' || Number.isNaN(Number(p)) ? null : String(Math.trunc(Number(p)));
+}
+
+function buildProfileTree(rows,metric){
+  const valueById=new Map(rows.map(r=>[String(r.crimeId),Number(r.value)]));
+  const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  const totalId=String(META.default_crime_id);
+
+  const included=new Set(
+    [...valueById.entries()]
+      .filter(([id,v])=>id!==totalId && Number.isFinite(v) && v>0)
+      .map(([id])=>id)
+  );
+
+  // Keep ancestors of positive categories for grouping, but never use parent
+  // aggregate values in the sum. Only deepest positive nodes carry area.
+  const needed=new Set(included);
+  for(const id of [...included]){
+    let cur=catById.get(id);
+    while(cur){
+      const parent=categoryParentId(cur);
+      if(!parent || parent===totalId)break;
+      needed.add(parent);
+      cur=catById.get(parent);
+    }
+  }
+
+  const nodeMap=new Map();
+  for(const id of needed){
+    const cat=catById.get(id);
+    if(!cat)continue;
+    nodeMap.set(id,{
+      id,
+      name:String(cat.Brott),
+      level:Number(cat['Brottsnivå']||1),
+      children:[],
+      rawValue:valueById.get(id)||0
+    });
+  }
+
+  const root={id:'root',name:'Alla brottskategorier',children:[]};
+  for(const node of nodeMap.values()){
+    const cat=catById.get(node.id);
+    const parentId=categoryParentId(cat);
+    const parent=nodeMap.get(parentId);
+    if(parent)parent.children.push(node);
+    else root.children.push(node);
+  }
+
+  function assignLeafValues(node){
+    const positiveChildren=(node.children||[]).filter(ch=>{
+      assignLeafValues(ch);
+      return ch.value>0;
+    });
+    node.children=positiveChildren;
+    if(positiveChildren.length){
+      node.value=positiveChildren.reduce((s,ch)=>s+ch.value,0);
+    }else{
+      node.value=Number(node.rawValue)||0;
+    }
+  }
+  root.children.forEach(assignLeafValues);
+  root.children=root.children.filter(ch=>ch.value>0);
+  root.value=root.children.reduce((s,ch)=>s+ch.value,0);
+  return root;
+}
+
+function profileScopeText(){
+  const municipality=el('profileMunicipality').value;
+  if(municipality && municipality!=='__ALL__')return municipality;
+  const county=el('profileCounty').value;
+  const skr=el('profileSkrGroup').value;
+  return [county,skr].filter(Boolean).join(' · ') || 'Sverige';
+}
+
+function renderTreemap(tree,metric){
+  const host=el('profileTreemap');
+  host.innerHTML='';
+  const rect=host.getBoundingClientRect();
+  const width=Math.max(700,Math.round(rect.width||1200));
+  const height=Math.max(520,Math.round(rect.height||620));
+
+  if(!tree.children.length || tree.value<=0){
+    host.innerHTML='<div class="profile-empty">Inga brott finns i valt urval.</div>';
+    return;
+  }
+
+  const root=d3.hierarchy(tree,d=>d.children)
+    .sum(d=>(!d.children||!d.children.length)?Number(d.value||0):0)
+    .sort((a,b)=>b.value-a.value);
+
+  d3.treemap()
+    .size([width,height])
+    .paddingOuter(2)
+    .paddingTop(d=>d.depth===1?22:0)
+    .paddingInner(2)
+    .round(true)(root);
+
+  const topNames=root.children.map(d=>d.data.name);
+  const color=d3.scaleOrdinal()
+    .domain(topNames)
+    .range(['#dbeafe','#ccfbf1','#fef3c7','#ede9fe','#fee2e2','#e0f2fe','#dcfce7','#f3e8ff','#ffedd5','#e5e7eb']);
+
+  const svg=d3.select(host).append('svg')
+    .attr('viewBox',`0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio','xMidYMid meet');
+
+  let tooltip=document.querySelector('.profile-tooltip');
+  if(!tooltip){
+    tooltip=document.createElement('div');
+    tooltip.className='profile-tooltip';
+    tooltip.style.display='none';
+    document.body.appendChild(tooltip);
+  }
+
+  const leaves=root.leaves().filter(d=>d.value>0);
+  const total=d3.sum(leaves,d=>d.value);
+
+  const topAncestor=d=>{
+    let n=d;
+    while(n.parent && n.parent.depth>0)n=n.parent;
+    return n;
+  };
+
+  const g=svg.selectAll('g.profile-leaf')
+    .data(leaves)
+    .join('g')
+    .attr('class','profile-leaf')
+    .attr('transform',d=>`translate(${d.x0},${d.y0})`);
+
+  g.append('rect')
+    .attr('class','profile-tile')
+    .attr('width',d=>Math.max(0,d.x1-d.x0))
+    .attr('height',d=>Math.max(0,d.y1-d.y0))
+    .attr('rx',3)
+    .attr('fill',d=>color(topAncestor(d).data.name))
+    .on('mousemove',(event,d)=>{
+      const share=total>0?100*d.value/total:0;
+      const info=metricInfo(metric);
+      const valueText=info.isAverage
+        ? fmt1.format(d.value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år')
+        : info.isCount
+          ? fmt0.format(d.value)+' brott'
+          : fmt1.format(d.value)+' per 100 000';
+      tooltip.innerHTML='<b>'+d.data.name+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %';
+      tooltip.style.display='block';
+      tooltip.style.left=(event.clientX+14)+'px';
+      tooltip.style.top=(event.clientY+14)+'px';
+    })
+    .on('mouseleave',()=>{tooltip.style.display='none';});
+
+  g.each(function(d){
+    const w=d.x1-d.x0,h=d.y1-d.y0;
+    if(w<70 || h<34)return;
+    const group=d3.select(this);
+    const share=total>0?100*d.value/total:0;
+    const words=d.data.name.split(/\s+/);
+    const maxChars=Math.max(8,Math.floor(w/7));
+    let line='',lines=[];
+    for(const word of words){
+      const test=(line+' '+word).trim();
+      if(test.length>maxChars && line){lines.push(line);line=word;}
+      else line=test;
+      if(lines.length>=2)break;
+    }
+    if(line && lines.length<2)lines.push(line);
+    const fs=w<120?10:12;
+    const text=group.append('text').attr('class','profile-tile-label').attr('x',7).attr('y',16).style('font-size',fs+'px');
+    lines.slice(0,2).forEach((ln,i)=>text.append('tspan').attr('x',7).attr('dy',i===0?0:fs+2).text(ln));
+    if(h>55){
+      group.append('text').attr('class','profile-tile-share').attr('x',7).attr('y',h-8).style('font-size','10px').text(fmt1.format(share)+' %');
+    }
+  });
+
+  root.children.forEach(groupNode=>{
+    svg.append('text')
+      .attr('class','profile-group-label')
+      .attr('x',groupNode.x0+6)
+      .attr('y',groupNode.y0+16)
+      .style('font-size','11px')
+      .text(groupNode.data.name);
+  });
+}
+
+async function renderProfile(){
+  if(!el('profileTreemap'))return;
+  setLoading('Laddar områdesprofil…');
+  try{
+    const {start,end,multi}=profileYearRange();
+    const metric=el('profileMetric').value;
+    const info=metricInfo(metric);
+    const municipalities=profileMunicipalityNames();
+    const allMunicipalities=municipalities.length===MUNICIPAL_META.length;
+    const municipalityWhere=(!municipalities.length || allMunicipalities)
+      ? ''
+      : ' AND "Kommun" IN ('+sqlStringList(municipalities)+')';
+
+    const expression=metric==='Antal'
+      ? 'SUM(CAST("Antal" AS DOUBLE))'
+      : metric==='Per100000'
+        ? 'SUM(CAST("Per100000" AS DOUBLE))'
+        : metric==='AvgAntal'
+          ? 'SUM(CAST("Antal" AS DOUBLE)) / '+(end-start+1)
+          : 'SUM(CAST("Per100000" AS DOUBLE)) / '+(end-start+1);
+
+    const rows=await query(`
+      SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+             CAST(${expression} AS DOUBLE) AS value
+      FROM read_parquet(${parquetSqlForRange(start,end)})
+      WHERE "Antal">0${municipalityWhere}
+        AND "Brott_ID"<>${Number(META.default_crime_id)}
+      GROUP BY "Brott_ID"
+      HAVING ${expression}>0
+    `);
+
+    const tree=buildProfileTree(rows,metric);
+    const scope=profileScopeText();
+    const periodText=multi?start+'–'+end:String(start);
+    el('profileTitle').textContent='Områdesprofil – '+scope;
+    el('profileStatus').textContent=periodText+' · '+info.label+' · '+tree.children.length+' huvudgrupper';
+    renderTreemap(tree,metric);
+    profileRendered=true;
+  }catch(err){
+    console.error(err);
+    el('profileTreemap').innerHTML='<div class="profile-empty">Fel: '+String(err.message||err)+'</div>';
+  }finally{
+    setLoading(null);
+  }
+}
+
 function renderMethod(){
-  fetch('data/build.json?v=19',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=21',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -1009,11 +1325,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=19',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=19',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=19',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=19',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=19',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=21',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=21',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=21',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=21',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=21',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
