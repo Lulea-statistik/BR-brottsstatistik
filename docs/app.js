@@ -77,6 +77,7 @@ function setupControls(){
   el('overviewMunicipality').addEventListener('change',renderOverview);
   el('overviewCrime').addEventListener('change',renderOverview);
   el('overviewYear').addEventListener('change',renderOverview);
+  el('overviewMetric').addEventListener('change',renderOverview);
   el('trendMunicipality').addEventListener('change',renderTrend);
   el('trendCrime').addEventListener('change',renderTrend);
   el('trendMetric').addEventListener('change',renderTrend);
@@ -94,26 +95,117 @@ function setupTabs(){
   }));
 }
 
-async function trendRows(municipality,crimeId){
-  return query(`
+function metricInfo(metric){
+  const isCount = metric === 'Antal' || metric === 'RankAntal';
+  const isRank = metric === 'RankAntal' || metric === 'RankPer100000';
+  return {
+    metric,
+    isCount,
+    isRank,
+    field: isCount ? 'count' : 'rate',
+    label: metric === 'Antal' ? 'Antal brott'
+      : metric === 'Per100000' ? 'Brott per 100 000 inv.'
+      : metric === 'RankAntal' ? 'Placering efter antal'
+      : 'Placering efter antal per 100 000'
+  };
+}
+
+function addRanks(data){
+  const rankField = (rows, field, outField) => {
+    const valid = rows.filter(r=>Number.isFinite(Number(r[field])))
+      .sort((a,b)=>Number(b[field])-Number(a[field]));
+    let previous = null;
+    let rank = 0;
+    valid.forEach((row,i)=>{
+      const value = Number(row[field]);
+      if (previous === null || value !== previous) rank = i + 1;
+      row[outField] = rank;
+      previous = value;
+    });
+  };
+  rankField(data,'count','rankCount');
+  rankField(data,'rate','rankRate');
+  return data;
+}
+
+async function trendRows(municipality,crimeId,metric){
+  const info=metricInfo(metric);
+  if(!info.isRank){
+    return query(`
+      SELECT CAST("År" AS INTEGER) AS year,
+             CAST(MAX("Antal") AS DOUBLE) AS count,
+             CAST(MAX("Per100000") AS DOUBLE) AS rate
+      FROM read_parquet(${allParquetSql()})
+      WHERE "Kommun"='${esc(municipality)}'
+        AND "Brott_ID"=${Number(crimeId)}
+        AND "Antal">-555
+      GROUP BY "År"
+      ORDER BY "År"
+    `);
+  }
+
+  const all=await query(`
     SELECT CAST("År" AS INTEGER) AS year,
-           CAST(MAX("Antal") AS DOUBLE) AS count,
-           CAST(MAX("Per100000") AS DOUBLE) AS rate
+           "Kommun",
+           CAST("Antal" AS DOUBLE) AS count,
+           CAST("Per100000" AS DOUBLE) AS rate
     FROM read_parquet(${allParquetSql()})
-    WHERE "Kommun"='${esc(municipality)}'
-      AND "Brott_ID"=${Number(crimeId)}
+    WHERE "Brott_ID"=${Number(crimeId)}
       AND "Antal">-555
-    GROUP BY "År"
     ORDER BY "År"
   `);
+  const grouped=new Map();
+  all.forEach(row=>{
+    if(!grouped.has(row.year)) grouped.set(row.year,[]);
+    grouped.get(row.year).push(row);
+  });
+  const out=[];
+  for(const [year,rowsForYear] of grouped){
+    addRanks(rowsForYear);
+    const row=rowsForYear.find(r=>r.Kommun===municipality);
+    if(row){
+      out.push({
+        year:Number(year),
+        count:row.count,
+        rate:row.rate,
+        rankCount:row.rankCount,
+        rankRate:row.rankRate
+      });
+    }
+  }
+  return out.sort((a,b)=>a.year-b.year);
+}
+
+function metricValue(row,metric){
+  if(!row)return null;
+  if(metric==='Antal')return row.count;
+  if(metric==='Per100000')return row.rate;
+  if(metric==='RankAntal')return row.rankCount;
+  return row.rankRate;
 }
 
 function drawLine(id,data,metric,label){
+  const info=metricInfo(metric);
   destroyChart(id);
   charts[id]=new Chart(el(id),{
     type:'line',
-    data:{labels:data.map(r=>r.year),datasets:[{label,data:data.map(r=>metric==='Antal'?r.count:r.rate),borderWidth:2,pointRadius:2,tension:.18}]},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:false,title:{display:true,text:label}}}}
+    data:{labels:data.map(r=>r.year),datasets:[{label,data:data.map(r=>metricValue(r,metric)),borderWidth:2,pointRadius:2,tension:.18}]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}},
+        y:{
+          beginAtZero:false,
+          reverse:info.isRank,
+          suggestedMin:info.isRank?1:undefined,
+          title:{display:true,text:label},
+          ticks:info.isRank?{precision:0}:undefined
+        }
+      }
+    }
   });
 }
 
@@ -123,10 +215,11 @@ async function renderTrend(){
     const municipality=el('trendMunicipality').value;
     const crimeId=el('trendCrime').value;
     const metric=el('trendMetric').value;
-    const data=await trendRows(municipality,crimeId);
+    const data=await trendRows(municipality,crimeId,metric);
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
+    const info=metricInfo(metric);
     el('trendTitle').textContent=municipality+' – '+(category?.Brott||'Brott');
-    drawLine('trendChart',data,metric,metric==='Antal'?'Antal brott':'Brott per 100 000 inv.');
+    drawLine('trendChart',data,metric,info.label);
   }finally{setLoading(null);}
 }
 
@@ -136,6 +229,8 @@ async function renderOverview(){
     const municipality=el('overviewMunicipality').value;
     const crimeId=el('overviewCrime').value;
     const year=Number(el('overviewYear').value);
+    const metric=el('overviewMetric').value;
+    const info=metricInfo(metric);
     const file="'"+parquetUrl(year)+"'";
     const data=await query(`
       SELECT "Kommun",
@@ -144,16 +239,18 @@ async function renderOverview(){
       FROM read_parquet(${file})
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
+    addRanks(data);
     const chosen=data.find(r=>r.Kommun===municipality);
-    const ranked=data.filter(r=>Number.isFinite(Number(r.rate))).sort((a,b)=>Number(b.rate)-Number(a.rate));
-    const rank=ranked.findIndex(r=>r.Kommun===municipality)+1;
+    const rankValue=chosen?(info.isCount?chosen.rankCount:chosen.rankRate):null;
+    const rankedCount=data.filter(r=>Number.isFinite(Number(info.isCount?r.count:r.rate))).length;
     el('cardCount').textContent=chosen?fmt0.format(chosen.count):'–';
     el('cardRate').textContent=chosen&&chosen.rate!=null?fmt1.format(chosen.rate):'–';
-    el('cardRank').textContent=rank>0?rank+' av '+ranked.length:'–';
+    el('cardRankLabel').textContent=info.isCount?'Placering efter antal':'Placering per 100 000';
+    el('cardRank').textContent=rankValue?rankValue+' av '+rankedCount:'–';
     el('cardCoverage').textContent=String(data.length);
 
-    const trend=await trendRows(municipality,crimeId);
-    drawLine('overviewChart',trend,'Per100000','Brott per 100 000 inv.');
+    const trend=await trendRows(municipality,crimeId,metric);
+    drawLine('overviewChart',trend,metric,info.label);
   }finally{setLoading(null);}
 }
 
@@ -170,6 +267,18 @@ function colorFor(v,cuts){
   return palette[Math.min(i,palette.length-1)];
 }
 function legendHtml(cuts,metric){
+  const info=metricInfo(metric);
+  if(info.isRank){
+    let prev=null;
+    return [...cuts,null].map((cut,i)=>{
+      const label=i===0?('Placering 1–'+fmt0.format(cuts[0]))
+        :(cut==null?('Placering '+(fmt0.format(cuts[cuts.length-1]+1))+'+')
+        :('Placering '+fmt0.format(prev+1)+'–'+fmt0.format(cut)));
+      prev=cut;
+      const color=palette[Math.max(0,palette.length-1-i)];
+      return '<div class="legend-row"><span class="legend-box" style="background:'+color+'"></span><span>'+label+'</span></div>';
+    }).join('');
+  }
   const unit=metric==='Antal'?'':' /100 000';
   let prev=null;
   return [...cuts,null].map((cut,i)=>{
@@ -177,6 +286,14 @@ function legendHtml(cuts,metric){
     prev=cut;
     return '<div class="legend-row"><span class="legend-box" style="background:'+palette[i]+'"></span><span>'+label+unit+'</span></div>';
   }).join('');
+}
+
+function colorForMetric(v,cuts,metric){
+  const info=metricInfo(metric);
+  if(!Number.isFinite(v))return '#e5e7eb';
+  let i=0;while(i<cuts.length&&v>cuts[i])i++;
+  if(info.isRank) return palette[Math.max(0,palette.length-1-i)];
+  return palette[Math.min(i,palette.length-1)];
 }
 
 function initMap(){
@@ -190,6 +307,7 @@ async function renderMap(){
     const year=Number(el('mapYear').value);
     const crimeId=el('mapCrime').value;
     const metric=el('mapMetric').value;
+    const info=metricInfo(metric);
     const data=await query(`
       SELECT "Kommun",
              CAST("Antal" AS DOUBLE) AS count,
@@ -197,35 +315,43 @@ async function renderMap(){
       FROM read_parquet('${parquetUrl(year)}')
       WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
     `);
+    addRanks(data);
     const byName=new Map(data.map(r=>[r.Kommun,r]));
-    const values=data.map(r=>Number(metric==='Antal'?r.count:r.rate)).filter(Number.isFinite);
+    const values=data.map(r=>Number(metricValue(r,metric))).filter(Number.isFinite);
     const cuts=quantiles(values,7);
     if(geoLayer)geoLayer.remove();
     geoLayer=L.geoJSON(GEO,{
       style:f=>{
         const name=f.properties.Kommun;
         const row=byName.get(name);
-        const value=row?Number(metric==='Antal'?row.count:row.rate):NaN;
+        const value=row?Number(metricValue(row,metric)):NaN;
         const special=name==='Luleå'?'#dc2626':name==='Boden'?'#d4a800':'#667085';
-        return {color:special,weight:(name==='Luleå'||name==='Boden')?3:0.7,fillColor:colorFor(value,cuts),fillOpacity:.78};
+        return {color:special,weight:(name==='Luleå'||name==='Boden')?3:0.7,fillColor:colorForMetric(value,cuts,metric),fillOpacity:.78};
       },
       onEachFeature:(f,layer)=>{
         const name=f.properties.Kommun;
         const row=byName.get(name);
-        const value=row?(metric==='Antal'?row.count:row.rate):null;
-        layer.bindTooltip('<b>'+name+'</b><br>'+(value==null?'Data saknas':(metric==='Antal'?fmt0.format(value):fmt1.format(value)+' per 100 000')));
+        const value=row?metricValue(row,metric):null;
+        const rankedTotal=data.filter(r=>Number.isFinite(Number(info.isCount?r.count:r.rate))).length;
+        let label='Data saknas';
+        if(value!=null){
+          label=info.isRank
+            ? 'Placering '+fmt0.format(value)+' av '+rankedTotal
+            : (metric==='Antal'?fmt0.format(value):fmt1.format(value)+' per 100 000');
+        }
+        layer.bindTooltip('<b>'+name+'</b><br>'+label);
       }
     }).addTo(map);
     if(!map._crimeFitDone){map.fitBounds(geoLayer.getBounds(),{padding:[6,6]});map._crimeFitDone=true;}
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
     el('mapTitle').textContent=year+' – '+(category?.Brott||'Brott');
-    el('mapStatus').textContent=data.length+' kommuner med värde.';
+    el('mapStatus').textContent=data.length+' kommuner med värde. '+(info.isRank?'Placering 1 = högst värde.':'');
     el('mapLegend').innerHTML=legendHtml(cuts,metric);
   }finally{setLoading(null);}
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=3',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=4',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -238,10 +364,10 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=3',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=3',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=3',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=3',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=4',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=4',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=4',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=4',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
