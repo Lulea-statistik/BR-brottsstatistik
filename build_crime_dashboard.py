@@ -6,8 +6,11 @@ import re
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import urljoin
+from html import unescape
 
 import pandas as pd
+import pdfplumber
 import requests
 from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
@@ -20,6 +23,32 @@ PARQUET_OUT = OUT / "parquet"
 
 SCB_WFS = "https://geodata.scb.se/geoserver/stat/wfs"
 FALLBACK_GEOJSON = "https://raw.githubusercontent.com/okfse/sweden-geojson/master/swedish_municipalities.geojson"
+SKR_GROUP_PAGE = "https://skr.se/kommunerochregioner/kommungruppsindelning.8281.html"
+SKR_GROUP_PDF_FALLBACK = "https://extra.skr.se/download/18.ef4ba7d1849a2f55db2898a/1669978414789/Kommungruppsindelning-2023.pdf"
+
+COUNTY_NAMES = {
+    "01": "Stockholms län",
+    "03": "Uppsala län",
+    "04": "Södermanlands län",
+    "05": "Östergötlands län",
+    "06": "Jönköpings län",
+    "07": "Kronobergs län",
+    "08": "Kalmar län",
+    "09": "Gotlands län",
+    "10": "Blekinge län",
+    "12": "Skåne län",
+    "13": "Hallands län",
+    "14": "Västra Götalands län",
+    "17": "Värmlands län",
+    "18": "Örebro län",
+    "19": "Västmanlands län",
+    "20": "Dalarnas län",
+    "21": "Gävleborgs län",
+    "22": "Västernorrlands län",
+    "23": "Jämtlands län",
+    "24": "Västerbottens län",
+    "25": "Norrbottens län",
+}
 
 
 def clean_municipality(value: object) -> str:
@@ -125,6 +154,13 @@ def _dissolve(features: list[dict], valid_names: set[str], source: str) -> dict:
         raise RuntimeError(f"Could not identify municipality name property: {list(sample)}")
 
     grouped: dict[str, list] = {}
+    grouped_props: dict[str, dict] = {}
+    code_key = _property_key(sample, "code")
+    if not code_key:
+        for candidate in ("id", "kommunkod", "kom_kod"):
+            if candidate in sample:
+                code_key = candidate
+                break
     for f in features:
         props = f.get("properties") or {}
         name = clean_municipality(props.get(name_key))
@@ -137,6 +173,14 @@ def _dissolve(features: list[dict], valid_names: set[str], source: str) -> dict:
         if geom.is_empty:
             continue
         grouped.setdefault(name, []).append(geom)
+        if name not in grouped_props:
+            kommun_code = str(props.get(code_key) or "").zfill(4) if code_key else ""
+            lan_code = str(props.get("lan_code") or props.get("lanskod") or (kommun_code[:2] if len(kommun_code) == 4 else ""))
+            grouped_props[name] = {
+                "Kommunkod": kommun_code or None,
+                "Lanskod": lan_code or None,
+                "Lan": COUNTY_NAMES.get(lan_code),
+            }
 
     output = []
     for name in sorted(grouped):
@@ -145,7 +189,7 @@ def _dissolve(features: list[dict], valid_names: set[str], source: str) -> dict:
         geom = geom.simplify(0.001, preserve_topology=True)
         output.append({
             "type": "Feature",
-            "properties": {"Kommun": name},
+            "properties": {"Kommun": name, **grouped_props.get(name, {})},
             "geometry": mapping(geom),
         })
 
@@ -220,6 +264,92 @@ def fetch_geometry(valid_names: set[str]) -> dict:
         )
 
 
+
+def fetch_skr_groups(valid_names: set[str]) -> list[dict]:
+    pdf_url = SKR_GROUP_PDF_FALLBACK
+    try:
+        page = requests.get(SKR_GROUP_PAGE, timeout=60)
+        page.raise_for_status()
+        match = re.search(r'href=["\\']([^"\\']*Kommungruppsindelning-2023\\.pdf[^"\\']*)', page.text, flags=re.I)
+        if match:
+            pdf_url = urljoin(SKR_GROUP_PAGE, unescape(match.group(1)))
+    except Exception as exc:
+        print(f"SKR page lookup warning: {exc}")
+
+    pdf_path = OUT / "_skr_kommungrupp_2023.pdf"
+    response = requests.get(pdf_url, timeout=120)
+    response.raise_for_status()
+    pdf_path.write_bytes(response.content)
+
+    rows: list[dict] = []
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                for table in page.extract_tables() or []:
+                    for row in table or []:
+                        cells = [" ".join(str(x or "").split()) for x in row]
+                        if len(cells) < 5:
+                            continue
+                        code = cells[0].replace(" ", "")
+                        kommun_code = cells[1].replace(" ", "")
+                        if not re.fullmatch(r"[ABC][1-9]", code):
+                            continue
+                        if not re.fullmatch(r"\\d{4}", kommun_code):
+                            continue
+                        name = clean_municipality(cells[2])
+                        rows.append({
+                            "Gruppkod": code,
+                            "Kommunkod": kommun_code,
+                            "Kommun": name,
+                            "Huvudgrupp": cells[3],
+                            "Kommungrupp": cells[4],
+                        })
+    finally:
+        pdf_path.unlink(missing_ok=True)
+
+    # Keep one row per municipality and validate against the 290-current-municipality list.
+    by_name = {row["Kommun"]: row for row in rows if row["Kommun"] in valid_names}
+    if len(by_name) != 290:
+        missing = sorted(valid_names - set(by_name))
+        raise RuntimeError(
+            f"SKR 2023 classification extraction matched {len(by_name)} of 290 municipalities; "
+            f"missing sample: {missing[:20]}"
+        )
+    print(f"SKR 2023 classification: {len(by_name)} municipalities from {pdf_url}")
+    return [by_name[name] for name in sorted(by_name)]
+
+
+def build_municipality_meta(geo: dict, skr_rows: list[dict], valid_names: set[str]) -> None:
+    geo_by_name = {f["properties"]["Kommun"]: f["properties"] for f in geo.get("features", [])}
+    skr_by_name = {row["Kommun"]: row for row in skr_rows}
+    records = []
+    for name in sorted(valid_names):
+        gp = geo_by_name.get(name, {})
+        sp = skr_by_name.get(name, {})
+        kommun_code = str(gp.get("Kommunkod") or sp.get("Kommunkod") or "").zfill(4)
+        lan_code = str(gp.get("Lanskod") or (kommun_code[:2] if len(kommun_code) == 4 else ""))
+        records.append({
+            "Kommun": name,
+            "Kommunkod": kommun_code or None,
+            "Lanskod": lan_code or None,
+            "Lan": COUNTY_NAMES.get(lan_code),
+            "SKR_Gruppkod": sp.get("Gruppkod"),
+            "SKR_Huvudgrupp": sp.get("Huvudgrupp"),
+            "SKR_Kommungrupp": sp.get("Kommungrupp"),
+        })
+
+    if sum(1 for r in records if r["Lan"]) != 290:
+        missing = [r["Kommun"] for r in records if not r["Lan"]]
+        raise RuntimeError(f"County metadata missing for municipalities: {missing[:20]}")
+    if sum(1 for r in records if r["SKR_Gruppkod"]) != 290:
+        missing = [r["Kommun"] for r in records if not r["SKR_Gruppkod"]]
+        raise RuntimeError(f"SKR metadata missing for municipalities: {missing[:20]}")
+
+    (OUT / "municipality_meta.json").write_text(
+        json.dumps(records, ensure_ascii=False, separators=(",", ":"), allow_nan=False),
+        encoding="utf-8",
+    )
+
 def copy_parquet(years: list[int]) -> None:
     PARQUET_OUT.mkdir(parents=True, exist_ok=True)
     keep = set()
@@ -243,6 +373,8 @@ def main() -> None:
     copy_parquet(meta["available_years"])
 
     geo = fetch_geometry(municipalities)
+    skr_rows = fetch_skr_groups(municipalities)
+    build_municipality_meta(geo, skr_rows, municipalities)
     (OUT / "municipalities.geojson").write_text(
         json.dumps(geo, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
     )
@@ -250,6 +382,8 @@ def main() -> None:
         "geometry_source": geo.get("properties", {}).get("source"),
         "geometry_municipalities": len(geo.get("features", [])),
         "parquet_years": len(meta["available_years"]),
+        "skr_classification": "SKR kommungruppsindelning 2023",
+        "skr_source": SKR_GROUP_PAGE,
     }
     (OUT / "build.json").write_text(
         json.dumps(build_info, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8"
