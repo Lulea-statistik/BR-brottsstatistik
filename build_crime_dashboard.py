@@ -270,7 +270,7 @@ def fetch_skr_groups(valid_names: set[str]) -> list[dict]:
     try:
         page = requests.get(SKR_GROUP_PAGE, timeout=60)
         page.raise_for_status()
-        match = re.search(r'href=["\\']([^"\\']*Kommungruppsindelning-2023\\.pdf[^"\\']*)', page.text, flags=re.I)
+        match = re.search(r"""href=["']([^"']*Kommungruppsindelning-2023\.pdf[^"']*)""", page.text, flags=re.I)
         if match:
             pdf_url = urljoin(SKR_GROUP_PAGE, unescape(match.group(1)))
     except Exception as exc:
