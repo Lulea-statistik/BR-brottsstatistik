@@ -66,6 +66,104 @@ function fillSelect(id,items,selected){
     s.appendChild(o);
   });
 }
+function buildCrimeTree(selectId){
+  const select=el(selectId);
+  if(!select)return;
+  select.classList.add('native-crime-select');
+
+  const old=select.parentElement.querySelector('.crime-tree-picker');
+  if(old)old.remove();
+
+  const picker=document.createElement('div');
+  picker.className='crime-tree-picker';
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='crime-tree-button';
+  const menu=document.createElement('div');
+  menu.className='crime-tree-menu hidden';
+  picker.append(button,menu);
+  select.insertAdjacentElement('afterend',picker);
+
+  const byParent=new Map();
+  CATEGORIES.forEach(cat=>{
+    const parent=cat['Förälder_ID'];
+    const key=parent==null?'ROOT':String(Math.trunc(Number(parent)));
+    if(!byParent.has(key))byParent.set(key,[]);
+    byParent.get(key).push(cat);
+  });
+  for(const list of byParent.values()){
+    list.sort((a,b)=>String(a.Brott).localeCompare(String(b.Brott),'sv'));
+  }
+
+  function selectedText(){
+    const cat=CATEGORIES.find(x=>String(x.Brott_ID)===String(select.value));
+    button.textContent=cat?.Brott||'Välj brottskategori';
+  }
+  function selectCategory(cat){
+    select.value=String(cat.Brott_ID);
+    selectedText();
+    menu.classList.add('hidden');
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  function branch(cat,level){
+    const wrap=document.createElement('div');
+    wrap.className='crime-branch';
+    const children=byParent.get(String(Math.trunc(Number(cat.Brott_ID))))||[];
+    const row=document.createElement('div');
+    row.className='crime-tree-row';
+    row.style.paddingLeft=((level-1)*16)+'px';
+
+    if(children.length){
+      const toggle=document.createElement('button');
+      toggle.type='button';
+      toggle.className='crime-tree-toggle';
+      toggle.textContent='▸';
+      const childBox=document.createElement('div');
+      childBox.className='crime-tree-children hidden';
+      toggle.addEventListener('click',e=>{
+        e.stopPropagation();
+        const opening=childBox.classList.contains('hidden');
+        childBox.classList.toggle('hidden');
+        toggle.textContent=opening?'▾':'▸';
+      });
+      row.appendChild(toggle);
+      children.forEach(ch=>childBox.appendChild(branch(ch,level+1)));
+      wrap.append(row,childBox);
+    }else{
+      const spacer=document.createElement('span');
+      spacer.className='crime-tree-toggle-spacer';
+      row.appendChild(spacer);
+      wrap.append(row);
+    }
+
+    const label=document.createElement('button');
+    label.type='button';
+    label.className='crime-tree-label';
+    label.textContent=cat.Brott+(cat.Upphört?' [upphört]':'');
+    label.addEventListener('click',()=>selectCategory(cat));
+    row.appendChild(label);
+    return wrap;
+  }
+
+  const roots=byParent.get('ROOT')||[];
+  roots.forEach(cat=>menu.appendChild(branch(cat,1)));
+  selectedText();
+
+  button.addEventListener('click',e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.crime-tree-menu').forEach(m=>{
+      if(m!==menu)m.classList.add('hidden');
+    });
+    menu.classList.toggle('hidden');
+  });
+  picker.addEventListener('click',e=>e.stopPropagation());
+}
+
+function setupCrimeTrees(){
+  ['overviewCrime','trendCrime','mapCrime'].forEach(buildCrimeTree);
+  document.addEventListener('click',()=>document.querySelectorAll('.crime-tree-menu').forEach(m=>m.classList.add('hidden')));
+}
+
 function setupControls(){
   const cats=CATEGORIES.map(categoryOption);
   const mun=MUNICIPALITIES.map(x=>({value:x,text:x}));
@@ -89,6 +187,7 @@ function setupControls(){
   refreshOverviewMunicipalities();
   fillSelect('trendCounty',countyItems,'');
   fillSelect('trendSkrGroup',skrItems,'');
+  setupCrimeTrees();
 
   el('overviewMunicipality').addEventListener('change',renderOverview);
   el('overviewCrime').addEventListener('change',renderOverview);
@@ -459,7 +558,7 @@ function fitMapToVisible(){
   if(!map || !geoLayer)return;
   const bounds=geoLayer.getBounds();
   if(bounds && bounds.isValid()){
-    map.fitBounds(bounds,{padding:[12,12],maxZoom:7});
+    map.fitBounds(bounds,{padding:[12,12],maxZoom:7,animate:false});
   }
 }
 
@@ -492,15 +591,22 @@ async function renderMap(){
         const row=byName.get(name);
         const value=row?Number(metricValue(row,metric)):NaN;
         const special=name==='Luleå'?'#dc2626':name==='Boden'?'#d4a800':'#667085';
-        return {color:special,weight:(name==='Luleå'||name==='Boden')?3:0.7,fillColor:continuousColor(value,minValue,maxValue,metric),fillOpacity:.82};
+        const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
+        return {
+          color:special,
+          weight:(name==='Luleå'||name==='Boden')?3:0.7,
+          fillColor:noCrime?'transparent':continuousColor(value,minValue,maxValue,metric),
+          fillOpacity:noCrime?0:.82
+        };
       },
       onEachFeature:(f,layer)=>{
         const name=f.properties.Kommun;
         const row=byName.get(name);
         const value=row?metricValue(row,metric):null;
         const rankedTotal=data.filter(r=>Number.isFinite(Number(info.isCount?r.count:r.rate))).length;
-        let label='Data saknas';
-        if(value!=null){
+        const noCrime=!row || !Number.isFinite(Number(row.count)) || Number(row.count)<=0;
+        let label=noCrime?'0 brott':'Data saknas';
+        if(!noCrime && value!=null){
           label=info.isRank
             ? 'Placering '+fmt0.format(value)+' av '+rankedTotal
             : (metric==='Antal'?fmt0.format(value):fmt1.format(value)+' per 100 000');
@@ -532,7 +638,7 @@ async function renderMap(){
 }
 
 function renderMethod(){
-  fetch('data/build.json?v=7',{cache:'no-store'}).then(r=>r.json()).then(b=>{
+  fetch('data/build.json?v=8',{cache:'no-store'}).then(r=>r.json()).then(b=>{
     el('methodMeta').innerHTML=
       '<p><b>Källa:</b> '+META.source+'</p>'+
       '<p><b>Period:</b> '+META.start_year+'–'+META.latest_year+'</p>'+
@@ -545,11 +651,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=7',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=7',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=7',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=7',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=7',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=8',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=8',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=8',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=8',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=8',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
