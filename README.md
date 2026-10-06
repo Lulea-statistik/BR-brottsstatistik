@@ -26,3 +26,16 @@ Workflow-lägen:
 - `target_year` kan användas för att köra om ett enda år
 
 Brå anger att kommunstatistik finns från 1996 och att nuvarande kommunindelning används för alla år. Källa: https://statistik.bra.se/solwebb/action/anmalda/urval/urval?menyid=101
+
+
+## GitHub Pages-rapport
+
+Repo:t innehåller nu en webbrapport under `docs/` med fyra flikar:
+- Översikt
+- Trender
+- Årskarta
+- Metod & data
+
+Rapporten läser de befintliga årsvisa Parquet-filerna direkt i webbläsaren med DuckDB-Wasm. Årskartan använder en förenklad kommungeometri som byggs vid deployment, i första hand från SCB:s öppna geodata.
+
+Workflowet **Build and deploy BRÅ dashboard** bygger webbdata och publicerar GitHub Pages.
