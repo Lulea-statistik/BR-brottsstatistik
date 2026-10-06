@@ -10,7 +10,20 @@ const el=id=>document.getElementById(id);
 const esc=s=>String(s).replaceAll("'","''");
 
 function rows(table){
-  return table.toArray().map(r=>typeof r.toJSON==='function'?r.toJSON():r);
+  const normalise = value => {
+    if (typeof value === 'bigint') return Number(value);
+    if (Array.isArray(value)) return value.map(normalise);
+    if (value && typeof value === 'object') {
+      const out = {};
+      for (const [key, item] of Object.entries(value)) out[key] = normalise(item);
+      return out;
+    }
+    return value;
+  };
+  return table.toArray().map(r=>{
+    const raw = typeof r.toJSON==='function' ? r.toJSON() : r;
+    return normalise(raw);
+  });
 }
 function parquetUrl(year){
   return new URL('data/parquet/year='+year+'.parquet', location.href).href;
