@@ -177,7 +177,15 @@ function setupControls(){
   ).entries()].sort((a,b)=>a[0].localeCompare(b[0],'sv'));
   ['overviewCrime','trendCrime','mapCrime'].forEach(id=>fillSelect(id,cats,META.default_crime_id));
   ['overviewMunicipality','trendMunicipality'].forEach(id=>fillSelect(id,mun,META.default_municipality));
-  ['overviewYear','mapYear'].forEach(id=>fillSelect(id,years,META.latest_year));
+  fillSelect('overviewYear',years,META.latest_year);
+  const minYear=Math.min(...META.available_years);
+  const maxYear=Math.max(...META.available_years);
+  ['mapYearStart','mapYearEnd'].forEach(id=>{
+    el(id).min=String(minYear);
+    el(id).max=String(maxYear);
+    el(id).value=String(maxYear);
+  });
+  updateMapYearUi();
   const countyItems=[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))];
   const skrItems=[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))];
   fillSelect('mapCounty',countyItems,'');
@@ -187,6 +195,7 @@ function setupControls(){
   refreshOverviewMunicipalities();
   fillSelect('trendCounty',countyItems,'');
   fillSelect('trendSkrGroup',skrItems,'');
+  refreshTrendMunicipalities();
   setupCrimeTrees();
 
   el('overviewMunicipality').addEventListener('change',renderOverview);
@@ -200,7 +209,8 @@ function setupControls(){
   el('trendMetric').addEventListener('change',renderTrend);
   el('trendCounty').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
   el('trendSkrGroup').addEventListener('change',async()=>{refreshTrendMunicipalities();await renderTrend();});
-  el('mapYear').addEventListener('change',renderMap);
+  el('mapYearStart').addEventListener('input',()=>handleMapYearRange('start'));
+  el('mapYearEnd').addEventListener('input',()=>handleMapYearRange('end'));
   el('mapCrime').addEventListener('change',renderMap);
   el('mapMetric').addEventListener('change',renderMap);
   el('mapCounty').addEventListener('change',renderMap);
@@ -223,20 +233,28 @@ const METRIC_STYLES = {
   Antal: {line:'#2563eb', fill:'rgba(37,99,235,.15)', gradient:['#dbeafe','#60a5fa','#1e3a8a']},
   Per100000: {line:'#0f766e', fill:'rgba(15,118,110,.15)', gradient:['#ccfbf1','#2dd4bf','#134e4a']},
   RankAntal: {line:'#d97706', fill:'rgba(217,119,6,.15)', gradient:['#fef3c7','#f59e0b','#78350f']},
-  RankPer100000: {line:'#7c3aed', fill:'rgba(124,58,237,.15)', gradient:['#ede9fe','#a78bfa','#4c1d95']}
+  RankPer100000: {line:'#7c3aed', fill:'rgba(124,58,237,.15)', gradient:['#ede9fe','#a78bfa','#4c1d95']},
+  AvgAntal: {line:'#be123c', fill:'rgba(190,18,60,.15)', gradient:['#ffe4e6','#fb7185','#881337']},
+  AvgPer100000: {line:'#0369a1', fill:'rgba(3,105,161,.15)', gradient:['#e0f2fe','#38bdf8','#0c4a6e']}
 };
 
 function metricInfo(metric){
-  const isCount = metric === 'Antal' || metric === 'RankAntal';
+  const isCount = metric === 'Antal' || metric === 'RankAntal' || metric === 'AvgAntal';
   const isRank = metric === 'RankAntal' || metric === 'RankPer100000';
+  const isAverage = metric === 'AvgAntal' || metric === 'AvgPer100000';
   return {
     metric,
     isCount,
     isRank,
-    field: isCount ? 'count' : 'rate',
+    isAverage,
+    field: metric==='AvgAntal'?'avgCount'
+      : metric==='AvgPer100000'?'avgRate'
+      : isCount?'count':'rate',
     style: METRIC_STYLES[metric] || METRIC_STYLES.Per100000,
     label: metric === 'Antal' ? 'Antal brott'
       : metric === 'Per100000' ? 'Brott per 100 000 inv.'
+      : metric === 'AvgAntal' ? 'Medelantal brott'
+      : metric === 'AvgPer100000' ? 'Medelantal brott per 100 000'
       : metric === 'RankAntal' ? 'Placering efter antal'
       : 'Placering efter antal per 100 000'
   };
@@ -317,7 +335,10 @@ function metricValue(row,metric){
   if(metric==='Antal')return row.count;
   if(metric==='Per100000')return row.rate;
   if(metric==='RankAntal')return row.rankCount;
-  return row.rankRate;
+  if(metric==='RankPer100000')return row.rankRate;
+  if(metric==='AvgAntal')return row.avgCount;
+  if(metric==='AvgPer100000')return row.avgRate;
+  return null;
 }
 
 function drawLine(id,data,metric,label){
@@ -395,11 +416,10 @@ function refreshTrendMunicipalities(){
   const current=el('trendMunicipality').value;
   const names=filteredMunicipalityNames('trendCounty','trendSkrGroup')
     .sort((a,b)=>a.localeCompare(b,'sv'));
-  fillSelect(
-    'trendMunicipality',
-    names.map(x=>({value:x,text:x})),
-    names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:names[0])
-  );
+  const items=[{value:'__ALL__',text:'Alla'},...names.map(x=>({value:x,text:x}))];
+  const selected=current==='__ALL__'?'__ALL__':
+    (names.includes(current)?current:(names.includes(META.default_municipality)?META.default_municipality:'__ALL__'));
+  fillSelect('trendMunicipality',items,selected);
 }
 
 function drawFunnel(id,data,metric,selectedMunicipality){
@@ -408,26 +428,16 @@ function drawFunnel(id,data,metric,selectedMunicipality){
   const ranked=data
     .filter(r=>Number.isFinite(Number(metricValue(r,metric))))
     .slice()
-    .sort((a,b)=>info.isRank
-      ? Number(metricValue(a,metric))-Number(metricValue(b,metric))
-      : Number(metricValue(b,metric))-Number(metricValue(a,metric)));
+    .sort((x,y)=>info.isRank
+      ? Number(metricValue(x,metric))-Number(metricValue(y,metric))
+      : Number(metricValue(y,metric))-Number(metricValue(x,metric)));
 
-  let shown=selectedMunicipality==='__ALL__' ? ranked : ranked.slice(0,15);
-  const selected=ranked.find(r=>r.Kommun===selectedMunicipality);
-  if(selected && !shown.some(r=>r.Kommun===selectedMunicipality)) shown=[...shown,selected];
-  const wrap=el('overviewChartWrap');
-  if(wrap) wrap.style.height=Math.max(500,shown.length*22)+'px';
-
-  const total=ranked.length;
-  const widths=shown.map(r=>{
-    if(info.isRank){
-      const rank=Number(metricValue(r,metric));
-      return Math.max(1,total-rank+1);
-    }
-    return Math.max(0,Number(metricValue(r,metric)));
-  });
-  const maxWidth=Math.max(...widths,1);
-  const bars=widths.map(v=>[-v/(2*maxWidth),v/(2*maxWidth)]);
+  const shown=selectedMunicipality==='__ALL__'
+    ? ranked
+    : ranked.filter((r,i)=>i<15 || r.Kommun===selectedMunicipality);
+  const n=Math.max(shown.length,1);
+  const barPct=n<=6?.72:n<=20?.78:n<=80?.86:.96;
+  const catPct=n<=6?.82:n<=20?.88:n<=80?.92:1;
   const values=shown.map(r=>metricValue(r,metric));
 
   charts[id]=new Chart(el(id),{
@@ -435,17 +445,17 @@ function drawFunnel(id,data,metric,selectedMunicipality){
     data:{
       labels:shown.map(r=>r.Kommun),
       datasets:[{
-        data:bars,
+        data:values,
         backgroundColor:shown.map(r=>r.Kommun===selectedMunicipality?info.style.line:info.style.fill),
         borderColor:info.style.line,
-        borderWidth:1.2,
-        borderRadius:3,
-        barPercentage:.82,
-        categoryPercentage:.88
+        borderWidth:n>120?.4:1,
+        borderRadius:n>80?0:3,
+        barPercentage:barPct,
+        categoryPercentage:catPct,
+        maxBarThickness:n<=6?120:n<=20?70:undefined
       }]
     },
     options:{
-      indexAxis:'y',
       responsive:true,
       maintainAspectRatio:false,
       animation:false,
@@ -454,19 +464,29 @@ function drawFunnel(id,data,metric,selectedMunicipality){
         tooltip:{
           callbacks:{
             label:ctx=>{
-              const value=values[ctx.dataIndex];
+              const value=ctx.raw;
               return info.isRank
-                ? 'Placering '+fmt0.format(value)+' av '+total
-                : info.isCount
-                  ? fmt0.format(value)+' brott'
-                  : fmt1.format(value)+' per 100 000';
+                ? 'Placering '+fmt0.format(value)+' av '+ranked.length
+                : info.isAverage
+                  ? fmt1.format(value)+(info.isCount?' brott':' per 100 000')
+                  : info.isCount
+                    ? fmt0.format(value)+' brott'
+                    : fmt1.format(value)+' per 100 000';
             }
           }
         }
       },
       scales:{
-        x:{display:false,stacked:false,min:-.52,max:.52},
-        y:{grid:{display:false},ticks:{autoSkip:false,font:{size:11}}}
+        x:{
+          grid:{display:false},
+          ticks:{autoSkip:true,maxRotation:n>35?90:45,minRotation:0,font:{size:n>100?8:10}}
+        },
+        y:{
+          beginAtZero:!info.isRank,
+          reverse:info.isRank,
+          suggestedMin:info.isRank?1:undefined,
+          ticks:info.isRank?{precision:0}:undefined
+        }
       }
     }
   });
