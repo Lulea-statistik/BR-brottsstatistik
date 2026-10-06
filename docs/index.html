@@ -6,7 +6,7 @@
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="icon" type="image/png" href="favicon.png?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <header class="topbar">
@@ -91,8 +91,6 @@
         <option value="Antal">Antal brott</option>
         <option value="AvgAntal">Medelantal brott</option>
         <option value="AvgPer100000">Medelantal brott per 100 000</option>
-        <option value="RankAntal">Placering antal</option>
-        <option value="RankPer100000">Placering antal per 100 000</option>
       </select></label>
     </div>
     <div class="map-layout">
@@ -101,8 +99,9 @@
         <h2 id="mapTitle">Årskarta</h2>
         <p id="mapStatus" class="muted">Laddar…</p>
         <div id="mapLegend" class="legend"></div>
-        <p><span class="swatch lulea"></span>Luleå markerad med röd kant</p>
-        <p><span class="swatch boden"></span>Boden markerad med gul kant</p>
+        <p><span class="swatch lulea"></span>Luleå markeras med röd kantfärg</p>
+        <p><span class="swatch boden"></span>Boden markeras med gul kantfärg</p>
+        <p><span class="swatch norrbotten"></span>Övriga norrbottenskommuner markeras med grå kantfärg</p>
       </aside>
     </div>
   </section>
@@ -118,6 +117,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=19"></script>
+<script type="module" src="app.js?v=20"></script>
 </body>
 </html>
