@@ -1,1 +1,1 @@
-{"geometry_source":"Fallback: okfse/sweden-geojson (visualisation only)","geometry_municipalities":290,"parquet_years":30}
+{"geometry_source":"Fallback: okfse/sweden-geojson (visualisation only)","geometry_municipalities":290,"parquet_years":30,"skr_classification":"SKR kommungruppsindelning 2023","skr_source":"https://skr.se/kommunerochregioner/kommungruppsindelning.8281.html"}
