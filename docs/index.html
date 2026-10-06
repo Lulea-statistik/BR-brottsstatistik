@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 <header class="topbar">
@@ -28,7 +28,7 @@
       <label>År<select id="overviewYear"></select></label>
       <label>Län<select id="overviewCounty"></select></label>
       <label>SKR-kommungrupp<select id="overviewSkrGroup"></select></label>
-      <label>Mått<select id="overviewMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option><option value="RankAntal">Placering antal</option><option value="RankPer100000">Placering antal per 100 000</option></select></label>
+      <label>Mått<select id="overviewMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option></select></label>
     </div>
     <div class="cards">
       <article><span>Antal brott</span><strong id="cardCount">–</strong></article>
@@ -58,12 +58,18 @@
 
   <section id="page-map" class="page">
     <div class="controls">
-      <label class="year-range-label">År
-        <div class="year-range-control">
-          <div class="year-range-values"><span id="mapYearStartLabel">–</span><span id="mapYearEndLabel">–</span></div>
+      <label class="year-range-label">Årintervall
+        <div id="mapYearControl" class="year-range-control">
+          <div class="year-range-head">
+            <span class="year-side"><small>Från</small><strong id="mapYearStartLabel">–</strong></span>
+            <span id="mapYearPeriod" class="year-period">–</span>
+            <span class="year-side right"><small>Till</small><strong id="mapYearEndLabel">–</strong></span>
+          </div>
           <div class="dual-range">
-            <input id="mapYearStart" type="range" step="1">
-            <input id="mapYearEnd" type="range" step="1">
+            <div class="range-track"></div>
+            <div class="range-selected"></div>
+            <input id="mapYearStart" type="range" step="1" aria-label="Från år">
+            <input id="mapYearEnd" type="range" step="1" aria-label="Till år">
           </div>
         </div>
       </label>
@@ -103,6 +109,6 @@
 <div id="loading" class="loading">Laddar rapportdata…</div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=12"></script>
+<script type="module" src="app.js?v=13"></script>
 </body>
 </html>
