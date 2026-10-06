@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 <header class="topbar">
@@ -26,6 +26,8 @@
       <label>Kommun<select id="overviewMunicipality"></select></label>
       <label>Brottskategori<select id="overviewCrime"></select></label>
       <label>År<select id="overviewYear"></select></label>
+      <label>Län<select id="overviewCounty"></select></label>
+      <label>SKR-kommungrupp<select id="overviewSkrGroup"></select></label>
       <label>Mått<select id="overviewMetric"><option value="Per100000">Per 100 000 inv.</option><option value="Antal">Antal</option><option value="RankAntal">Placering antal</option><option value="RankPer100000">Placering antal per 100 000</option></select></label>
     </div>
     <div class="cards">
@@ -34,8 +36,8 @@
       <article><span id="cardRankLabel">Placering per 100 000</span><strong id="cardRank">–</strong></article>
       <article><span>Kommuner med data</span><strong id="cardCoverage">–</strong></article>
     </div>
-    <div class="panel">
-      <h2>Snabbtrend</h2>
+    <div class="panel funnel">
+      <h2 id="overviewChartTitle">Kommunjämförelse</h2>
       <canvas id="overviewChart"></canvas>
     </div>
   </section>
@@ -84,6 +86,6 @@
 <div id="loading" class="loading">Laddar rapportdata…</div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=5"></script>
+<script type="module" src="app.js?v=6"></script>
 </body>
 </html>
