@@ -423,7 +423,7 @@ function mixHex(a,b,t){
 function continuousColor(value,min,max,metric){
   if(!Number.isFinite(value))return '#e5e7eb';
   const info=metricInfo(metric);
-  let t=max===min?.5:(value-min)/(max-min);
+  let t=max===min ? .5 : (value-min)/(max-min);
   t=Math.max(0,Math.min(1,t));
   if(info.isRank)t=1-t;
   const [low,mid,high]=info.style.gradient;
