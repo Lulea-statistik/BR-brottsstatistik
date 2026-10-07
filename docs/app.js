@@ -1349,6 +1349,47 @@ function profileScopeText(){
   return [county,skr].filter(Boolean).join(' · ') || 'Sverige';
 }
 
+function conciseCrimeLabel(name){
+  let text=String(name||'').trim();
+
+  const prefixes=[
+    /^Brott mot brottsbalken,\s*/i,
+    /^Brott mot specialstraffrättsliga författningar,?\s*/i,
+    /^Brott mot specialstraffrätten,?\s*/i
+  ];
+  for(const re of prefixes)text=text.replace(re,'');
+
+  // Repeated hierarchy path fragments such as
+  // "8-12 kap. Brott mot förmögenhet, 12 kap. Skadegörelsebrott, Skadegörelse inkl. grov åverkan"
+  // are reduced to the most specific, reader-relevant final segment.
+  const parts=text.split(/,\s*/).map(x=>x.trim()).filter(Boolean);
+  if(parts.length>1){
+    let best=parts[parts.length-1];
+
+    // If the last part is only a chapter/section marker, step back.
+    if(/^\d+(?:-\d+)?\s*kap\.?$/i.test(best) && parts.length>1){
+      best=parts[parts.length-2];
+    }
+
+    // Prefer the final segment that is not merely "Brott mot ..." or a chapter reference.
+    for(let i=parts.length-1;i>=0;i--){
+      const p=parts[i];
+      if(!/^\d+(?:-\d+)?\s*kap\.?/i.test(p) && !/^Brott mot\b/i.test(p)){
+        best=p;
+        break;
+      }
+    }
+    text=best;
+  }
+
+  text=text
+    .replace(/^\d+(?:-\d+)?\s*kap\.\s*/i,'')
+    .replace(/^Brott mot\s+/i,'')
+    .trim();
+
+  return text || String(name||'');
+}
+
 function renderTreemap(tree,metric){
   const host=el('profileTreemap');
   host.innerHTML='';
@@ -1433,7 +1474,7 @@ function renderTreemap(tree,metric){
         : info.isCount
           ? fmt0.format(displayValue)+' brott'
           : fmt1.format(displayValue)+' per 100 000';
-      tooltip.innerHTML='<b>'+d.data.name+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %<br>Nivå: '+Number(d.data.level||0);
+      tooltip.innerHTML='<b>'+conciseCrimeLabel(d.data.name)+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %<br>Nivå: '+Number(d.data.level||0);
       tooltip.style.display='block';
       tooltip.style.left=(event.clientX+14)+'px';
       tooltip.style.top=(event.clientY+14)+'px';
@@ -1445,7 +1486,8 @@ function renderTreemap(tree,metric){
     if(w<70 || h<34)return;
     const group=d3.select(this);
     const share=total>0?100*d.value/total:0;
-    const words=d.data.name.split(/\s+/);
+    const label=conciseCrimeLabel(d.data.name);
+    const words=label.split(/\s+/);
     const maxChars=Math.max(8,Math.floor(w/7));
     let line='',lines=[];
     for(const word of words){
@@ -1545,11 +1587,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=26',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=26',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=26',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=26',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=26',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=27',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=27',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=27',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=27',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=27',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
