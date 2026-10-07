@@ -1679,7 +1679,13 @@ function chatCountyNames(){
 }
 
 function chatQuestionGeography(question){
-  const q=String(question||'').toLocaleLowerCase('sv');
+  const recentUserHistory=(history||[])
+    .filter(m=>m?.role==='user')
+    .slice(-3)
+    .map(m=>String(m.content||''))
+    .join(' ');
+  const lookupQuestion=(recentUserHistory+' '+String(question||'')).trim();
+  const q=String(lookupQuestion||'').toLocaleLowerCase('sv');
   const municipalities=MUNICIPALITIES.filter(name=>
     q.includes(String(name).toLocaleLowerCase('sv'))
   );
@@ -1870,7 +1876,7 @@ async function chatSpecificCrimeContext(year,municipality,question){
   } : null;
 }
 
-async function buildChatContext(question=''){
+async function buildChatContext(question='',history=[]){
   const page=chatActivePage();
   let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
 
@@ -1898,7 +1904,7 @@ async function buildChatContext(question=''){
   if(municipality==='__ALL__')municipality=null;
 
   const q=String(question||'').toLocaleLowerCase('sv');
-  const geography=chatQuestionGeography(question);
+  const geography=chatQuestionGeography(lookupQuestion);
   const mentionedMunicipality=geography.municipalities.length===1
     ? geography.municipalities[0]
     : null;
@@ -1948,7 +1954,7 @@ async function buildChatContext(question=''){
     };
   }
 
-  const specificCrimeContext=await chatSpecificCrimeContext(comparisonYear,municipality,question);
+  const specificCrimeContext=await chatSpecificCrimeContext(comparisonYear,municipality,lookupQuestion);
   if(specificCrimeContext){
     context.specificCrime=specificCrimeContext;
   }
@@ -2027,6 +2033,7 @@ function addChatMessage(role,text,extraClass=''){
 function setupChat(){
   const launcher=el('chatLauncher'),panel=el('chatPanel'),close=el('chatClose'),form=el('chatForm'),input=el('chatInput'),send=el('chatSend'),status=el('chatStatus');
   if(!launcher||!panel||!form)return;
+  const chatHistory=[];
   const toggle=open=>{
     panel.classList.toggle('hidden',!open);
     launcher.setAttribute('aria-expanded',String(open));
@@ -2042,7 +2049,9 @@ function setupChat(){
     const question=input.value.trim();
     if(!question)return;
     const endpoint=String(window.CRIME_CHAT_API_URL||'').trim();
+    const recentHistory=chatHistory.slice(-8);
     addChatMessage('user',question);
+    chatHistory.push({role:'user',content:question});
     input.value='';
     if(!endpoint){
       addChatMessage('assistant','Chatten är inlagd men AI-endpointen är ännu inte konfigurerad. Lägg Worker-URL:en i chat-config.js för att aktivera svar.','error');
@@ -2050,12 +2059,12 @@ function setupChat(){
     }
     send.disabled=true;status.textContent='Tar fram underlag…';
     try{
-      const context=await buildChatContext(question);
+      const context=await buildChatContext(question,recentHistory);
       status.textContent='Frågar modellen…';
       const response=await fetch(endpoint,{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({question,context})
+        body:JSON.stringify({question,context,history:recentHistory})
       });
       const data=await response.json().catch(()=>({}));
       if(!response.ok){
@@ -2064,7 +2073,10 @@ function setupChat(){
           : (data.error||('HTTP '+response.status));
         throw new Error(detail);
       }
-      addChatMessage('assistant',String(data.answer||'Inget svar returnerades.'));
+      const answer=String(data.answer||'Inget svar returnerades.');
+      addChatMessage('assistant',answer);
+      chatHistory.push({role:'assistant',content:answer});
+      if(chatHistory.length>12)chatHistory.splice(0,chatHistory.length-12);
     }catch(err){
       console.error(err);
       addChatMessage('assistant','Kunde inte hämta AI-svar: '+String(err.message||err),'error');
