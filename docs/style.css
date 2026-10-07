@@ -301,3 +301,48 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
   color:#cbd5e1;
   white-space:nowrap;
 }
+
+.legislation-label{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+}
+.legislation-label-text{
+  min-width:0;
+  flex:1;
+}
+.legislation-toggle{
+  width:22px;
+  height:22px;
+  padding:0;
+  border:0;
+  border-radius:5px;
+  background:#eef2f7;
+  color:#334155;
+  font-size:13px;
+  line-height:22px;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.legislation-toggle:hover{
+  background:#e2e8f0;
+}
+.legislation-toggle-spacer{
+  width:22px;
+  flex:0 0 22px;
+}
+.legislation-children{
+  display:block;
+}
+.legislation-children[hidden]{
+  display:none;
+}
+.legislation-row-child{
+  background:#f8fafc;
+}
+.legislation-row-child .legislation-label{
+  padding-left:22px;
+}
+.legislation-row-child .legislation-label strong{
+  font-weight:600;
+}
