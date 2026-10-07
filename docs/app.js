@@ -1767,6 +1767,32 @@ async function chatCountyComparison(year,crimeId){
   })).sort((a,b)=>(Number(b.rateDerived)||-Infinity)-(Number(a.rateDerived)||-Infinity));
 }
 
+async function chatCategoryComparison(year,municipality,level=3){
+  if(!municipality)return [];
+  const rows=await query(`
+    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+           CAST("Antal" AS DOUBLE) AS count,
+           CAST("Per100000" AS DOUBLE) AS rate
+    FROM read_parquet('${parquetUrl(year)}')
+    WHERE "Kommun"='${esc(municipality)}'
+      AND "Antal">-555
+  `);
+  const catById=new Map(CATEGORIES.map(c=>[String(c.Brott_ID),c]));
+  return rows
+    .map(r=>{
+      const cat=catById.get(String(r.crimeId));
+      if(!cat || Number(cat['Brottsnivå'])!==Number(level))return null;
+      return {
+        crimeId:Number(r.crimeId),
+        category:conciseCrimeLabel(cat.Brott),
+        count:Number(r.count),
+        rate:r.rate==null?null:Number(r.rate)
+      };
+    })
+    .filter(Boolean)
+    .sort((a,b)=>b.count-a.count);
+}
+
 async function buildChatContext(question=''){
   const page=chatActivePage();
   let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
@@ -1808,6 +1834,8 @@ async function buildChatContext(question=''){
   const totalIntent=/\b(total|totalt|samtliga brott|alla brott|brottslighet(?:en)? totalt)\b/i.test(q);
   if(totalIntent) crimeId=String(META.default_crime_id);
 
+  const categoryIntent=/\b(vanligast|vanligaste|mest förekommande|brottstyp(?:er)?|brottskategor(?:i|ier)|typ(?:er)? av brott)\b/i.test(q);
+
   const context={
     source:'Brottsförebyggande rådet (Brå), anmälda brott',
     report:'BRÅ brottsstatistik – Sveriges kommuner',
@@ -1840,6 +1868,17 @@ async function buildChatContext(question=''){
       rows:comparisonRows,
       complete:wanted.size===0 || comparisonRows.length===wanted.size,
       note:'Kommunvärden kommer direkt från Brå-underlaget. Om requestedMunicipalities innehåller flera namn ska rows användas som huvudunderlag för jämförelsen.'
+    };
+  }
+
+  if(categoryIntent && municipality){
+    const categoryRows=await chatCategoryComparison(comparisonYear,municipality,3);
+    context.categoryComparison={
+      year:comparisonYear,
+      municipality,
+      hierarchyLevel:3,
+      rows:categoryRows,
+      note:'Kategorierna jämförs inom samma Brå-hierarkinivå för att undvika att över- och underkategorier dubbelräknas. Raderna är sorterade efter antal brott.'
     };
   }
 
