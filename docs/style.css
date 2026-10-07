@@ -467,10 +467,58 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 
 /* Interaktiv analys - handlagda brott */
 .handled-controls{
-  grid-template-columns:minmax(170px,1.05fr) minmax(105px,.55fr) minmax(165px,.9fr) minmax(180px,1fr) minmax(260px,1.45fr) minmax(220px,1.2fr);
+  grid-template-columns:minmax(170px,1.05fr) minmax(105px,.55fr) minmax(165px,.9fr) minmax(180px,1fr) minmax(260px,1.45fr) minmax(220px,1.2fr) minmax(210px,1fr);
 }
 .handled-crime-label{min-width:0}
-.handled-crime-label input{width:100%}
+.handled-crime-label select{width:100%}
+.handled-topn-label{min-width:210px}
+.handled-topn-control{min-width:200px}
+.handled-topn-head{display:flex;align-items:baseline;gap:4px;margin-bottom:4px;color:#475569;font-size:11px}
+.handled-topn-head strong{font-size:13px;color:var(--text)}
+#handledTopN{
+  --handled-topn-pct:50%;
+  width:100%;
+  height:24px;
+  margin:0;
+  appearance:none;
+  -webkit-appearance:none;
+  background:transparent;
+  cursor:pointer;
+}
+#handledTopN::-webkit-slider-runnable-track{
+  height:5px;
+  border-radius:999px;
+  background:linear-gradient(to right,#cbd5e1 0%,#cbd5e1 0%,#2f6fed 0%,#2f6fed var(--handled-topn-pct),#cbd5e1 var(--handled-topn-pct),#cbd5e1 100%);
+}
+#handledTopN::-webkit-slider-thumb{
+  appearance:none;
+  -webkit-appearance:none;
+  width:18px;
+  height:18px;
+  margin-top:-6.5px;
+  border-radius:50%;
+  border:3px solid #2f6fed;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+#handledTopN::-moz-range-track{
+  height:5px;
+  border-radius:999px;
+  background:#cbd5e1;
+}
+#handledTopN::-moz-range-progress{
+  height:5px;
+  border-radius:999px;
+  background:#2f6fed;
+}
+#handledTopN::-moz-range-thumb{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  border:3px solid #2f6fed;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
 .handled-kpis{margin-bottom:14px}
 .handled-text-kpi{font-size:16px!important;line-height:1.25;white-space:normal}
 .handled-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}
