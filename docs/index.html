@@ -160,9 +160,15 @@
       <label>Sök
         <input id="legislationSearch" type="search" placeholder="Exempel: cykel, skadegörelse, narkotika…" autocomplete="off">
       </label>
+      <label>Detaljnivå
+        <select id="legislationDetail">
+          <option value="aggregate" selected>Sammanfattad – nivå 1–4</option>
+          <option value="all">Alla nivåer 1–6</option>
+        </select>
+      </label>
       <label>Nivå
         <select id="legislationLevel">
-          <option value="">Alla nivåer</option>
+          <option value="">Alla visade nivåer</option>
           <option value="1">Nivå 1</option>
           <option value="2">Nivå 2</option>
           <option value="3">Nivå 3</option>
@@ -232,6 +238,6 @@
 <script src="chat-config.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=42"></script>
+<script type="module" src="app.js?v=43"></script>
 </body>
 </html>
