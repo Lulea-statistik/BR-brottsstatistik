@@ -144,6 +144,63 @@
       return {value:null,count:null};
     }
 
+    if([
+      'derived:with_suspect_share',
+      'derived:with_suspect_personcleared_share',
+      'derived:personcleared_prosecution_share',
+      'derived:personcleared_penaltyorder_share',
+      'derived:personcleared_waiver_share',
+      'derived:with_suspect_fub_share',
+      'derived:with_suspect_other_share'
+    ].includes(measure.key)){
+      const configs={
+        'derived:with_suspect_share':{
+          numerator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('totalt')&&!x.includes('både med och utan'),
+          denominator:x=>x.includes('samtliga handlagda brott')&&x.includes('både med och utan misstänkt person')
+        },
+        'derived:with_suspect_personcleared_share':{
+          numerator:x=>x.includes('handlagda brott med misstänkt person som personuppklarats'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('totalt')&&!x.includes('både med och utan')
+        },
+        'derived:personcleared_prosecution_share':{
+          numerator:x=>x.includes('personuppklarade brott där åtal väckts'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person som personuppklarats')
+        },
+        'derived:personcleared_penaltyorder_share':{
+          numerator:x=>x.includes('personuppklarade brott där strafföreläggande'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person som personuppklarats')
+        },
+        'derived:personcleared_waiver_share':{
+          numerator:x=>x.includes('personuppklarade brott där åtalsunderlåtelse'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person som personuppklarats')
+        },
+        'derived:with_suspect_fub_share':{
+          numerator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('förundersöknings')&&x.includes('begräns'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('totalt')&&!x.includes('både med och utan')
+        },
+        'derived:with_suspect_other_share':{
+          numerator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('övriga beslut'),
+          denominator:x=>x.includes('handlagda brott med misstänkt person')&&x.includes('totalt')&&!x.includes('både med och utan')
+        }
+      };
+      const config=configs[measure.key];
+      const candidateSheets=Object.values(payload?.sheets||{});
+      for(const s of [sheet,...candidateSheets]){
+        if(!s?.columns||!s?.rows)continue;
+        const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
+        if(!matchedRow)continue;
+        const norm=label=>String(label||'').toLocaleLowerCase('sv-SE').replace(/-/g,' ').replace(/\s+/g,' ').trim();
+        const numeratorIdx=findColumnIndex(s,label=>config.numerator(norm(label)));
+        const denominatorIdx=findColumnIndex(s,label=>config.denominator(norm(label)));
+        const count=Number(matchedRow[numeratorIdx]);
+        const total=Number(matchedRow[denominatorIdx]);
+        if(numeratorIdx>=2&&denominatorIdx>=2&&Number.isFinite(count)&&Number.isFinite(total)&&total>0){
+          return {value:(count/total)*100,count};
+        }
+      }
+      return {value:null,count:null};
+    }
+
     if(measure.key==='derived:no_suspect_fub_share'||measure.key==='derived:no_suspect_other_share'){
       const candidateSheets=Object.values(payload?.sheets||{});
       for(const s of [sheet,...candidateSheets]){
@@ -308,6 +365,16 @@
           });
         }
       });
+    }else if(table==='310'&&$('handledSheet')?.value==='Brott med misstänkt person'){
+      measures=[
+        {value:'derived:with_suspect_share',text:'Andel handlagda brott med misstänkt person (%)'},
+        {value:'derived:with_suspect_personcleared_share',text:'Andel handlagda brott med misstänkt person som personuppklarats (%)'},
+        {value:'derived:personcleared_prosecution_share',text:'Andel personuppklarade brott där åtal väckts (%)'},
+        {value:'derived:personcleared_penaltyorder_share',text:'Andel personuppklarade brott där strafföreläggande utfärdats (%)'},
+        {value:'derived:personcleared_waiver_share',text:'Andel personuppklarade brott där åtalsunderlåtelse utfärdats (%)'},
+        {value:'derived:with_suspect_fub_share',text:'Andel handlagda brott med misstänkt person som förundersökningsbegränsats (%)'},
+        {value:'derived:with_suspect_other_share',text:'Andel handlagda brott med misstänkt person som avslutats med övriga beslut (%)'}
+      ];
     }else if(table==='310'&&$('handledSheet')?.value==='Brott utan misstänkt person'){
       measures=[
         {value:'derived:no_suspect_fub_share',text:'Andel brott utan misstänkt person som förundersökningsbegränsats (%)'},
