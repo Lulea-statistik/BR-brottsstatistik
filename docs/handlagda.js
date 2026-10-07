@@ -144,6 +144,31 @@
       return {value:null,count:null};
     }
 
+    if(measure.key==='derived:no_suspect_fub_share'||measure.key==='derived:no_suspect_other_share'){
+      const candidateSheets=Object.values(payload?.sheets||{});
+      for(const s of [sheet,...candidateSheets]){
+        if(!s?.columns||!s?.rows)continue;
+        const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
+        if(!matchedRow)continue;
+        const totalIdx=findColumnIndex(s,label=>{
+          const x=label.toLocaleLowerCase('sv-SE').replace(/-/g,' ');
+          return x.includes('handlagda brott utan misstänkt person')&&x.includes('totalt');
+        });
+        const countIdx=findColumnIndex(s,label=>{
+          const x=label.toLocaleLowerCase('sv-SE').replace(/-/g,' ');
+          return measure.key==='derived:no_suspect_fub_share'
+            ? x.includes('handlagda brott utan misstänkt person')&&x.includes('förundersöknings')&&x.includes('begräns')
+            : x.includes('handlagda brott utan misstänkt person')&&x.includes('övriga beslut');
+        });
+        const total=Number(matchedRow[totalIdx]);
+        const count=Number(matchedRow[countIdx]);
+        if(totalIdx>=2&&countIdx>=2&&Number.isFinite(total)&&total>0&&Number.isFinite(count)){
+          return {value:(count/total)*100,count};
+        }
+      }
+      return {value:null,count:null};
+    }
+
     if(measure.key==='derived:current_year_share'){
       const year=Number(payload?.year);
       const target=canonicalMeasure('Andel handlagda brott anmälda '+year+' (%)',year);
@@ -283,6 +308,11 @@
           });
         }
       });
+    }else if(table==='310'&&$('handledSheet')?.value==='Brott utan misstänkt person'){
+      measures=[
+        {value:'derived:no_suspect_fub_share',text:'Andel brott utan misstänkt person som förundersökningsbegränsats (%)'},
+        {value:'derived:no_suspect_other_share',text:'Andel brott utan misstänkt person som avslutats med övriga beslut (%)'}
+      ];
     }else if(table==='320'){
       measures=[{value:'derived:current_year_share',text:'Andel handlagda brott anmäld'}];
     }else{
@@ -469,15 +499,21 @@
     try{
       currentPayload=await loadJson(entry.path);
       const sheets=Object.keys(currentPayload.sheets||{});
+      const is300=String(table)==='300';
       const is320=String(table)==='320';
+      const visibleSheets=is300&&sheets.includes('Utredda brott')
+        ? ['Utredda brott']
+        : sheets;
       const preferredSheet=is320
         ? (sheets.includes('Samtliga handlagda brott')?'Samtliga handlagda brott':sheets[0])
-        : (preserveSheet?$('handledSheet')?.value:'');
-      setSelect('handledSheet',sheets.map(x=>({value:x,text:x})),preferredSheet);
+        : (is300&&visibleSheets.includes('Utredda brott')
+          ? 'Utredda brott'
+          : (preserveSheet?$('handledSheet')?.value:''));
+      setSelect('handledSheet',visibleSheets.map(x=>({value:x,text:x})),preferredSheet);
       $('handledSheetLabel')?.classList.toggle('hidden',is320);
       refreshMeasures(preserveMeasure&&!is320);
       refreshCrimeList(preserveCrime);
-      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':sheets.length+' deltabeller');
+      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':visibleSheets.length+' deltabeller');
       renderCurrent();
     }catch(err){
       console.error(err);
