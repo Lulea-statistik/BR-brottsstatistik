@@ -1,0 +1,107 @@
+name: Deploy statistics chat Worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID MISTRAL_API_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Wrangler
+        run: npm install --no-save wrangler@latest
+
+      - name: Deploy Worker
+        shell: bash
+        run: |
+          set -o pipefail
+          npx wrangler deploy --config worker/wrangler.jsonc 2>&1 | tee worker-deploy.log
+
+      - name: Configure Mistral secret
+        shell: bash
+        run: |
+          printf '%s' "$MISTRAL_API_KEY" | npx wrangler secret put MISTRAL_API_KEY --config worker/wrangler.jsonc
+
+      - name: Detect Worker URL
+        id: worker
+        shell: bash
+        run: |
+          url="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' worker-deploy.log | tail -n 1)"
+          if [ -z "$url" ]; then
+            echo "::error::Could not detect the workers.dev URL from Wrangler output."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Worker URL: $url"
+
+      - name: Configure dashboard endpoint
+        shell: bash
+        env:
+          WORKER_URL: ${{ steps.worker.outputs.url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          url = os.environ["WORKER_URL"]
+          Path("docs/chat-config.js").write_text(
+              "// Public configuration only. Never place API keys here.\n"
+              f"window.CRIME_CHAT_API_URL = {json.dumps(url)};\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit Worker URL
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/chat-config.js
+          if git diff --cached --quiet; then
+            echo "Worker URL already configured."
+            exit 0
+          fi
+          git commit -m "Configure statistics chat Worker URL"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Summary
+        shell: bash
+        env:
+          WORKER_URL: ${{ steps.worker.outputs.url }}
+        run: |
+          echo "### Statistics chat deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Worker: $WORKER_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "The dashboard endpoint was written to docs/chat-config.js." >> "$GITHUB_STEP_SUMMARY"

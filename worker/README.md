@@ -1,31 +1,38 @@
 # Statistikchatt – Cloudflare Worker
 
-Detta är backend-proxyn för chatten i GitHub Pages-rapporten.
+Backend-proxy för chatten i GitHub Pages-rapporten. API-nyckeln exponeras aldrig i `docs/`.
 
-## Driftsättning
+## Rekommenderad driftsättning via GitHub Actions
 
-1. Installera Node.js och kör `npm install -D wrangler` i denna mapp.
-2. Logga in med `npx wrangler login`.
-3. Skapa en Mistral API-nyckel i Mistrals kontrollpanel.
-4. Lägg nyckeln som Cloudflare-secret:
+Lägg in följande **Repository secrets** under **Settings → Secrets and variables → Actions**:
 
-   ```
-   npx wrangler secret put MISTRAL_API_KEY
-   ```
+- `CLOUDFLARE_API_TOKEN` – Cloudflare API-token med rätt att publicera Workers.
+- `CLOUDFLARE_ACCOUNT_ID` – Cloudflare Account ID.
+- `MISTRAL_API_KEY` – Mistral API-nyckeln.
 
-5. Publicera:
+Kör sedan workflowet **Deploy statistics chat Worker** via **Actions → Deploy statistics chat Worker → Run workflow**.
 
-   ```
-   npx wrangler deploy
-   ```
+Workflowet gör därefter automatiskt följande:
 
-6. Kopiera Worker-URL:en och sätt den i `docs/chat-config.js`:
+1. publicerar Cloudflare Workern,
+2. lägger in `MISTRAL_API_KEY` som Cloudflare-secret,
+3. läser Worker-adressen från Wrangler,
+4. skriver adressen till `docs/chat-config.js`,
+5. committar konfigurationen till `main`.
 
-   ```js
-   window.CRIME_CHAT_API_URL = "https://din-worker.workers.dev";
-   ```
+Ingen API-nyckel skrivs till repot.
 
-Lägg aldrig Mistral-nyckeln i `docs/` eller annan klientkod.
+## Manuell reservväg
+
+Om automatisk URL-detektering skulle misslyckas kan Workern publiceras manuellt:
+
+```
+npx wrangler login
+npx wrangler secret put MISTRAL_API_KEY --config worker/wrangler.jsonc
+npx wrangler deploy --config worker/wrangler.jsonc
+```
+
+Sätt därefter Worker-URL:en i `docs/chat-config.js`.
 
 ## V1-begränsning
 
