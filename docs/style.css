@@ -411,11 +411,18 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 }
 .change-chart-wrap{
   position:relative;
-  height:560px;
-  margin-top:8px;
+  height:820px;
+  margin-top:12px;
 }
 @media (max-width:1100px){
   .change-grid{
     grid-template-columns:1fr;
   }
+}
+
+.change-panel{
+  padding-bottom:18px;
+}
+.change-grid{
+  align-items:start;
 }
