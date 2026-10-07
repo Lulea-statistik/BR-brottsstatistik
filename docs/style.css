@@ -258,3 +258,46 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
     grid-template-columns:220px minmax(500px,1fr);
   }
 }
+
+.legislation-tooltip{
+  position:fixed;
+  z-index:10000;
+  max-width:min(520px,calc(100vw - 28px));
+  max-height:min(520px,70vh);
+  overflow:auto;
+  pointer-events:none;
+  background:rgba(15,23,42,.96);
+  color:#fff;
+  border-radius:8px;
+  padding:10px 12px;
+  box-shadow:0 8px 28px rgba(15,23,42,.28);
+  font-size:12px;
+  line-height:1.4;
+}
+.legislation-tooltip strong{
+  display:block;
+  font-size:13px;
+  margin-bottom:3px;
+}
+.legislation-tooltip-meta{
+  color:#cbd5e1;
+  margin-bottom:8px;
+}
+.legislation-tooltip-title{
+  border-top:1px solid rgba(255,255,255,.18);
+  padding-top:7px;
+  margin-top:5px;
+  margin-bottom:4px;
+  font-weight:700;
+}
+.legislation-tooltip-child{
+  padding:3px 0 3px 10px;
+  text-indent:-10px;
+}
+.legislation-tooltip-child span{
+  font-weight:700;
+}
+.legislation-tooltip-child small{
+  color:#cbd5e1;
+  white-space:nowrap;
+}
