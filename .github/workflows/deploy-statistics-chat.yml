@@ -2,6 +2,11 @@ name: Deploy statistics chat Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/deploy-statistics-chat.yml"
 
 permissions:
   contents: write
