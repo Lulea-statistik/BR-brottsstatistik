@@ -6,7 +6,7 @@
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="icon" type="image/png" href="favicon.png?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
 <header class="topbar">
@@ -163,8 +163,27 @@
     </div>
   </section>
 </main>
+<button id="chatLauncher" class="chat-launcher" type="button" aria-controls="chatPanel" aria-expanded="false">Fråga om statistiken</button>
+<aside id="chatPanel" class="chat-panel hidden" aria-label="Fråga om statistiken">
+  <div class="chat-head">
+    <div><strong>Fråga om statistiken</strong><small>Svar baseras på rapportens aktuella val och Brå-data.</small></div>
+    <button id="chatClose" class="chat-close" type="button" aria-label="Stäng">×</button>
+  </div>
+  <div id="chatMessages" class="chat-messages" aria-live="polite">
+    <div class="chat-message assistant">Välj gärna kommun och brottskategori i rapporten och ställ sedan en fråga om utvecklingen.</div>
+  </div>
+  <form id="chatForm" class="chat-form">
+    <textarea id="chatInput" rows="3" maxlength="800" placeholder="Exempel: Hur har detta utvecklats sedan 2015?"></textarea>
+    <div class="chat-form-row">
+      <span id="chatStatus" class="chat-status"></span>
+      <button id="chatSend" type="submit">Skicka</button>
+    </div>
+  </form>
+  <div class="chat-foot">AI-svar kan innehålla fel. Kontrollera viktiga uppgifter mot diagram och källa.</div>
+</aside>
+<script src="chat-config.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=29"></script>
+<script type="module" src="app.js?v=30"></script>
 </body>
 </html>
