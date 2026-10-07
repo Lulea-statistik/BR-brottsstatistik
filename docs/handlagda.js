@@ -104,21 +104,104 @@
     return currentPayload?.sheets?.[name]||null;
   }
 
-  function selectedMeasureIndex(){
-    return Number($('handledMeasure')?.value||2);
+  function findColumnIndex(sheet,matcher){
+    return (sheet?.columns||[]).findIndex((label,i)=>i>=2&&matcher(String(label||'')));
   }
 
-  function hasPositiveMeasureValue(row,measureIndex=selectedMeasureIndex()){
-    const raw=row?.[measureIndex];
-    if(raw===null||raw===undefined||raw==='')return false;
-    const value=Number(raw);
-    return Number.isFinite(value)&&value>0;
+  function currentMeasure(){
+    const key=$('handledMeasure')?.value||'';
+    const text=$('handledMeasure')?.selectedOptions?.[0]?.textContent||'Värde';
+    return {key,label:text,percent:isPercentMeasure(text)||key.startsWith('derived:')};
+  }
+
+  function measureResult(payload,sheetName,row,measure){
+    if(!row||!measure)return {value:null,count:null};
+    const table=String(payload?.table_id||$('handledTable')?.value||'');
+    const sheet=payload?.sheets?.[sheetName]||null;
+
+    if(measure.key==='derived:investigated_share'||measure.key==='derived:direct_share'){
+      const candidateSheets=Object.values(payload?.sheets||{});
+      for(const s of [sheet,...candidateSheets]){
+        if(!s?.columns||!s?.rows)continue;
+        const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
+        if(!matchedRow)continue;
+        const totalIdx=findColumnIndex(s,label=>{
+          const x=label.toLocaleLowerCase('sv-SE');
+          return x.includes('handlagda brott')&&x.includes('totalt')&&!x.includes('övriga');
+        });
+        const countIdx=findColumnIndex(s,label=>{
+          const x=label.toLocaleLowerCase('sv-SE');
+          return measure.key==='derived:investigated_share'
+            ? /^utredda brott(?:, totalt)?$/.test(x.trim())
+            : /^direktavskrivna brott(?:, totalt)?$/.test(x.trim());
+        });
+        const total=Number(matchedRow[totalIdx]);
+        const count=Number(matchedRow[countIdx]);
+        if(totalIdx>=2&&countIdx>=2&&Number.isFinite(total)&&total>0&&Number.isFinite(count)){
+          return {value:(count/total)*100,count};
+        }
+      }
+      return {value:null,count:null};
+    }
+
+    if(measure.key==='derived:current_year_share'){
+      const year=Number(payload?.year);
+      const target=canonicalMeasure('Andel handlagda brott anmälda '+year+' (%)',year);
+      const candidateSheets=[
+        sheet,
+        ...Object.entries(payload?.sheets||{})
+          .filter(([name])=>name!==sheetName)
+          .map(([,s])=>s)
+      ];
+      for(const s of candidateSheets){
+        if(!s?.columns||!s?.rows)continue;
+        const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
+        if(!matchedRow)continue;
+        const idx=s.columns.findIndex(c=>canonicalMeasure(c,year)===target);
+        const countIdx=findColumnIndex(s,label=>{
+          const x=label.toLocaleLowerCase('sv-SE');
+          return x.includes('handlagda brott')&&x.includes('totalt')&&!x.includes('personuppklarade')&&!x.includes('övriga');
+        });
+        const value=Number(matchedRow[idx]);
+        const count=Number(matchedRow[countIdx]);
+        if(idx>=2&&Number.isFinite(value)){
+          return {value,count:Number.isFinite(count)?count:null};
+        }
+      }
+      return {value:null,count:null};
+    }
+
+    if(measure.key.startsWith('column:')){
+      const canonical=measure.key.slice(7);
+      const year=Number(payload?.year);
+      const candidateSheets=[
+        sheet,
+        ...Object.entries(payload?.sheets||{})
+          .filter(([name])=>name!==sheetName)
+          .map(([,s])=>s)
+      ];
+      for(const s of candidateSheets){
+        if(!s?.columns||!s?.rows)continue;
+        const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
+        if(!matchedRow)continue;
+        const idx=s.columns.findIndex(c=>canonicalMeasure(c,year)===canonical);
+        if(idx<2)continue;
+        const value=Number(matchedRow[idx]);
+        if(Number.isFinite(value))return {value,count:null};
+      }
+    }
+    return {value:null,count:null};
+  }
+
+  function hasPositiveMeasureValue(row,measure=currentMeasure(),payload=currentPayload,sheetName=$('handledSheet')?.value){
+    const result=measureResult(payload,sheetName,row,measure);
+    return Number.isFinite(result.value)&&result.value>0;
   }
 
   function resolveCrimeRow(sheet){
     if(!sheet?.rows?.length)return null;
-    const measureIndex=selectedMeasureIndex();
-    const validRows=sheet.rows.filter(r=>hasPositiveMeasureValue(r,measureIndex));
+    const measure=currentMeasure();
+    const validRows=sheet.rows.filter(r=>hasPositiveMeasureValue(r,measure));
     if(!validRows.length)return null;
     const selectedKey=$('handledCrime')?.value||selectedCrimeKey;
     return validRows.find(r=>crimeKey(r)===selectedKey)
@@ -133,9 +216,9 @@
     if(!sheet||!select)return;
 
     const oldKey=preserve?selectedCrimeKey:'';
-    const measureIndex=selectedMeasureIndex();
+    const measure=currentMeasure();
     crimeOptions=sheet.rows
-      .filter(row=>hasPositiveMeasureValue(row,measureIndex))
+      .filter(row=>hasPositiveMeasureValue(row,measure))
       .map(row=>({key:crimeKey(row),label:crimeLabel(row),row}));
 
     let chosen=crimeOptions.find(x=>x.key===oldKey)
@@ -178,8 +261,32 @@
   function refreshMeasures(preserve=true){
     const sheet=selectedSheet();
     if(!sheet)return;
+    const table=String($('handledTable')?.value||'');
     const old=preserve?$('handledMeasure')?.value:'';
-    const measures=sheet.columns.slice(2).map((text,i)=>({value:String(i+2),text}));
+    let measures=[];
+
+    if(table==='300'&&$('handledSheet')?.value==='Samtliga handlagda brott'){
+      measures=[
+        {value:'derived:investigated_share',text:'Andel utredda brott (%)'},
+        {value:'derived:direct_share',text:'Andel direktavskrivna brott (%)'}
+      ];
+      sheet.columns.forEach(label=>{
+        if(/lagföringsprocent|personuppklaringsprocent/i.test(String(label||''))){
+          measures.push({
+            value:'column:'+canonicalMeasure(label,currentPayload?.year),
+            text:String(label).replace(/\s*\(%\)\s*$/,' (%)')
+          });
+        }
+      });
+    }else if(table==='320'){
+      measures=[{value:'derived:current_year_share',text:'Andel handlagda brott anmäld'}];
+    }else{
+      measures=sheet.columns.slice(2).map(text=>({
+        value:'column:'+canonicalMeasure(text,currentPayload?.year),
+        text
+      }));
+    }
+
     setSelect('handledMeasure',measures,old);
   }
 
@@ -196,7 +303,11 @@
           bodyFont:{size:13},
           padding:11,
           callbacks:{
-            label:ctx=>fmtNumber(ctx.raw,percent)
+            label:ctx=>fmtNumber(ctx.raw,percent),
+            afterLabel:ctx=>{
+              const count=ctx.dataset?._counts?.[ctx.dataIndex];
+              return Number.isFinite(Number(count)) ? 'Antal: '+fmtNumber(count,false) : '';
+            }
           }
         }
       },
@@ -220,13 +331,11 @@
     selectedCrimeKey=crimeKey(row);
     $('handledCrime').value=selectedCrimeKey;
 
-    const measureIndex=Number($('handledMeasure').value||2);
-    const measure=sheet.columns[measureIndex]||'Värde';
-    const value=row[measureIndex];
-    const percent=isPercentMeasure(measure);
+    const measure=currentMeasure();
+    const result=measureResult(currentPayload,$('handledSheet').value,row,measure);
 
-    $('handledValue').textContent=fmtNumber(value,percent);
-    $('handledValueSub').textContent=measure;
+    $('handledValue').textContent=fmtNumber(result.value,measure.percent);
+    $('handledValueSub').textContent=measure.label;
     $('handledCrimeKpi').textContent=String(row[1]??'–');
     $('handledLawKpi').textContent=String(row[0]??'–');
     $('handledSheetKpi').textContent=$('handledSheet').value;
@@ -234,8 +343,8 @@
     $('handledSourceLink').href=currentPayload?.source_file||currentPayload?.source_page||'#';
 
     renderDetail(sheet,row);
-    renderRanking(sheet,measureIndex,measure,percent);
-    renderTrend(row,measure,percent);
+    renderRanking(sheet,measure);
+    renderTrend(row,measure);
   }
 
   function renderDetail(sheet,row){
@@ -243,21 +352,23 @@
     tbody.innerHTML='';
     sheet.columns.slice(2).forEach((label,i)=>{
       const idx=i+2;
+      const raw=row[idx];
+      if(raw===null||raw===undefined||raw===''||!Number.isFinite(Number(raw))||Number(raw)===0)return;
       const tr=document.createElement('tr');
       const th=document.createElement('th');
       const td=document.createElement('td');
       th.textContent=label;
-      td.textContent=fmtNumber(row[idx],isPercentMeasure(label));
+      td.textContent=fmtNumber(raw,isPercentMeasure(label));
       tr.append(th,td);
       tbody.appendChild(tr);
     });
     $('handledDetailStatus').textContent=(currentPayload?.year||'')+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · '+crimeLabel(row);
   }
 
-  function renderRanking(sheet,measureIndex,measure,percent){
+  function renderRanking(sheet,measure){
     const ranked=sheet.rows
-      .filter(r=>hasPositiveMeasureValue(r,measureIndex))
-      .map(r=>({row:r,value:Number(r[measureIndex])}))
+      .map(r=>({row:r,...measureResult(currentPayload,$('handledSheet').value,r,measure)}))
+      .filter(x=>Number.isFinite(x.value)&&x.value>0)
       .filter(x=>String(x.row?.[1]||'').trim().toUpperCase()!=='SAMTLIGA BROTT')
       .sort((a,b)=>b.value-a.value);
 
@@ -273,25 +384,24 @@
         labels:rows.map((x,i)=>(start+i+1)+'. '+String(x.row[1]||x.row[0]||'')),
         datasets:[{
           data:rows.map(x=>x.value),
+          _counts:rows.map(x=>x.count),
           backgroundColor:'rgba(15,118,110,.72)',
           borderColor:'rgb(15,118,110)',
           borderWidth:1,
           borderRadius:3
         }]
       },
-      options:chartOptions(percent,'y')
+      options:chartOptions(measure.percent,'y')
     });
     $('handledRankTitle').textContent='Rankade värden – '+(currentPayload?.year||'');
-    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · plats '+(start+1)+'–'+end+' av '+ranked.length;
+    $('handledRankStatus').textContent=measure.label+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · plats '+(start+1)+'–'+end+' av '+ranked.length;
   }
 
-  async function renderTrend(currentRow,measure,percent){
+  async function renderTrend(currentRow,measure){
     const table=$('handledTable').value;
     const region=$('handledRegion').value;
     const sheetName=$('handledSheet').value;
     const targetKey=crimeKey(currentRow);
-    const currentYear=Number($('handledYear').value);
-    const targetCanonical=canonicalMeasure(measure,currentYear);
 
     $('handledTrendStatus').textContent='Laddar tidsserie…';
 
@@ -307,13 +417,13 @@
           ...sheetEntries.filter(([name])=>name===sheetName),
           ...sheetEntries.filter(([name])=>name!==sheetName)
         ];
-        for(const [,sheet] of orderedSheets){
+        for(const [name,sheet] of orderedSheets){
           const row=sheet?.rows?.find(r=>crimeKey(r)===targetKey);
           if(!row)continue;
-          const idx=sheet.columns.findIndex(c=>canonicalMeasure(c,payload.year)===targetCanonical);
-          if(idx<2)continue;
-          const value=Number(row[idx]);
-          if(Number.isFinite(value))return {year:Number(payload.year),value};
+          const result=measureResult(payload,name,row,measure);
+          if(Number.isFinite(result.value)&&result.value>0){
+            return {year:Number(payload.year),value:result.value,count:result.count};
+          }
         }
         return null;
       }catch{return null;}
@@ -326,6 +436,7 @@
         labels:points.map(x=>String(x.year)),
         datasets:[{
           data:points.map(x=>x.value),
+          _counts:points.map(x=>x.count),
           borderColor:'rgb(37,99,235)',
           backgroundColor:'rgba(37,99,235,.12)',
           pointRadius:3,
@@ -334,10 +445,10 @@
           fill:false
         }]
       },
-      options:chartOptions(percent,'x')
+      options:chartOptions(measure.percent,'x')
     });
     $('handledTrendTitle').textContent='Utveckling över tid – '+String(currentRow[1]||'');
-    $('handledTrendStatus').textContent=measure+' · '+($('handledRegion').selectedOptions[0]?.textContent||region)+' · '+points.length+' år';
+    $('handledTrendStatus').textContent=measure.label+' · '+($('handledRegion').selectedOptions[0]?.textContent||region)+' · '+points.length+' år';
   }
 
   async function loadSelection({preserveSheet=true,preserveCrime=true,preserveMeasure=true}={}){
@@ -353,10 +464,15 @@
     try{
       currentPayload=await loadJson(entry.path);
       const sheets=Object.keys(currentPayload.sheets||{});
-      setSelect('handledSheet',sheets.map(x=>({value:x,text:x})),preserveSheet?$('handledSheet')?.value:'');
-      refreshMeasures(preserveMeasure);
+      const is320=String(table)==='320';
+      const preferredSheet=is320
+        ? (sheets.includes('Samtliga handlagda brott')?'Samtliga handlagda brott':sheets[0])
+        : (preserveSheet?$('handledSheet')?.value:'');
+      setSelect('handledSheet',sheets.map(x=>({value:x,text:x})),preferredSheet);
+      $('handledSheetLabel')?.classList.toggle('hidden',is320);
+      refreshMeasures(preserveMeasure&&!is320);
       refreshCrimeList(preserveCrime);
-      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+sheets.length+' deltabeller';
+      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':sheets.length+' deltabeller');
       renderCurrent();
     }catch(err){
       console.error(err);
