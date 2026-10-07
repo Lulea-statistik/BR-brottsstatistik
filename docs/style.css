@@ -555,3 +555,38 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 /* Handlagda brott: dolj statusrad och KPI-rutor ovanfor diagrammen */
 .handled-status{display:none!important}
 .handled-kpis{display:none!important}
+
+/* Sokbar brottstyp och rankningsslider i diagramkortet */
+.handled-crime-native{display:none}
+.handled-crime-picker{position:relative;width:100%;min-width:260px}
+.handled-crime-button{
+  width:100%;min-height:36px;text-align:left;padding:8px 34px 8px 10px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--text);
+  cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.handled-crime-button:after{content:"▾";position:absolute;right:10px;top:8px;color:var(--muted)}
+.handled-crime-menu{
+  position:absolute;left:0;top:calc(100% + 4px);z-index:1200;
+  width:max(100%,420px);max-width:min(680px,90vw);background:#fff;
+  border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px rgba(23,32,51,.16);padding:7px;
+}
+.handled-crime-menu.hidden{display:none}
+.handled-crime-search{
+  width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);
+  border-radius:6px;outline:none;font:inherit;color:var(--text);background:#fff;
+}
+.handled-crime-search:focus{border-color:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.12)}
+.handled-crime-list{max-height:360px;overflow:auto;margin-top:6px}
+.handled-crime-option{
+  display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);
+  padding:7px 9px;border-radius:5px;cursor:pointer;font:inherit;
+}
+.handled-crime-option:hover,.handled-crime-option.selected{background:#eef3fb}
+.handled-crime-option.selected{font-weight:600}
+.handled-crime-empty{padding:10px;color:var(--muted);font-size:12px}
+.handled-rank-slider{margin:12px 0 4px}
+.handled-rank-slider #handledTopN{width:100%}
+@media(max-width:640px){
+  .handled-crime-picker{min-width:0}
+  .handled-crime-menu{width:100%;max-width:none}
+}
