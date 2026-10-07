@@ -1921,7 +1921,13 @@ async function buildChatContext(question='',history=[]){
 
   if(municipality==='__ALL__')municipality=null;
 
-  const q=String(question||'').toLocaleLowerCase('sv');
+  const recentUserHistory=(history||[])
+    .filter(m=>m?.role==='user')
+    .slice(-3)
+    .map(m=>String(m.content||''))
+    .join(' ');
+  const lookupQuestion=(recentUserHistory+' '+String(question||'')).trim();
+  const q=String(lookupQuestion||'').toLocaleLowerCase('sv');
   const geography=chatQuestionGeography(lookupQuestion);
   const mentionedMunicipality=geography.municipalities.length===1
     ? geography.municipalities[0]
