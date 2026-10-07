@@ -6,7 +6,7 @@
   <title>BRÅ brottsstatistik – Sveriges kommuner</title>
   <link rel="icon" type="image/png" href="favicon.png?v=1">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <header class="topbar">
@@ -143,6 +143,13 @@
         </div>
         <div class="profile-note">Rutornas storlek visar andelen av valt mått. Totalt antal brott ingår inte som egen kategori.</div>
       </div>
+      <div class="profile-kpis">
+        <div class="profile-kpi">
+          <span>Brott i diagrammet</span>
+          <strong id="profileTotalCrimes">–</strong>
+          <small id="profileTotalCrimesPeriod">–</small>
+        </div>
+      </div>
       <div id="profileTreemap" class="profile-treemap" aria-label="Treemap över brottskategorier"></div>
     </div>
   </section>
@@ -158,6 +165,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=22"></script>
+<script type="module" src="app.js?v=23"></script>
 </body>
 </html>
