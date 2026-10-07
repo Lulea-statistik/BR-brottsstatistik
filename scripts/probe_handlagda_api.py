@@ -8,6 +8,7 @@ import requests
 
 ASSET = "https://bra.se/webapp-resource/4.63eed38e192716a4afc1718/360.5efe631a19493c8efed2de96/1738664703154/webapp-assets.js"
 OUT = Path("data/handlagda_statselector_probe.json")
+RAW = Path("data/statselector_assets.js")
 
 
 def contexts(text: str, term: str, radius: int = 1800):
@@ -30,6 +31,7 @@ def main():
     r = requests.get(ASSET, timeout=60, headers={"User-Agent":"Lulea-statistik/1.0"})
     r.raise_for_status()
     text = r.text
+    RAW.write_text(text, encoding="utf-8")
 
     terms = [
         "requester", "router", "formPeriodRegion", "statisticsdownload",
