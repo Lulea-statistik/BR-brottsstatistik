@@ -1724,7 +1724,12 @@ function setupChat(){
         body:JSON.stringify({question,context})
       });
       const data=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(data.error||('HTTP '+response.status));
+      if(!response.ok){
+        const detail=data.upstreamStatus
+          ? data.error+' ('+data.upstreamStatus+'): '+(data.upstreamMessage||'okänt fel')
+          : (data.error||('HTTP '+response.status));
+        throw new Error(detail);
+      }
       addChatMessage('assistant',String(data.answer||'Inget svar returnerades.'));
     }catch(err){
       console.error(err);
