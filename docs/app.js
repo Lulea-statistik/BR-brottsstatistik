@@ -1084,7 +1084,7 @@ function categoryParentId(cat){
   return p==null || p==='' || Number.isNaN(Number(p)) ? null : String(Math.trunc(Number(p)));
 }
 
-function buildProfileTree(rows,metric){
+function buildProfileTree(rows,metric,totalValue,totalCount){
   const valueById=new Map(rows.map(r=>[String(r.crimeId),Number(r.value)]));
   const countById=new Map(rows.map(r=>[String(r.crimeId),Number(r.countValue)]));
   const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
@@ -1148,8 +1148,10 @@ function buildProfileTree(rows,metric){
   }
   root.children.forEach(assignLeafValues);
   root.children=root.children.filter(ch=>ch.value>0);
-  root.value=root.children.reduce((s,ch)=>s+ch.value,0);
-  root.count=root.children.reduce((s,ch)=>s+ch.count,0);
+  root.rawLeafValue=root.children.reduce((s,ch)=>s+ch.value,0);
+  root.rawLeafCount=root.children.reduce((s,ch)=>s+ch.count,0);
+  root.value=Number(totalValue)||0;
+  root.count=Number(totalCount)||0;
   return root;
 }
 
@@ -1215,7 +1217,8 @@ function renderTreemap(tree,metric){
   }
 
   const leaves=root.leaves().filter(d=>d.value>0);
-  const total=d3.sum(leaves,d=>d.value);
+  const layoutTotal=d3.sum(leaves,d=>d.value);
+  const total=Number(tree.value)||layoutTotal;
 
   const topAncestor=d=>{
     let n=d;
@@ -1304,6 +1307,16 @@ async function renderProfile(){
           ? 'SUM(CAST("Antal" AS DOUBLE)) / '+(end-start+1)
           : 'SUM(CAST("Per100000" AS DOUBLE)) / '+(end-start+1);
 
+    const totalRows=await query(`
+      SELECT CAST(${expression} AS DOUBLE) AS value,
+             CAST(SUM(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS countValue
+      FROM read_parquet(${parquetSqlForRange(start,end)})
+      WHERE "Antal">-555${municipalityWhere}
+        AND "Brott_ID"=${Number(META.default_crime_id)}
+    `);
+    const authoritativeTotalValue=Number(totalRows[0]?.value)||0;
+    const authoritativeTotalCount=Number(totalRows[0]?.countValue)||0;
+
     const rows=await query(`
       SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
              CAST(${expression} AS DOUBLE) AS value,
@@ -1315,13 +1328,18 @@ async function renderProfile(){
       HAVING ${expression}>0
     `);
 
-    const tree=buildProfileTree(rows,metric);
+    const tree=buildProfileTree(rows,metric,authoritativeTotalValue,authoritativeTotalCount);
     const scope=profileScopeText();
     const periodText=multi?start+'–'+end:String(start);
     el('profileTitle').textContent='Områdesprofil – '+scope;
-    el('profileStatus').textContent=periodText+' · '+info.label+' · '+tree.children.length+' huvudgrupper';
-    el('profileTotalCrimes').textContent=fmt0.format(tree.count||0);
-    el('profileTotalCrimesPeriod').textContent=multi ? 'summa för '+start+'–'+end : 'år '+start;
+    el('profileTotalCrimes').textContent=fmt0.format(authoritativeTotalCount);
+    const leafSum=Number(tree.rawLeafCount)||0;
+    const qaDiff=authoritativeTotalCount>0 ? 100*(leafSum-authoritativeTotalCount)/authoritativeTotalCount : 0;
+    el('profileTotalCrimesPeriod').textContent=(multi ? 'summa för '+start+'–'+end : 'år '+start)
+      +' · källa: Totalt antal brott';
+    const statusBase=periodText+' · '+info.label+' · '+tree.children.length+' huvudgrupper';
+    el('profileStatus').textContent=statusBase
+      +(Math.abs(qaDiff)>.1?' · hierarkisumma avviker '+fmt1.format(qaDiff)+' % från totalen':'');
     renderTreemap(tree,metric);
     profileRendered=true;
   }catch(err){
@@ -1340,11 +1358,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=23',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=23',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=23',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=23',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=23',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=24',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=24',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=24',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=24',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=24',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
