@@ -60,3 +60,9 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .profile-group-label{pointer-events:none;font-family:Inter,Segoe UI,Arial,sans-serif;fill:#172033;font-weight:700}
 .profile-tooltip{position:fixed;z-index:2000;pointer-events:none;background:rgba(23,32,51,.96);color:#fff;padding:8px 10px;border-radius:7px;font-size:12px;line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.18);max-width:320px}
 @media(max-width:900px){.profile-heading{display:block}.profile-note{text-align:left;margin-top:8px}.profile-treemap{height:560px}}
+
+.profile-kpis{display:flex;gap:10px;margin:0 0 12px}
+.profile-kpi{min-width:190px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 12px;box-shadow:0 1px 2px rgba(23,32,51,.03)}
+.profile-kpi span{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.profile-kpi strong{display:block;font-size:22px;line-height:1.15;color:var(--text)}
+.profile-kpi small{display:block;font-size:10px;color:var(--muted);margin-top:3px}
