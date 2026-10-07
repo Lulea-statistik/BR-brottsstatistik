@@ -44,9 +44,29 @@ def normalize_sheet(book, sheet: str):
     if raw.shape[0] < 3 or raw.shape[1] < 3:
         return None
 
-    headers = [clean(v) for v in raw.iloc[1].tolist()]
-    if len(headers) < 3 or not headers[1]:
+    # Layouten skiljer sig mellan äldre .xls och nyare .xlsx. Hitta därför
+    # rubrikraden genom innehållet i stället för ett fast radnummer.
+    header_idx = None
+    for idx in range(min(30, len(raw))):
+        vals = [clean(v) for v in raw.iloc[idx].tolist()]
+        text = " | ".join(str(v or "") for v in vals).casefold()
+        nonempty = sum(v is not None for v in vals)
+        if "brottstyp" in text and nonempty >= 3:
+            header_idx = idx
+            break
+
+    if header_idx is None:
         return None
+
+    headers = [clean(v) for v in raw.iloc[header_idx].tolist()]
+    if len(headers) < 3:
+        return None
+
+    # I vissa äldre filer är första rubriken tom men andra kolumnen är Brottstyp.
+    if not headers[0]:
+        headers[0] = "Lagrum"
+    if len(headers) > 1 and not headers[1]:
+        headers[1] = "Brottstyp"
 
     columns = []
     seen = {}
@@ -59,12 +79,22 @@ def normalize_sheet(book, sheet: str):
         columns.append(label)
 
     rows = []
-    for _, series in raw.iloc[2:].iterrows():
+    for _, series in raw.iloc[header_idx + 1:].iterrows():
         vals = [clean(v) for v in series.iloc[:len(columns)].tolist()]
         if not vals or all(v is None for v in vals):
             continue
-        # Real data rows have lagrum/brottstyp in the first two columns.
-        if vals[0] is None and vals[1] is None:
+
+        # Behåll endast faktiska datarader. Äldre filer kan ha fotnoter efter
+        # tabellen som annars riskerar att följa med.
+        first = str(vals[0] or "").strip()
+        second = str(vals[1] or "").strip() if len(vals) > 1 else ""
+        numeric_count = sum(
+            isinstance(v, (int, float)) and not isinstance(v, bool)
+            for v in vals[2:]
+        )
+        if not first and not second:
+            continue
+        if numeric_count == 0:
             continue
         rows.append(vals)
 
