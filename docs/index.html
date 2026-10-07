@@ -62,7 +62,7 @@
   }
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 <header class="topbar">
@@ -337,10 +337,17 @@
       <label>Område<select id="handledRegion"></select></label>
       <label>Deltabell<select id="handledSheet"></select></label>
       <label class="handled-crime-label">Brottstyp
-        <input id="handledCrime" list="handledCrimeList" autocomplete="off" placeholder="Sök brottstyp…">
-        <datalist id="handledCrimeList"></datalist>
+        <select id="handledCrime"></select>
       </label>
       <label>Mått<select id="handledMeasure"></select></label>
+      <label class="handled-topn-label">Antal kategorier
+        <div class="handled-topn-control">
+          <div class="handled-topn-head">
+            <span>Top</span><strong id="handledTopNValue">15</strong>
+          </div>
+          <input id="handledTopN" type="range" min="5" max="25" step="1" value="15" aria-label="Antal kategorier i rankingen">
+        </div>
+      </label>
     </div>
 
     <div id="handledStatus" class="handled-status">Laddar interaktiv data…</div>
@@ -427,7 +434,7 @@
     if(tab)tab.click();
   });
 </script>
-<script src="handlagda.js?v=4"></script>
+<script src="handlagda.js?v=5"></script>
 <script type="module" src="app.js?v=50"></script>
 </body>
 </html>
