@@ -367,7 +367,7 @@ function setupControls(){
     ])
   ).entries()].sort((a,b)=>a[0].localeCompare(b[0],'sv'));
   ['overviewCrime','trendCrime','mapCrime'].forEach(id=>fillSelect(id,cats,META.default_crime_id));
-  ['overviewMunicipality','trendMunicipality'].forEach(id=>fillSelect(id,mun,META.default_municipality));
+  ['overviewMunicipality','trendMunicipality','changeMunicipality'].forEach(id=>fillSelect(id,mun,META.default_municipality));
   fillSelect('overviewYear',years,META.latest_year);
   const minYear=Math.min(...META.available_years);
   const maxYear=Math.max(...META.available_years);
@@ -378,6 +378,12 @@ function setupControls(){
   });
   updateMapYearUi();
   updateProfileYearUi();
+  if(el('changeBaseYear')){
+    el('changeBaseYear').min=String(minYear);
+    el('changeBaseYear').max=String(Math.max(minYear,maxYear-1));
+    el('changeBaseYear').value=String(Math.max(minYear,maxYear-10));
+    updateChangeYearUi();
+  }
   const countyItems=[{value:'',text:'Alla län'},...counties.map(x=>({value:x,text:x}))];
   const skrItems=[{value:'',text:'Alla kommungrupper'},...skrGroups.map(([value,text])=>({value,text}))];
   fillSelect('mapCounty',countyItems,'');
@@ -411,6 +417,12 @@ function setupControls(){
   el('trendMetric').addEventListener('change',renderTrend);
   el('trendCounty').addEventListener('change',async()=>{refreshTrendMunicipalities();await refreshCrimeTreeForPage('trend');await renderTrend();});
   el('trendSkrGroup').addEventListener('change',async()=>{refreshTrendMunicipalities();await refreshCrimeTreeForPage('trend');await renderTrend();});
+  el('changeMunicipality').addEventListener('change',renderChangeRanking);
+  el('changeMetric').addEventListener('change',renderChangeRanking);
+  el('changeMode').addEventListener('change',renderChangeRanking);
+  el('changeLevel').addEventListener('change',renderChangeRanking);
+  el('changeBaseYear').addEventListener('input',()=>{updateChangeYearUi();renderChangeRanking(false);});
+  el('changeBaseYear').addEventListener('change',()=>renderChangeRanking(true));
   el('mapYearStart').addEventListener('input',()=>handleMapYearRange('start',false));
   el('mapYearEnd').addEventListener('input',()=>handleMapYearRange('end',false));
   el('mapYearStart').addEventListener('change',()=>handleMapYearRange('start',true));
@@ -448,6 +460,9 @@ function setupTabs(){
     },60);
     if(btn.dataset.page==='profile')setTimeout(async()=>{
       await renderProfile();
+    },20);
+    if(btn.dataset.page==='change')setTimeout(async()=>{
+      await renderChangeRanking();
     },20);
     if(btn.dataset.page==='legislation')setTimeout(async()=>{
       await renderLegislationTimeline();
@@ -643,6 +658,171 @@ async function renderTrend(){
       drawLine('trendChart',data,metric,info.label,municipality);
     }
   }finally{setLoading(null);}
+}
+
+function updateChangeYearUi(){
+  const slider=el('changeBaseYear');
+  if(!slider)return;
+  const base=Number(slider.value);
+  const latest=Number(META.latest_year);
+  const windowYears=Math.max(0,latest-base);
+  if(el('changeYearPeriod'))el('changeYearPeriod').textContent=base+'–'+latest;
+  if(el('changeWindowText'))el('changeWindowText').textContent=windowYears+' år';
+}
+
+async function changeRankingRows(municipality,baseYear,latestYear,level,metric){
+  const field=metric==='Antal' ? 'Antal' : 'Per100000';
+  const rows=await query(`
+    SELECT CAST("År" AS INTEGER) AS year,
+           CAST("Brott_ID" AS INTEGER) AS crimeId,
+           CAST("${field}" AS DOUBLE) AS value,
+           CAST("Antal" AS DOUBLE) AS count
+    FROM read_parquet('${parquetUrl(baseYear)}','${parquetUrl(latestYear)}')
+    WHERE "Kommun"='${esc(municipality)}'
+      AND "Antal">-555
+      AND "Brott_ID"<>${Number(META.default_crime_id)}
+      AND CAST("År" AS INTEGER) IN (${Number(baseYear)},${Number(latestYear)})
+  `);
+
+  const byCrime=new Map();
+  for(const row of rows){
+    const cat=CATEGORIES.find(c=>String(c.Brott_ID)===String(row.crimeId));
+    if(!cat || Number(cat['Brottsnivå'])!==Number(level))continue;
+    if(!byCrime.has(String(row.crimeId))){
+      byCrime.set(String(row.crimeId),{
+        crimeId:Number(row.crimeId),
+        category:legislationDisplayLabel(row.crimeId,cat.Brott),
+        fullCategory:String(cat.Brott),
+        level:Number(cat['Brottsnivå']),
+        base:null,
+        latest:null,
+        baseCount:null,
+        latestCount:null
+      });
+    }
+    const item=byCrime.get(String(row.crimeId));
+    if(Number(row.year)===Number(baseYear)){
+      item.base=Number(row.value);
+      item.baseCount=Number(row.count);
+    }
+    if(Number(row.year)===Number(latestYear)){
+      item.latest=Number(row.value);
+      item.latestCount=Number(row.count);
+    }
+  }
+
+  return [...byCrime.values()]
+    .filter(r=>Number.isFinite(r.base) && Number.isFinite(r.latest) && r.base>=0 && r.latest>=0)
+    .map(r=>({
+      ...r,
+      absoluteChange:r.latest-r.base,
+      percentChange:r.base>0 ? (r.latest-r.base)/r.base*100 : null
+    }));
+}
+
+function drawChangeRankingChart(id,rows,mode,metric,title){
+  destroyChart(id);
+  const isPercent=mode==='percent';
+  const values=rows.map(r=>isPercent?r.percentChange:r.absoluteChange);
+  const labels=rows.map(r=>r.category);
+  const unit=metric==='Antal'?'brott':'per 100 000';
+
+  charts[id]=new Chart(el(id),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:title,
+        data:values,
+        backgroundColor:rows.map(r=>r._direction==='increase'?'rgba(190,24,93,.72)':'rgba(15,118,110,.72)'),
+        borderColor:rows.map(r=>r._direction==='increase'?'rgb(190,24,93)':'rgb(15,118,110)'),
+        borderWidth:1,
+        borderRadius:4
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      animation:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            title:items=>rows[items[0].dataIndex]?.fullCategory||items[0].label,
+            label:ctx=>{
+              const r=rows[ctx.dataIndex];
+              const change=isPercent ? fmt1.format(r.percentChange)+' %' : fmt1.format(r.absoluteChange)+' '+unit;
+              const base=metric==='Antal'?fmt0.format(r.base):fmt1.format(r.base);
+              const latest=metric==='Antal'?fmt0.format(r.latest):fmt1.format(r.latest);
+              return [
+                'Förändring: '+change,
+                'Basår: '+base+' '+unit,
+                'Senaste år: '+latest+' '+unit
+              ];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          title:{display:true,text:isPercent?'Förändring (%)':'Förändring ('+unit+')'},
+          grid:{color:'rgba(148,163,184,.18)'}
+        },
+        y:{
+          grid:{display:false},
+          ticks:{
+            autoSkip:false,
+            font:{size:10}
+          }
+        }
+      }
+    }
+  });
+}
+
+async function renderChangeRanking(showLoading=true){
+  if(!el('changeIncreaseChart') || !el('changeDecreaseChart'))return;
+  if(showLoading)setLoading('Beräknar förändring per brottskategori…');
+  try{
+    const municipality=el('changeMunicipality').value;
+    const metric=el('changeMetric').value;
+    const mode=el('changeMode').value;
+    const level=Number(el('changeLevel').value);
+    const baseYear=Number(el('changeBaseYear').value);
+    const latestYear=Number(META.latest_year);
+    const rows=await changeRankingRows(municipality,baseYear,latestYear,level,metric);
+
+    const usable=rows.filter(r=>mode==='percent'?Number.isFinite(r.percentChange):Number.isFinite(r.absoluteChange));
+    const increases=usable
+      .filter(r=>(mode==='percent'?r.percentChange:r.absoluteChange)>0)
+      .sort((a,b)=>(mode==='percent'?b.percentChange-a.percentChange:b.absoluteChange-a.absoluteChange))
+      .slice(0,10)
+      .map(r=>({...r,_direction:'increase'}));
+    const decreases=usable
+      .filter(r=>(mode==='percent'?r.percentChange:r.absoluteChange)<0)
+      .sort((a,b)=>(mode==='percent'?a.percentChange-b.percentChange:a.absoluteChange-b.absoluteChange))
+      .slice(0,10)
+      .map(r=>({...r,_direction:'decrease'}));
+
+    const metricText=metric==='Antal'?'antal brott':'brott per 100 000 invånare';
+    const modeText=mode==='percent'?'procentuell förändring':'absolut förändring';
+    const period=baseYear+'–'+latestYear;
+
+    el('changeIncreaseTitle').textContent='Störst ökning – '+municipality;
+    el('changeDecreaseTitle').textContent='Störst minskning – '+municipality;
+    el('changeIncreaseStatus').textContent='Top 10 · '+period+' · '+metricText+' · '+modeText+' · nivå '+level;
+    el('changeDecreaseStatus').textContent='Top 10 · '+period+' · '+metricText+' · '+modeText+' · nivå '+level;
+
+    drawChangeRankingChart('changeIncreaseChart',increases,mode,metric,'Ökning');
+    drawChangeRankingChart('changeDecreaseChart',decreases,mode,metric,'Minskning');
+  }catch(err){
+    console.error(err);
+    if(el('changeIncreaseStatus'))el('changeIncreaseStatus').textContent='Fel: '+String(err.message||err);
+    if(el('changeDecreaseStatus'))el('changeDecreaseStatus').textContent='Fel: '+String(err.message||err);
+  }finally{
+    if(showLoading)setLoading(null);
+  }
 }
 
 function filteredMunicipalityNames(countyId,skrId){
@@ -2677,6 +2857,7 @@ async function main(){
     await refreshCrimeTreeForPage('map');
     await renderOverview();
     await renderTrend();
+    await renderChangeRanking(false);
     await renderMap();
   }catch(err){
     console.error(err);
