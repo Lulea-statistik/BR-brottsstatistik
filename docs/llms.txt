@@ -1,0 +1,39 @@
+# BRÅ brottsstatistik – Sveriges kommuner
+
+> Interaktiv rapport över BRÅ:s årsvisa kommunstatistik för anmälda brott i Sveriges kommuner.
+
+## Huvudsida
+
+- Rapport: https://lulea-statistik.github.io/BR-brottsstatistik/
+
+## Period och geografi
+
+- Period: 1996–2025.
+- Geografi: Sveriges kommuner.
+- Källmyndighet: Brottsförebyggande rådet (BRÅ).
+
+## Mått
+
+Rapporten visar bland annat:
+- antal anmälda brott
+- anmälda brott per 100 000 invånare
+- kommunplacering/rankning
+- förändring mellan basår och senaste år
+- kommunjämförelser
+- kartor
+- områdesprofil för brottskategorier
+- första och sista observerade år för brottskategorier i rapportens data
+
+## Rapportdelar
+
+- Översikt: jämför kommuner för valt år, brottskategori och mått.
+- Trender: följ en kommuns utveckling över tid.
+- Förändring: identifiera brottskategorier med störst ökning och minskning.
+- Årskarta: jämför geografiska nivåer på karta.
+- Områdesprofil: visar brottskategoriernas fördelning.
+- Lag & kategorier över tid: visar första och sista observerade år i data; detta är inte nödvändigtvis samma sak som lagens ikraftträdande eller upphävande.
+- Metod & data: beskriver källa, period och viktiga tolkningsfrågor.
+
+## Tolkning
+
+Statistiken avser anmälda brott. Förändringar kan bero både på faktisk brottslighet och på exempelvis anmälningsbenägenhet, registreringsrutiner, lagändringar eller förändrad brottsklassificering. Jämförelser över tid bör därför tolkas med hänsyn till metod- och klassificeringsförändringar.
