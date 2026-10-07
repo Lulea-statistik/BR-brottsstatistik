@@ -549,3 +549,5 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 }
 
 #handledTopN:disabled{opacity:.45;cursor:default}
+
+.handled-controls label.hidden{display:none}
