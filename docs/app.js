@@ -1090,16 +1090,14 @@ function buildProfileTree(rows,metric,totalValue,totalCount){
   const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
   const totalId=String(META.default_crime_id);
 
-  const included=new Set(
+  const positiveIds=new Set(
     [...valueById.entries()]
       .filter(([id,v])=>id!==totalId && Number.isFinite(v) && v>0)
       .map(([id])=>id)
   );
 
-  // Keep ancestors of positive categories for grouping, but never use parent
-  // aggregate values in the sum. Only deepest positive nodes carry area.
-  const needed=new Set(included);
-  for(const id of [...included]){
+  const needed=new Set(positiveIds);
+  for(const id of [...positiveIds]){
     let cur=catById.get(id);
     while(cur){
       const parent=categoryParentId(cur);
@@ -1118,12 +1116,22 @@ function buildProfileTree(rows,metric,totalValue,totalCount){
       name:String(cat.Brott),
       level:Number(cat['Brottsnivå']||1),
       children:[],
-      rawValue:valueById.get(id)||0,
-      rawCount:countById.get(id)||0
+      rawValue:Number(valueById.get(id)||0),
+      rawCount:Number(countById.get(id)||0),
+      synthetic:false
     });
   }
 
-  const root={id:'root',name:'Alla brottskategorier',children:[]};
+  const root={
+    id:'root',
+    name:'Alla brottskategorier',
+    level:0,
+    children:[],
+    rawValue:Number(totalValue)||0,
+    rawCount:Number(totalCount)||0,
+    synthetic:false
+  };
+
   for(const node of nodeMap.values()){
     const cat=catById.get(node.id);
     const parentId=categoryParentId(cat);
@@ -1132,26 +1140,80 @@ function buildProfileTree(rows,metric,totalValue,totalCount){
     else root.children.push(node);
   }
 
-  function assignLeafValues(node){
-    const positiveChildren=(node.children||[]).filter(ch=>{
-      assignLeafValues(ch);
-      return ch.value>0;
-    });
-    node.children=positiveChildren;
-    if(positiveChildren.length){
-      node.value=positiveChildren.reduce((s,ch)=>s+ch.value,0);
-      node.count=positiveChildren.reduce((s,ch)=>s+ch.count,0);
-    }else{
-      node.value=Number(node.rawValue)||0;
-      node.count=Number(node.rawCount)||0;
+  let scaledBranches=0;
+  let residualNodes=0;
+
+  function partition(node,targetValue,targetCount){
+    const ownValue=Math.max(0,Number(targetValue)||0);
+    const ownCount=Math.max(0,Number(targetCount)||0);
+    const children=(node.children||[]).filter(ch=>ch.rawValue>0);
+
+    node.displayValue=ownValue;
+    node.displayCount=ownCount;
+
+    if(!children.length){
+      node.areaValue=ownValue;
+      node.areaCount=ownCount;
+      node.children=[];
+      return;
     }
+
+    const childRawSum=children.reduce((s,ch)=>s+Math.max(0,ch.rawValue),0);
+    const childCountSum=children.reduce((s,ch)=>s+Math.max(0,ch.rawCount),0);
+
+    // Children are a decomposition of their parent. If their published totals
+    // overlap and sum above the parent, scale only their treemap areas
+    // proportionally to the parent's authoritative total. Tooltip values remain raw.
+    const scale=childRawSum>ownValue && childRawSum>0 ? ownValue/childRawSum : 1;
+    const countScale=childCountSum>ownCount && childCountSum>0 ? ownCount/childCountSum : 1;
+    if(scale<0.999999)scaledBranches++;
+
+    const out=[];
+    for(const ch of children){
+      const childTarget=Math.max(0,ch.rawValue)*scale;
+      const childCountTarget=Math.max(0,ch.rawCount)*countScale;
+      partition(ch,childTarget,childCountTarget);
+      ch.displayValue=ch.rawValue;
+      ch.displayCount=ch.rawCount;
+      out.push(ch);
+    }
+
+    const allocated=out.reduce((s,ch)=>s+Number(ch.areaValue||0),0);
+    const allocatedCount=out.reduce((s,ch)=>s+Number(ch.areaCount||0),0);
+    const residual=Math.max(0,ownValue-allocated);
+    const residualCount=Math.max(0,ownCount-allocatedCount);
+
+    if(residual>0.000001){
+      residualNodes++;
+      out.push({
+        id:node.id+'__residual',
+        name:'Övrigt inom '+node.name,
+        level:Math.min(5,Number(node.level||0)+1),
+        children:[],
+        rawValue:residual,
+        rawCount:residualCount,
+        displayValue:residual,
+        displayCount:residualCount,
+        areaValue:residual,
+        areaCount:residualCount,
+        synthetic:true
+      });
+    }
+
+    node.children=out;
+    node.areaValue=out.reduce((s,ch)=>s+Number(ch.areaValue||0),0);
+    node.areaCount=out.reduce((s,ch)=>s+Number(ch.areaCount||0),0);
   }
-  root.children.forEach(assignLeafValues);
-  root.children=root.children.filter(ch=>ch.value>0);
-  root.rawLeafValue=root.children.reduce((s,ch)=>s+ch.value,0);
-  root.rawLeafCount=root.children.reduce((s,ch)=>s+ch.count,0);
-  root.value=Number(totalValue)||0;
-  root.count=Number(totalCount)||0;
+
+  partition(root,root.rawValue,root.rawCount);
+
+  root.children=root.children.filter(ch=>Number(ch.areaValue||0)>0);
+  root.value=root.rawValue;
+  root.count=root.rawCount;
+  root.rawLeafValue=root.children.reduce((s,ch)=>s+Number(ch.areaValue||0),0);
+  root.rawLeafCount=root.children.reduce((s,ch)=>s+Number(ch.areaCount||0),0);
+  root.scaledBranches=scaledBranches;
+  root.residualNodes=residualNodes;
   return root;
 }
 
@@ -1176,7 +1238,7 @@ function renderTreemap(tree,metric){
   }
 
   const root=d3.hierarchy(tree,d=>d.children)
-    .sum(d=>(!d.children||!d.children.length)?Number(d.value||0):0)
+    .sum(d=>(!d.children||!d.children.length)?Number(d.areaValue||0):0)
     .sort((a,b)=>b.value-a.value);
 
   d3.treemap()
@@ -1241,11 +1303,12 @@ function renderTreemap(tree,metric){
     .on('mousemove',(event,d)=>{
       const share=total>0?100*d.value/total:0;
       const info=metricInfo(metric);
+      const displayValue=Number(d.data.displayValue ?? d.data.rawValue ?? d.value);
       const valueText=info.isAverage
-        ? fmt1.format(d.value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år')
+        ? fmt1.format(displayValue)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år')
         : info.isCount
-          ? fmt0.format(d.value)+' brott'
-          : fmt1.format(d.value)+' per 100 000';
+          ? fmt0.format(displayValue)+' brott'
+          : fmt1.format(displayValue)+' per 100 000';
       tooltip.innerHTML='<b>'+d.data.name+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %<br>Nivå: '+Number(d.data.level||0);
       tooltip.style.display='block';
       tooltip.style.left=(event.clientX+14)+'px';
@@ -1333,13 +1396,13 @@ async function renderProfile(){
     const periodText=multi?start+'–'+end:String(start);
     el('profileTitle').textContent='Områdesprofil – '+scope;
     el('profileTotalCrimes').textContent=fmt0.format(authoritativeTotalCount);
-    const leafSum=Number(tree.rawLeafCount)||0;
-    const qaDiff=authoritativeTotalCount>0 ? 100*(leafSum-authoritativeTotalCount)/authoritativeTotalCount : 0;
     el('profileTotalCrimesPeriod').textContent=(multi ? 'summa för '+start+'–'+end : 'år '+start)
       +' · källa: Totalt antal brott';
     const statusBase=periodText+' · '+info.label+' · '+tree.children.length+' huvudgrupper';
-    el('profileStatus').textContent=statusBase
-      +(Math.abs(qaDiff)>.1?' · hierarkisumma avviker '+fmt1.format(qaDiff)+' % från totalen':'');
+    const qaParts=[];
+    if(tree.scaledBranches>0)qaParts.push(tree.scaledBranches+' överlappande grenar normaliserade');
+    if(tree.residualNodes>0)qaParts.push(tree.residualNodes+' restkategorier skapade');
+    el('profileStatus').textContent=statusBase+(qaParts.length?' · '+qaParts.join(' · '):'');
     renderTreemap(tree,metric);
     profileRendered=true;
   }catch(err){
@@ -1358,11 +1421,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=24',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=24',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=24',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=24',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=24',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=25',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=25',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=25',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=25',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=25',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
