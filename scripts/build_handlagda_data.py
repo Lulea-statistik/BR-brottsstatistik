@@ -137,6 +137,31 @@ def normalize_sheet(book, sheet: str, table_id: str, year: int):
 
     if forced:
         source_headers = forced
+    elif table_id == "320" and width == 8:
+        # Från 2020 ligger tabell 320 i tre separata blad. Den synliga
+        # rubrikraden innehåller tabelltiteln snarare än kolumnnamnen.
+        if sheet == "Personuppklarade brott":
+            total_label = "Personuppklarade brott, totalt"
+            prefix = "Andel personuppklarade brott anmälda"
+            unknown = "Andel personuppklarade brott med okänt anmälningsår (%)"
+        elif sheet == "Övriga handlagda brott":
+            total_label = "Övriga handlagda brott, totalt"
+            prefix = "Andel övriga handlagda brott anmälda"
+            unknown = "Andel övriga handlagda brott med okänt anmälningsår (%)"
+        else:
+            total_label = "Handlagda brott, totalt"
+            prefix = "Andel handlagda brott anmälda"
+            unknown = "Andel handlagda brott med okänt anmälningsår (%)"
+        source_headers = [
+            "Lagrum",
+            "Brottstyp",
+            total_label,
+            f"{prefix} {year} (%)",
+            f"{prefix} {year-1} (%)",
+            f"{prefix} {year-2} (%)",
+            f"{prefix} tidigare år (%)",
+            unknown,
+        ]
     else:
         # Nyare filer har en enkel rubrikrad.
         source_headers = [clean(v) for v in raw.iloc[header_idx].tolist()]
