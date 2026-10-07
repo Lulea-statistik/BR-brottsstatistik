@@ -24,11 +24,15 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python scripts/update_handlagda.py
+      - name: Sync dashboard data
+        run: |
+          mkdir -p docs/data
+          cp data/handlagda_source_catalog.csv docs/data/handlagda_source_catalog.csv
       - name: Commit source catalog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/handlagda_source_catalog.csv
+          git add data/handlagda_source_catalog.csv docs/data/handlagda_source_catalog.csv
           if git diff --cached --quiet; then
             echo "No changes"
           else
