@@ -1796,8 +1796,14 @@ async function buildChatContext(question=''){
 
   const q=String(question||'').toLocaleLowerCase('sv');
   const geography=chatQuestionGeography(question);
-  const mentionedMunicipality=geography.municipalities[0]||null;
-  if(mentionedMunicipality) municipality=mentionedMunicipality;
+  const mentionedMunicipality=geography.municipalities.length===1
+    ? geography.municipalities[0]
+    : null;
+  if(geography.municipalities.length>1){
+    municipality=null;
+  }else if(mentionedMunicipality){
+    municipality=mentionedMunicipality;
+  }
 
   const totalIntent=/\b(total|totalt|samtliga brott|alla brott|brottslighet(?:en)? totalt)\b/i.test(q);
   if(totalIntent) crimeId=String(META.default_crime_id);
@@ -1824,13 +1830,16 @@ async function buildChatContext(question=''){
     const municipalityRows=await chatMunicipalityComparison(comparisonYear,crimeId);
     const wanted=new Set(geography.municipalities);
     const sorted=municipalityRows.slice().sort((a,b)=>(Number(b.rate)||-Infinity)-(Number(a.rate)||-Infinity));
+    const comparisonRows=wanted.size
+      ? municipalityRows.filter(r=>wanted.has(r.municipality))
+      : sorted;
     context.municipalityComparison={
       year:comparisonYear,
       category:chatCategoryName(crimeId),
-      rows:wanted.size
-        ? municipalityRows.filter(r=>wanted.has(r.municipality))
-        : sorted,
-      note:'Kommunvärden kommer direkt från Brå-underlaget.'
+      requestedMunicipalities:[...wanted],
+      rows:comparisonRows,
+      complete:wanted.size===0 || comparisonRows.length===wanted.size,
+      note:'Kommunvärden kommer direkt från Brå-underlaget. Om requestedMunicipalities innehåller flera namn ska rows användas som huvudunderlag för jämförelsen.'
     };
   }
 
