@@ -677,7 +677,7 @@ async function changeRankingRows(municipality,baseYear,latestYear,level,metric){
            CAST("Brott_ID" AS INTEGER) AS crimeId,
            CAST("${field}" AS DOUBLE) AS value,
            CAST("Antal" AS DOUBLE) AS count
-    FROM read_parquet('${parquetUrl(baseYear)}','${parquetUrl(latestYear)}')
+    FROM read_parquet(['${parquetUrl(baseYear)}','${parquetUrl(latestYear)}'])
     WHERE "Kommun"='${esc(municipality)}'
       AND "Antal">-555
       AND "Brott_ID"<>${Number(META.default_crime_id)}
