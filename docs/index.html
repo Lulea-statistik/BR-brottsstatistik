@@ -3,10 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BRÅ brottsstatistik – Sveriges kommuner</title>
+  <title>BRÅ brottsstatistik för Sveriges kommuner 1996–2025 | Luleå Statistik</title>
+  <meta name="description" content="Interaktiv kommunstatistik över anmälda brott från BRÅ 1996–2025. Jämför Sveriges kommuner, följ trender, förändringar, brott per 100 000 invånare, kartor och brottskategorier över tid.">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <link rel="canonical" href="https://lulea-statistik.github.io/BR-brottsstatistik/">
   <link rel="icon" type="image/png" href="favicon.png?v=1">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="sv_SE">
+  <meta property="og:site_name" content="Luleå Statistik">
+  <meta property="og:title" content="BRÅ brottsstatistik för Sveriges kommuner 1996–2025">
+  <meta property="og:description" content="Jämför anmälda brott mellan Sveriges kommuner och analysera trender, förändringar, kartor och brottskategorier över tid.">
+  <meta property="og:url" content="https://lulea-statistik.github.io/BR-brottsstatistik/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="BRÅ brottsstatistik för Sveriges kommuner 1996–2025">
+  <meta name="twitter:description" content="Interaktiv kommunstatistik över anmälda brott från BRÅ, med data från 1996 till 2025.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://lulea-statistik.github.io/BR-brottsstatistik/#website",
+        "url": "https://lulea-statistik.github.io/BR-brottsstatistik/",
+        "name": "BRÅ brottsstatistik – Sveriges kommuner",
+        "inLanguage": "sv-SE"
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://lulea-statistik.github.io/BR-brottsstatistik/#webpage",
+        "url": "https://lulea-statistik.github.io/BR-brottsstatistik/",
+        "name": "BRÅ brottsstatistik för Sveriges kommuner 1996–2025",
+        "description": "Interaktiv rapport för jämförelser och analys av BRÅ:s kommunstatistik över anmälda brott.",
+        "isPartOf": {"@id": "https://lulea-statistik.github.io/BR-brottsstatistik/#website"},
+        "about": {"@id": "https://lulea-statistik.github.io/BR-brottsstatistik/#dataset"},
+        "inLanguage": "sv-SE"
+      },
+      {
+        "@type": "Dataset",
+        "@id": "https://lulea-statistik.github.io/BR-brottsstatistik/#dataset",
+        "name": "BRÅ anmälda brott – Sveriges kommuner 1996–2025",
+        "description": "Årsvis kommunstatistik över anmälda brott från Brottsförebyggande rådet (BRÅ), presenterad som antal och antal per 100 000 invånare samt med brottskategorier och kommunjämförelser.",
+        "url": "https://lulea-statistik.github.io/BR-brottsstatistik/",
+        "inLanguage": "sv-SE",
+        "temporalCoverage": "1996/2025",
+        "spatialCoverage": {"@type": "Country", "name": "Sverige"},
+        "keywords": ["BRÅ", "brottsstatistik", "anmälda brott", "Sveriges kommuner", "brott per 100 000 invånare", "kommunstatistik"],
+        "creator": {"@type": "Organization", "name": "Luleå Statistik"},
+        "provider": {"@type": "Organization", "name": "Brottsförebyggande rådet (BRÅ)"},
+        "variableMeasured": [
+          "Antal anmälda brott",
+          "Anmälda brott per 100 000 invånare",
+          "Brottskategori",
+          "Kommun",
+          "År"
+        ]
+      }
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 <header class="topbar">
@@ -35,6 +91,10 @@
 </nav>
 <main>
   <section id="page-overview" class="page active">
+    <section class="seo-intro" aria-labelledby="seo-intro-title">
+      <h2 id="seo-intro-title">Brottsstatistik för Sveriges kommuner</h2>
+      <p>Rapporten bygger på <strong>BRÅ:s årsvisa kommunstatistik över anmälda brott</strong> och omfattar perioden <strong>1996–2025</strong>. Här kan du jämföra kommuner, analysera utvecklingen över tid och växla mellan antal brott och brott per 100 000 invånare. Rapporten innehåller även förändringsanalys, karta, områdesprofil och en tidslinje över brottskategorier. Se <button class="inline-tab-link" type="button" data-open-page="method">Metod & data</button> för tolkning och källinformation.</p>
+    </section>
     <div class="controls">
       <label>Kommun<select id="overviewMunicipality"></select></label>
       <label>Brottskategori<select id="overviewCrime"></select></label>
@@ -286,6 +346,15 @@
 <script src="chat-config.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  document.addEventListener('click',function(e){
+    const b=e.target.closest('[data-open-page]');
+    if(!b)return;
+    const target=b.dataset.openPage;
+    const tab=document.querySelector('.tab[data-page="'+target+'"]');
+    if(tab)tab.click();
+  });
+</script>
 <script type="module" src="app.js?v=49"></script>
 </body>
 </html>
