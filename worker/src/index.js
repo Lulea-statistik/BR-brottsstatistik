@@ -30,6 +30,9 @@ export default {
 
     const question=String(body?.question||"").trim().slice(0,800);
     const context=body?.context||{};
+    const history=Array.isArray(body?.history)
+      ? body.history.slice(-8).filter(m=>m && (m.role==="user" || m.role==="assistant") && typeof m.content==="string")
+      : [];
     if(!question){
       return Response.json({error:"Question is required"},{status:400,headers:cors(origin)});
     }
@@ -46,7 +49,7 @@ Om countyComparison finns får du jämföra län. Förklara vid behov kort att l
 Om municipalityComparison finns får du jämföra, rangordna och beskriva kommuner utifrån dessa rader.
 När municipalityComparison.requestedMunicipalities innehåller flera kommuner ska municipalityComparison.rows vara huvudkällan. Säg inte att en efterfrågad kommun saknas om den finns i rows.
 Ignorera en eventuell enkelkommun-serie när frågan uttryckligen jämför två eller flera kommuner.
-Om specificCrime finns ska du använda den när användaren frågar om en specifik brottstyp, till exempel cykelstöld, elcykel, klotter eller bilbrand. Välj den mest semantiskt relevanta träffen och ange kategori, antal och per 100 000 när det finns. Säg inte att brottstypen saknas om den finns i specificCrime.matches.
+Om specificCrime finns ska du använda den när användaren frågar om en specifik brottstyp, till exempel cykelstöld, elcykel, klotter eller bilbrand. Välj den mest semantiskt relevanta träffen och ange kategori, antal och per 100 000 när det finns. Om shareOfAllReportedPercent finns ska du använda den för frågor om hur stor andel brottstypen utgör av alla anmälda brott. Säg inte att brottstypen eller andelen saknas när dessa värden finns i specificCrime.matches.
 Om categoryComparison finns ska du använda dessa rader när användaren frågar om vanligaste brottstyper eller brottskategorier. Säg inte att brottskategorier saknas om categoryComparison.rows innehåller data. Rangordna normalt de 3–5 största kategorierna efter count och ange gärna antal. Förklara vid behov kort att kategorierna jämförs inom samma hierarkinivå för att undvika dubbelräkning. Nämn aldrig interna fältnamn som "categoryComparison", "rows" eller andra JSON-nycklar i svaret.
 Om frågan gäller utveckling: beskriv riktning och storlek på förändringen och ange start- och slutår.
 Skilj alltid på antal och per 100 000 invånare. Ange relevanta årtal och enheter.
@@ -58,7 +61,8 @@ Svara kort, tydligt och sakligt på svenska, normalt 2–5 meningar. Avsluta med
       temperature:0.1,
       messages:[
         {role:"system",content:system},
-        {role:"user",content:`Fråga: ${question}\n\nRapportunderlag (JSON):\n${JSON.stringify(context)}`}
+        ...history,
+        {role:"user",content:`Fråga: ${question}\n\nAktuellt rapportunderlag (JSON):\n${JSON.stringify(context)}`}
       ]
     };
 
