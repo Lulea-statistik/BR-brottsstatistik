@@ -26,7 +26,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/handlagda_statselector_probe.json
+          git add data/handlagda_statselector_probe.json data/statselector_assets.js
           if git diff --cached --quiet; then
             echo "No changes"
           else
