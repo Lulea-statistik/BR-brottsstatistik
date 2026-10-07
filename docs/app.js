@@ -1619,6 +1619,122 @@ function renderMethod(){
   // Method & data text is maintained directly in index.html.
 }
 
+
+function chatActivePage(){
+  const active=document.querySelector('.page.active');
+  return active?.id?.replace('page-','')||'overview';
+}
+function chatCategoryName(crimeId){
+  return CATEGORIES.find(x=>String(x.Brott_ID)===String(crimeId))?.Brott||null;
+}
+function chatMetricLabel(value){
+  const labels={Antal:'Antal',Per100000:'Per 100 000 inv.',RankAntal:'Placering antal',RankPer100000:'Placering per 100 000',AvgAntal:'Medelantal',AvgPer100000:'Medel per 100 000'};
+  return labels[value]||value||null;
+}
+async function buildChatContext(){
+  const page=chatActivePage();
+  let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
+
+  if(page==='overview'){
+    municipality=el('overviewMunicipality')?.value;
+    crimeId=el('overviewCrime')?.value;
+    metric=el('overviewMetric')?.value;
+    year=Number(el('overviewYear')?.value)||null;
+  }else if(page==='trends'){
+    municipality=el('trendMunicipality')?.value;
+    crimeId=el('trendCrime')?.value;
+    metric=el('trendMetric')?.value;
+  }else if(page==='map'){
+    crimeId=el('mapCrime')?.value;
+    metric=el('mapMetric')?.value;
+    const range=mapYearRange();
+    startYear=range.start;endYear=range.end;
+  }else if(page==='profile'){
+    municipality=el('profileMunicipality')?.value;
+    metric=el('profileMetric')?.value;
+    const range=profileYearRange();
+    startYear=range.start;endYear=range.end;
+  }
+
+  if(municipality==='__ALL__')municipality=null;
+  const context={
+    source:'Brottsförebyggande rådet (Brå), anmälda brott',
+    report:'BRÅ brottsstatistik – Sveriges kommuner',
+    page,municipality,crimeId:crimeId?Number(crimeId):null,
+    crimeCategory:crimeId?chatCategoryName(crimeId):null,
+    metric:chatMetricLabel(metric),
+    selectedYear:year,startYear,endYear,
+    availableYears:[META.start_year,META.latest_year]
+  };
+
+  if(municipality && crimeId){
+    const series=await query(`
+      SELECT CAST("År" AS INTEGER) AS year,
+             CAST("Antal" AS DOUBLE) AS count,
+             CAST("Per100000" AS DOUBLE) AS rate
+      FROM read_parquet(${allParquetSql()})
+      WHERE "Kommun"='${esc(municipality)}'
+        AND "Brott_ID"=${Number(crimeId)}
+        AND "Antal">-555
+      ORDER BY "År"
+    `);
+    context.series=series.map(r=>({year:Number(r.year),count:Number(r.count),rate:r.rate==null?null:Number(r.rate)}));
+  }
+  return context;
+}
+function addChatMessage(role,text,extraClass=''){
+  const box=el('chatMessages');if(!box)return;
+  const div=document.createElement('div');
+  div.className='chat-message '+role+(extraClass?' '+extraClass:'');
+  div.textContent=text;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+function setupChat(){
+  const launcher=el('chatLauncher'),panel=el('chatPanel'),close=el('chatClose'),form=el('chatForm'),input=el('chatInput'),send=el('chatSend'),status=el('chatStatus');
+  if(!launcher||!panel||!form)return;
+  const toggle=open=>{
+    panel.classList.toggle('hidden',!open);
+    launcher.setAttribute('aria-expanded',String(open));
+    if(open)requestAnimationFrame(()=>input?.focus());
+  };
+  launcher.addEventListener('click',()=>toggle(panel.classList.contains('hidden')));
+  close?.addEventListener('click',()=>toggle(false));
+  input?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit();}
+  });
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const question=input.value.trim();
+    if(!question)return;
+    const endpoint=String(window.CRIME_CHAT_API_URL||'').trim();
+    addChatMessage('user',question);
+    input.value='';
+    if(!endpoint){
+      addChatMessage('assistant','Chatten är inlagd men AI-endpointen är ännu inte konfigurerad. Lägg Worker-URL:en i chat-config.js för att aktivera svar.','error');
+      return;
+    }
+    send.disabled=true;status.textContent='Tar fram underlag…';
+    try{
+      const context=await buildChatContext();
+      status.textContent='Frågar modellen…';
+      const response=await fetch(endpoint,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({question,context})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||('HTTP '+response.status));
+      addChatMessage('assistant',String(data.answer||'Inget svar returnerades.'));
+    }catch(err){
+      console.error(err);
+      addChatMessage('assistant','Kunde inte hämta AI-svar: '+String(err.message||err),'error');
+    }finally{
+      send.disabled=false;status.textContent='';
+    }
+  });
+}
+
 async function main(){
   try{
     setLoading('Förbereder rapport…');
@@ -1630,7 +1746,7 @@ async function main(){
       fetch('data/municipalities.geojson?v=29',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
-    setupTabs();setupControls();initMap();renderMethod();
+    setupTabs();setupControls();initMap();renderMethod();setupChat();
     await refreshCrimeTreeForPage('overview');
     await refreshCrimeTreeForPage('trend');
     await refreshCrimeTreeForPage('map');
