@@ -1,0 +1,2489 @@
+{
+  "tables": {
+    "300": {
+      "table_name": "Utredning och beslut",
+      "years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "regions": {
+        "La": "Hela landet",
+        "Rn01": "Region Nord",
+        "Rn02": "Region Mitt",
+        "Rn03": "Region Stockholm",
+        "Rn04": "Region Ost",
+        "Rn05": "Region Vast",
+        "Rn06": "Region Syd",
+        "Rn07": "Region Bergslagen"
+      }
+    },
+    "310": {
+      "table_name": "Misstankt person och beslut",
+      "years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "regions": {
+        "La": "Hela landet",
+        "Rn01": "Region Nord",
+        "Rn02": "Region Mitt",
+        "Rn03": "Region Stockholm",
+        "Rn04": "Region Ost",
+        "Rn05": "Region Vast",
+        "Rn06": "Region Syd",
+        "Rn07": "Region Bergslagen"
+      }
+    },
+    "320": {
+      "table_name": "Anmalningsar",
+      "years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "regions": {
+        "La": "Hela landet",
+        "Rn01": "Region Nord",
+        "Rn02": "Region Mitt",
+        "Rn03": "Region Stockholm",
+        "Rn04": "Region Ost",
+        "Rn05": "Region Vast",
+        "Rn06": "Region Syd",
+        "Rn07": "Region Bergslagen"
+      }
+    }
+  },
+  "files": [
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2020/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2020/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2020/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2020/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2020/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2020/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2020/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2020,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2020/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2021/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2021/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2021/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2021/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2021/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2021/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2021/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2021,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2021/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2022/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2022/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2022/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2022/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2022/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2022/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2022/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2022,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2022/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2023/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2023/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2023/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2023/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2023/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2023/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2023/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2023,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2023/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2024/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2024/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2024/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2024/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2024/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2024/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2024/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2024,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2024/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "300/2025/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "300/2025/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "300/2025/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "300/2025/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "300/2025/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "300/2025/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "300/2025/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "300",
+      "year": 2025,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "300/2025/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Utredda brott",
+        "Direktavskrivna brott"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2020/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2020/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2020/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2020/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2020/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2020/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2020/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2020,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2020/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2021/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2021/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2021/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2021/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2021/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2021/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2021/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2021,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2021/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2022/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2022/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2022/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2022/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2022/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2022/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2022/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2022,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2022/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2023/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2023/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2023/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2023/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2023/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2023/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2023/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2023,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2023/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2024/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2024/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2024/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2024/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2024/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2024/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2024/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2024,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2024/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "310/2025/La.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "310/2025/Rn01.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "310/2025/Rn02.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "310/2025/Rn03.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "310/2025/Rn04.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "310/2025/Rn05.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "310/2025/Rn06.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "310",
+      "year": 2025,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "310/2025/Rn07.json",
+      "sheets": [
+        "Brott med misstänkt person",
+        "Brott utan misstänkt person"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2020/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2020/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2020/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2020/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2020/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2020/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2020/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2020,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2020/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2021/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2021/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2021/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2021/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2021/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2021/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2021/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2021,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2021/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2022/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2022/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2022/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2022/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2022/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2022/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2022/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2022,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2022/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2023/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2023/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2023/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2023/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2023/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2023/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2023/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2023,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2023/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2024/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2024/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2024/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2024/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2024/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2024/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2024/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2024,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2024/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "La",
+      "region_name": "Hela landet",
+      "path": "320/2025/La.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn01",
+      "region_name": "Region Nord",
+      "path": "320/2025/Rn01.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn02",
+      "region_name": "Region Mitt",
+      "path": "320/2025/Rn02.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn03",
+      "region_name": "Region Stockholm",
+      "path": "320/2025/Rn03.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn04",
+      "region_name": "Region Ost",
+      "path": "320/2025/Rn04.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn05",
+      "region_name": "Region Vast",
+      "path": "320/2025/Rn05.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn06",
+      "region_name": "Region Syd",
+      "path": "320/2025/Rn06.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    },
+    {
+      "table_id": "320",
+      "year": 2025,
+      "region_code": "Rn07",
+      "region_name": "Region Bergslagen",
+      "path": "320/2025/Rn07.json",
+      "sheets": [
+        "Samtliga handlagda brott",
+        "Personuppklarade brott",
+        "Övriga handlagda brott"
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "table_id": "300",
+      "year": 2014,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2015,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2016,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2017,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2018,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "300",
+      "year": 2019,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2014,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2015,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2016,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2017,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2018,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "310",
+      "year": 2019,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2014,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2015,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2016,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2017,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2018,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "La",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn01",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn02",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn03",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn04",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn05",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn06",
+      "error": "RuntimeError('inga datasheets')"
+    },
+    {
+      "table_id": "320",
+      "year": 2019,
+      "region_code": "Rn07",
+      "error": "RuntimeError('inga datasheets')"
+    }
+  ]
+}
