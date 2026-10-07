@@ -346,3 +346,17 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .legislation-row-child .legislation-label strong{
   font-weight:600;
 }
+
+.legislation-tooltip-rule{
+  margin:5px 0 2px;
+  color:#fde68a;
+}
+.legislation-tooltip-observed{
+  margin:3px 0 7px;
+  color:#cbd5e1;
+}
+.legislation-tooltip-child-observed{
+  margin-left:10px;
+  color:#94a3b8;
+  font-size:10px;
+}
