@@ -62,7 +62,7 @@
   }
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
 <header class="topbar">
@@ -320,45 +320,70 @@
     <div class="handled-intro">
       <div>
         <h2>Handlagda brott</h2>
-        <p>Slutlig årsstatistik från Brå från och med 2014. Till skillnad från rapportens kommunstatistik redovisas dessa tabeller för hela landet och polisregioner.</p>
+        <p>Interaktiv analys av Brås slutliga årsstatistik från och med 2014. Statistiken redovisas för hela landet och, från 2015, de sju polisregionerna.</p>
       </div>
       <a href="https://bra.se/statistik/statistik-om-rattsvasendet/handlagda-brott" target="_blank" rel="noopener">Öppna källsidan hos Brå</a>
     </div>
 
     <div class="controls handled-controls">
+      <label>Tabell
+        <select id="handledTable">
+          <option value="300">300 · Utredning och beslut</option>
+          <option value="310">310 · Misstänkt person och beslut</option>
+          <option value="320">320 · Anmälningsår</option>
+        </select>
+      </label>
       <label>År<select id="handledYear"></select></label>
       <label>Område<select id="handledRegion"></select></label>
+      <label>Deltabell<select id="handledSheet"></select></label>
+      <label class="handled-crime-label">Brottstyp
+        <input id="handledCrime" list="handledCrimeList" autocomplete="off" placeholder="Sök brottstyp…">
+        <datalist id="handledCrimeList"></datalist>
+      </label>
+      <label>Mått<select id="handledMeasure"></select></label>
     </div>
 
-    <div id="handledStatus" class="handled-status">Laddar källkatalog…</div>
+    <div id="handledStatus" class="handled-status">Laddar interaktiv data…</div>
 
-    <div class="handled-grid">
-      <article class="panel handled-card" data-table-id="300">
-        <div class="handled-card-head"><span class="handled-table-no">Tabell 300</span><span id="handledBadge300" class="handled-badge">–</span></div>
-        <h2>Utredning och typ av beslut</h2>
-        <p>Handlagda brott efter om utredning har bedrivits eller om brotten har direktavskrivits, typ av beslut, lagföringsprocent och personuppklaringsprocent samt brottstyp.</p>
-        <div id="handledFile300" class="handled-file"></div>
-      </article>
+    <div class="cards handled-kpis">
+      <div class="card"><div class="label">Valt värde</div><div id="handledValue" class="value">–</div><div id="handledValueSub" class="sub">–</div></div>
+      <div class="card"><div class="label">Brottstyp</div><div id="handledCrimeKpi" class="value handled-text-kpi">–</div><div id="handledLawKpi" class="sub">–</div></div>
+      <div class="card"><div class="label">Deltabell</div><div id="handledSheetKpi" class="value handled-text-kpi">–</div><div id="handledSourceKpi" class="sub">Brå</div></div>
+    </div>
 
-      <article class="panel handled-card" data-table-id="310">
-        <div class="handled-card-head"><span class="handled-table-no">Tabell 310</span><span id="handledBadge310" class="handled-badge">–</span></div>
-        <h2>Misstänkt person och typ av beslut</h2>
-        <p>Handlagda brott efter om minst en misstänkt person har varit registrerad för brottet eller ej, typ av beslut och brottstyp.</p>
-        <div id="handledFile310" class="handled-file"></div>
+    <div class="handled-chart-grid">
+      <article class="panel handled-chart-panel">
+        <h2 id="handledTrendTitle">Utveckling över tid</h2>
+        <div id="handledTrendStatus" class="sub"></div>
+        <div class="handled-chart-wrap"><canvas id="handledTrendChart"></canvas></div>
       </article>
+      <article class="panel handled-chart-panel">
+        <h2 id="handledRankTitle">Högsta värden – valt år</h2>
+        <div id="handledRankStatus" class="sub"></div>
+        <div class="handled-chart-wrap handled-rank-wrap"><canvas id="handledRankChart"></canvas></div>
+      </article>
+    </div>
 
-      <article class="panel handled-card" data-table-id="320">
-        <div class="handled-card-head"><span class="handled-table-no">Tabell 320</span><span id="handledBadge320" class="handled-badge">–</span></div>
-        <h2>Handlagda brott efter anmälningsår</h2>
-        <p>Samtliga handlagda brott, personuppklarade brott och övriga handlagda brott efter anmälningsår och brottstyp.</p>
-        <div id="handledFile320" class="handled-file"></div>
-      </article>
+    <div class="panel handled-detail-panel">
+      <div class="handled-detail-head">
+        <div>
+          <h2>Detaljer för vald brottstyp</h2>
+          <div id="handledDetailStatus" class="sub"></div>
+        </div>
+        <a id="handledSourceLink" href="#" target="_blank" rel="noopener">Öppna originalfil hos Brå</a>
+      </div>
+      <div class="table-scroll">
+        <table class="handled-detail-table">
+          <thead><tr><th>Mått</th><th>Värde</th></tr></thead>
+          <tbody id="handledDetailBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="panel prose handled-method">
       <h2>Om statistiken</h2>
-      <p>Statistiken omfattar anmälda brott där polis, åklagare eller annan utredande myndighet fattat ett beslut som innebär att handläggningen av brottet avslutas. Den nuvarande statistiken över handlagda brott redovisas från och med helåret 2014.</p>
-      <p><strong>Geografi:</strong> från 2015 redovisas hela landet och de sju polisregionerna. År 2014 visas hela landet i denna sida.</p>
+      <p><strong>Tabell 300</strong> visar bland annat om utredning bedrivits eller om brottet direktavskrivits och vilken typ av beslut som fattats. <strong>Tabell 310</strong> delar upp efter om minst en misstänkt person har registrerats för brottet. <strong>Tabell 320</strong> visar de handlagda brottens anmälningsår.</p>
+      <p>Statistiken omfattar anmälda brott där polis, åklagare eller annan utredande myndighet fattat ett beslut som innebär att handläggningen av brottet avslutas. År 2014 redovisas hela landet; från 2015 finns även polisregionerna.</p>
     </div>
   </section>
 
@@ -402,7 +427,7 @@
     if(tab)tab.click();
   });
 </script>
-<script src="handlagda.js?v=2"></script>
+<script src="handlagda.js?v=3"></script>
 <script type="module" src="app.js?v=50"></script>
 </body>
 </html>
