@@ -64,7 +64,17 @@ Svara kort och sakligt på svenska. Avsluta med "Källa: Brå." när svaret inne
 
     const data=await upstream.json().catch(()=>({}));
     if(!upstream.ok){
-      return Response.json({error:"Mistral request failed",detail:data},{status:502,headers:cors(origin)});
+      const upstreamMessage =
+        data?.message ||
+        data?.detail?.message ||
+        (typeof data?.detail === "string" ? data.detail : null) ||
+        data?.error?.message ||
+        null;
+      return Response.json({
+        error:"Mistral request failed",
+        upstreamStatus:upstream.status,
+        upstreamMessage:upstreamMessage || "Okänt fel från Mistral API"
+      },{status:502,headers:cors(origin)});
     }
     const answer=data?.choices?.[0]?.message?.content;
     return Response.json({answer:typeof answer==="string"?answer:"Inget svar returnerades."},{headers:cors(origin)});
