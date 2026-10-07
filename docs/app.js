@@ -1673,6 +1673,100 @@ function chatMetricLabel(value){
   const labels={Antal:'Antal',Per100000:'Per 100 000 inv.',RankAntal:'Placering antal',RankPer100000:'Placering per 100 000',AvgAntal:'Medelantal',AvgPer100000:'Medel per 100 000'};
   return labels[value]||value||null;
 }
+function chatCountyNames(){
+  return [...new Set(MUNICIPAL_META.map(x=>x.Lan).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'sv'));
+}
+
+function chatQuestionGeography(question){
+  const q=String(question||'').toLocaleLowerCase('sv');
+  const municipalities=MUNICIPALITIES.filter(name=>
+    q.includes(String(name).toLocaleLowerCase('sv'))
+  );
+  const counties=chatCountyNames().filter(name=>{
+    const low=String(name).toLocaleLowerCase('sv');
+    const short=low.replace(/\s+län$/,'');
+    return q.includes(low) || (short.length>4 && q.includes(short));
+  });
+  return {
+    asksMunicipality:/\bkommun(?:er|erna|nivå)?\b/i.test(q) || municipalities.length>0,
+    asksCounty:/\blän(?:en|snivå)?\b/i.test(q) || counties.length>0,
+    municipalities,
+    counties
+  };
+}
+
+async function chatMunicipalityComparison(year,crimeId){
+  const rows=await query(`
+    SELECT "Kommun",
+           CAST("Antal" AS DOUBLE) AS count,
+           CAST("Per100000" AS DOUBLE) AS rate
+    FROM read_parquet('${parquetUrl(year)}')
+    WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
+  `);
+  const metaByName=new Map(MUNICIPAL_META.map(x=>[x.Kommun,x]));
+  return rows.map(r=>({
+    municipality:r.Kommun,
+    county:metaByName.get(r.Kommun)?.Lan||null,
+    count:Number(r.count),
+    rate:r.rate==null?null:Number(r.rate)
+  }));
+}
+
+async function chatCountyComparison(year,crimeId){
+  const [crimeRows,totalRows]=await Promise.all([
+    query(`
+      SELECT "Kommun",
+             CAST("Antal" AS DOUBLE) AS count,
+             CAST("Per100000" AS DOUBLE) AS rate
+      FROM read_parquet('${parquetUrl(year)}')
+      WHERE "Brott_ID"=${Number(crimeId)} AND "Antal">-555
+    `),
+    query(`
+      SELECT "Kommun",
+             CAST("Antal" AS DOUBLE) AS totalCount,
+             CAST("Per100000" AS DOUBLE) AS totalRate
+      FROM read_parquet('${parquetUrl(year)}')
+      WHERE "Brott_ID"=${Number(META.default_crime_id)} AND "Antal">-555
+    `)
+  ]);
+
+  const metaByName=new Map(MUNICIPAL_META.map(x=>[x.Kommun,x]));
+  const totalByName=new Map(totalRows.map(r=>[r.Kommun,r]));
+  const grouped=new Map();
+
+  for(const row of crimeRows){
+    const meta=metaByName.get(row.Kommun);
+    if(!meta?.Lan)continue;
+    const total=totalByName.get(row.Kommun);
+    const totalCount=Number(total?.totalCount);
+    const totalRate=Number(total?.totalRate);
+    const population=(Number.isFinite(totalCount) && Number.isFinite(totalRate) && totalRate>0)
+      ? totalCount/totalRate*100000
+      : null;
+
+    if(!grouped.has(meta.Lan)){
+      grouped.set(meta.Lan,{county:meta.Lan,count:0,populationDerived:0,municipalities:0,populationMunicipalities:0});
+    }
+    const g=grouped.get(meta.Lan);
+    g.count+=Number(row.count)||0;
+    g.municipalities+=1;
+    if(Number.isFinite(population) && population>0){
+      g.populationDerived+=population;
+      g.populationMunicipalities+=1;
+    }
+  }
+
+  return [...grouped.values()].map(g=>({
+    county:g.county,
+    count:g.count,
+    rateDerived:g.populationDerived>0 ? g.count/g.populationDerived*100000 : null,
+    populationDerived:Math.round(g.populationDerived),
+    municipalities:g.municipalities,
+    populationMunicipalities:g.populationMunicipalities
+  })).sort((a,b)=>(Number(b.rateDerived)||-Infinity)-(Number(a.rateDerived)||-Infinity));
+}
+
 async function buildChatContext(question=''){
   const page=chatActivePage();
   let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
@@ -1701,7 +1795,8 @@ async function buildChatContext(question=''){
   if(municipality==='__ALL__')municipality=null;
 
   const q=String(question||'').toLocaleLowerCase('sv');
-  const mentionedMunicipality=MUNICIPALITIES.find(name=>q.includes(String(name).toLocaleLowerCase('sv')));
+  const geography=chatQuestionGeography(question);
+  const mentionedMunicipality=geography.municipalities[0]||null;
   if(mentionedMunicipality) municipality=mentionedMunicipality;
 
   const totalIntent=/\b(total|totalt|samtliga brott|alla brott|brottslighet(?:en)? totalt)\b/i.test(q);
@@ -1714,8 +1809,46 @@ async function buildChatContext(question=''){
     crimeCategory:crimeId?chatCategoryName(crimeId):null,
     metric:chatMetricLabel(metric),
     selectedYear:year,startYear,endYear,
-    availableYears:[META.start_year,META.latest_year]
+    availableYears:[META.start_year,META.latest_year],
+    geographyCapabilities:{
+      municipalityLevel:true,
+      municipalityCount:MUNICIPALITIES.length,
+      countyLevelDerived:true,
+      counties:chatCountyNames(),
+      note:'Län byggs genom att gruppera kommuner. Länets frekvens per 100 000 beräknas som summa brott dividerat med summa härledd kommunbefolkning.'
+    }
   };
+
+  const comparisonYear=Number(year||endYear||META.latest_year);
+  if(crimeId && geography.asksMunicipality){
+    const municipalityRows=await chatMunicipalityComparison(comparisonYear,crimeId);
+    const wanted=new Set(geography.municipalities);
+    const sorted=municipalityRows.slice().sort((a,b)=>(Number(b.rate)||-Infinity)-(Number(a.rate)||-Infinity));
+    context.municipalityComparison={
+      year:comparisonYear,
+      category:chatCategoryName(crimeId),
+      rows:wanted.size
+        ? municipalityRows.filter(r=>wanted.has(r.municipality))
+        : sorted,
+      note:'Kommunvärden kommer direkt från Brå-underlaget.'
+    };
+  }
+
+  if(crimeId && geography.asksCounty){
+    let countyRows=await chatCountyComparison(comparisonYear,crimeId);
+    if(geography.counties.length){
+      const wanted=new Set(geography.counties);
+      countyRows=countyRows.filter(r=>wanted.has(r.county));
+    }
+    context.countyComparison={
+      year:comparisonYear,
+      category:chatCategoryName(crimeId),
+      rows:countyRows,
+      rateMethod:'summa kommunala brott / summa härledd kommunbefolkning × 100 000',
+      populationMethod:'kommunbefolkning ≈ totalt antal brott / totalt antal brott per 100 000 × 100 000',
+      caution:'Härledd befolkning och länsfrekvens kan avvika något på grund av avrundning i publicerade kommunfrekvenser.'
+    };
+  }
 
   if(municipality && crimeId){
     const series=await query(`
