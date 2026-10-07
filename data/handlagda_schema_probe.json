@@ -1,0 +1,2285 @@
+{
+  "300": {
+    "year": 2025,
+    "region_code": "La",
+    "file_name": "300La-2025.xlsx",
+    "sheets": {
+      "Samtliga handlagda brott": {
+        "shape": [
+          862,
+          7
+        ],
+        "preview": [
+          [
+            "Tabell 300 a. Handlagda brott efter om utredning har bedrivits eller ej,  samt personuppklaringsprocent och lagföringsprocent, i hela landet, 2025",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Handlagda brott, totalt",
+            "Utredda brott",
+            "Direktavskrivna brott",
+            "Lagföringsprocent (%)",
+            "Personuppklaringsprocent (%)"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            1466095,
+            757117,
+            708978,
+            28.0654152294646,
+            12.9533215787517
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            1150022,
+            475877,
+            674145,
+            17.9001131103,
+            6.67404623563723
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            330639,
+            218392,
+            112247,
+            14.9287639584136,
+            9.38062358040038
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            102872,
+            81551,
+            21321,
+            13.6703087409783,
+            10.6054125515203
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            502,
+            463,
+            39,
+            16.6306695464363,
+            15.3386454183267
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            154,
+            142,
+            12,
+            11.2676056338028,
+            10.3896103896104
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            22,
+            21,
+            1,
+            33.3333333333333,
+            31.8181818181818
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            132,
+            121,
+            11,
+            7.43801652892562,
+            6.81818181818182
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            348,
+            321,
+            27,
+            19.0031152647975,
+            17.5287356321839
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            106,
+            93,
+            13,
+            34.4086021505376,
+            30.188679245283
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            242,
+            228,
+            14,
+            12.719298245614,
+            11.9834710743802
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1656,
+            1501,
+            155,
+            31.3922356091031,
+            28.3212560386473
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            163,
+            148,
+            15,
+            25.1700680272109,
+            22.6993865030675
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            47,
+            42,
+            5,
+            28.5714285714286,
+            25.531914893617
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            116,
+            106,
+            10,
+            23.8095238095238,
+            21.551724137931
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            250,
+            218,
+            32,
+            34.1013824884793,
+            29.6
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            58,
+            51,
+            7,
+            32,
+            27.5862068965517
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            24,
+            22,
+            2,
+            63.6363636363636,
+            58.3333333333333
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            32,
+            24,
+            8,
+            25,
+            18.75
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            136,
+            121,
+            15,
+            31.404958677686,
+            27.9411764705882
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            1234,
+            1126,
+            108,
+            31.935771632471,
+            29.0113452188006
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            19,
+            17,
+            2,
+            17.6470588235294,
+            15.7894736842105
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            19,
+            18,
+            1,
+            47.0588235294118,
+            42.1052631578947
+          ]
+        ]
+      },
+      "Utredda brott": {
+        "shape": [
+          862,
+          9
+        ],
+        "preview": [
+          [
+            "Tabell 300 b. Utredda handlagda brott efter typ av beslut, i hela landet, 2025",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Utredda brott, totalt",
+            "Utredda brott som personuppklarats",
+            "Personuppklarade brott där åtal väckts",
+            "Personuppklarade brott där strafföreläggande utfärdats",
+            "Personuppklarade brott där åtalsunderlåtelse meddelats",
+            "Utredda brott som förundersöknings-begränsats",
+            "Utredda brott som avslutats med övriga beslut"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            757117,
+            189908,
+            159765,
+            24302,
+            5841,
+            80455,
+            486754
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            475877,
+            76753,
+            67037,
+            7031,
+            2685,
+            47092,
+            352032
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            218392,
+            31016,
+            30277,
+            551,
+            188,
+            10632,
+            176744
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            81551,
+            10910,
+            10771,
+            76,
+            63,
+            1743,
+            68898
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            463,
+            77,
+            77,
+            0,
+            0,
+            0,
+            386
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            142,
+            16,
+            16,
+            0,
+            0,
+            0,
+            126
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            21,
+            7,
+            7,
+            0,
+            0,
+            0,
+            14
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            121,
+            9,
+            9,
+            0,
+            0,
+            0,
+            112
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            321,
+            61,
+            61,
+            0,
+            0,
+            0,
+            260
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            93,
+            32,
+            32,
+            0,
+            0,
+            0,
+            61
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            228,
+            29,
+            29,
+            0,
+            0,
+            0,
+            199
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1501,
+            469,
+            469,
+            0,
+            0,
+            7,
+            1025
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            148,
+            37,
+            37,
+            0,
+            0,
+            1,
+            110
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            42,
+            12,
+            12,
+            0,
+            0,
+            0,
+            30
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            106,
+            25,
+            25,
+            0,
+            0,
+            1,
+            80
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            218,
+            74,
+            74,
+            0,
+            0,
+            1,
+            143
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            51,
+            16,
+            16,
+            0,
+            0,
+            1,
+            34
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            22,
+            14,
+            14,
+            0,
+            0,
+            0,
+            8
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            24,
+            6,
+            6,
+            0,
+            0,
+            0,
+            18
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            121,
+            38,
+            38,
+            0,
+            0,
+            0,
+            83
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            1126,
+            358,
+            358,
+            0,
+            0,
+            5,
+            763
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            17,
+            3,
+            3,
+            0,
+            0,
+            0,
+            14
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            18,
+            8,
+            8,
+            0,
+            0,
+            1,
+            9
+          ]
+        ]
+      },
+      "Direktavskrivna brott": {
+        "shape": [
+          862,
+          5
+        ],
+        "preview": [
+          [
+            "Tabell 300 c. Direktavskrivna handlagda brott efter typ av beslut, i hela landet, 2025",
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum ",
+            "Brottstyp",
+            "Direktavskrivna brott, totalt",
+            "Direktavskrivna brott som förundersökningsbegränsats",
+            "Direktavskrivna brott som avslutats med övriga beslut"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            708978,
+            17028,
+            691950
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            674145,
+            16106,
+            658039
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            112247,
+            9238,
+            103009
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            21321,
+            293,
+            21028
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            39,
+            0,
+            39
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            12,
+            0,
+            12
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            1,
+            0,
+            1
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            11,
+            0,
+            11
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            27,
+            0,
+            27
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            13,
+            0,
+            13
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            14,
+            0,
+            14
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            155,
+            0,
+            155
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            15,
+            0,
+            15
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            5,
+            0,
+            5
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            10,
+            0,
+            10
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            32,
+            0,
+            32
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            7,
+            0,
+            7
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            2,
+            0,
+            2
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            8,
+            0,
+            8
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            15,
+            0,
+            15
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            108,
+            0,
+            108
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            2,
+            0,
+            2
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            1,
+            0,
+            1
+          ]
+        ]
+      },
+      "Information": {
+        "shape": [
+          13,
+          1
+        ],
+        "preview": [
+          [
+            "Information"
+          ],
+          [
+            "Källa: Brottsförebyggande rådet (Brå)"
+          ],
+          [
+            "Första publicering: 2026-04-16 kl: 08.00"
+          ],
+          [
+            "Senaste uppdatering: 2026-07-07"
+          ],
+          [
+            "Teckenförklaringar till tabellerna"
+          ],
+          [
+            "BrB är förkortning av brottsbalken vid lagrumsangivelse."
+          ],
+          [
+            "Kap. är förkortning av kapitel i lagrum vid lagrumsangivelse."
+          ],
+          [
+            "Streck (−) innebär att värdet är noll. "
+          ],
+          [
+            null
+          ],
+          [
+            "Övrig information"
+          ],
+          [
+            "Statistiken har korrigerats 2026-07-07 - Ett fel i programmering innebar att 19 035 brott (1 % av totalt antal handlagda brott ) tidigare felaktigt redovisades som utredda istället för direktavskrivna. Det hade inverkan på måttet lagföringsprocent, som på total nivå  redovisades som 1 procentenhet lägre än det faktiska utfallet, det vill säga 27 % istället för 28 %. För vissa enskilda brottstyper kan skillnaden ha varit större eller mindre. Kontakta Enheten för rättsstatistik för mer information, statistik@bra.se."
+          ],
+          [
+            null
+          ],
+          [
+            "Fler tabeller, rapport, kvalitetsdeklaration samt övrig information finns på Brås webbsida för Handlagda brott"
+          ]
+        ]
+      },
+      "Förekomst av stora ärenden": {
+        "shape": [
+          12,
+          1
+        ],
+        "preview": [
+          [
+            "Stora ärenden"
+          ],
+          [
+            "Med stora ärenden avses här förekomst av enskilda ärenden som omfattar cirka 100 brott eller fler och som gett upphov till märkbara förändringar i statistiken."
+          ],
+          [
+            "Bedrägeribrott är en brottstyp där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 9 BrB."
+          ],
+          [
+            "Brott mot bidragsbrottslagen är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller bidragsbrott."
+          ],
+          [
+            "Brott mot ordningslagen - 2025 handlades 3 stora ärenden i region Väst med ca 100-130 brott mot ordningslagen, som direktavskrevs. Det handlades även 2 stora ärenden i region Bergslagen gällande ca 450 respektive 100 brott mot ordningslagen, som utreddes men lades ned."
+          ],
+          [
+            "Dataintrång är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten."
+          ],
+          [
+            "Narkotikastrafflagen - 2025 handlades ett stort ärende med ca 110 brott gällande överlåtelse av narkotika i region Nord, som utreddes men lades ned."
+          ],
+          [
+            "Penningtvättsbrott - 2025 handlades ett stort ärende med ca 130 brott gällande penningtvätt i region Stockholm. Brotten utreddes och för ca 50 brott väcktes åtal, resterande lades ned."
+          ],
+          [
+            "Tagande av muta - 2025 handlades ett stort ärende med ca 100 brott gällande tagande av muta i region Stockholm, där åtal väcktes."
+          ],
+          [
+            "Trolöshet mot huvudman och förskingring är brottstyper där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 10 BrB."
+          ],
+          [
+            "För mer information om stora ärenden se Kvalitetsdeklarationen för Handlagda brott på Brås webbisda"
+          ],
+          [
+            "Sammanhållna brott - År 2025 omfattar statistiken 1 sammanhållet brott och brottsmisstanke, som tillsammans motsvarar ca 200 brott och brottsmisstankar som personuppklarats. Det beror på en temporär lösning för hantering av stora ärenden, som innebär att verksamheten får hantera stora antal brottsmisstankar sammanhållet, med anledning av tekniska begränsningar i verksamhetsstödsystem, vid omfattande registrering av information. Det avser bidragsbrott i region Stockholm."
+          ]
+        ]
+      }
+    }
+  },
+  "310": {
+    "year": 2025,
+    "region_code": "La",
+    "file_name": "310La-2025.xlsx",
+    "sheets": {
+      "Brott med misstänkt person": {
+        "shape": [
+          862,
+          10
+        ],
+        "preview": [
+          [
+            "Tabell 310 a. 'Handlagda brott med minst en misstänkt person för brottet, efter typ av beslut, i hela landet,  2025",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Samtliga handlagda brott, både med och utan misstänkt person",
+            "Handlagda brott med misstänkt person, totalt",
+            "Handlagda brott med misstänkt person som personuppklarats",
+            "Personuppklarade brott där åtal väckts",
+            "Personuppklarade brott där strafföreläggande utfärdats",
+            "Personuppklarade brott där åtalsunderlåtelse utfärdats",
+            "Handlagda brott med misstänkt person som förundersöknings-begränsats",
+            "Handlagda brott med misstänkt person som avslutats med övriga beslut"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            1466095,
+            534764,
+            189908,
+            159765,
+            24302,
+            5841,
+            68512,
+            276344
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            1150022,
+            279484,
+            76753,
+            67037,
+            7031,
+            2685,
+            37892,
+            164839
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            330639,
+            149153,
+            31016,
+            30277,
+            551,
+            188,
+            7757,
+            110380
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            102872,
+            58027,
+            10910,
+            10771,
+            76,
+            63,
+            1339,
+            45778
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            502,
+            219,
+            77,
+            77,
+            0,
+            0,
+            0,
+            142
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            154,
+            77,
+            16,
+            16,
+            0,
+            0,
+            0,
+            61
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            22,
+            19,
+            7,
+            7,
+            0,
+            0,
+            0,
+            12
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            132,
+            58,
+            9,
+            9,
+            0,
+            0,
+            0,
+            49
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            348,
+            142,
+            61,
+            61,
+            0,
+            0,
+            0,
+            81
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            106,
+            74,
+            32,
+            32,
+            0,
+            0,
+            0,
+            42
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            242,
+            68,
+            29,
+            29,
+            0,
+            0,
+            0,
+            39
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1656,
+            1057,
+            469,
+            469,
+            0,
+            0,
+            5,
+            583
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            163,
+            92,
+            37,
+            37,
+            0,
+            0,
+            0,
+            55
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            47,
+            27,
+            12,
+            12,
+            0,
+            0,
+            0,
+            15
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            116,
+            65,
+            25,
+            25,
+            0,
+            0,
+            0,
+            40
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            250,
+            165,
+            74,
+            74,
+            0,
+            0,
+            1,
+            90
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            58,
+            51,
+            16,
+            16,
+            0,
+            0,
+            1,
+            34
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            24,
+            20,
+            14,
+            14,
+            0,
+            0,
+            0,
+            6
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            32,
+            14,
+            6,
+            6,
+            0,
+            0,
+            0,
+            8
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            136,
+            80,
+            38,
+            38,
+            0,
+            0,
+            0,
+            42
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            1234,
+            799,
+            358,
+            358,
+            0,
+            0,
+            4,
+            437
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            19,
+            14,
+            3,
+            3,
+            0,
+            0,
+            0,
+            11
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            19,
+            13,
+            8,
+            8,
+            0,
+            0,
+            0,
+            5
+          ]
+        ]
+      },
+      "Brott utan misstänkt person": {
+        "shape": [
+          862,
+          6
+        ],
+        "preview": [
+          [
+            "Tabell 310 b. Handlagda brott utan misstänkt person för brottet, efter typ av beslut, i hela landet,  2025.",
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Samtliga handlagda brott, både med och utan misstänkt person",
+            "Handlagda brott utan misstänkt person, totalt",
+            "Handlagda brott utan misstänkt person som förundersöknings-begränsats",
+            "Handlagda brott utan misstänkt person som avslutats med övriga beslut"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            1466095,
+            931331,
+            28971,
+            902360
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            1150022,
+            870538,
+            25306,
+            845232
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            330639,
+            181486,
+            12113,
+            169373
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            102872,
+            44845,
+            697,
+            44148
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            502,
+            283,
+            0,
+            283
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            154,
+            77,
+            0,
+            77
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            22,
+            3,
+            0,
+            3
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            132,
+            74,
+            0,
+            74
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            348,
+            206,
+            0,
+            206
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            106,
+            32,
+            0,
+            32
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            242,
+            174,
+            0,
+            174
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1656,
+            599,
+            2,
+            597
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            163,
+            71,
+            1,
+            70
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            47,
+            20,
+            0,
+            20
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            116,
+            51,
+            1,
+            50
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            250,
+            85,
+            0,
+            85
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            58,
+            7,
+            0,
+            7
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            24,
+            4,
+            0,
+            4
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            32,
+            18,
+            0,
+            18
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            136,
+            56,
+            0,
+            56
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            1234,
+            435,
+            1,
+            434
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            19,
+            5,
+            0,
+            5
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            19,
+            6,
+            1,
+            5
+          ]
+        ]
+      },
+      "Information": {
+        "shape": [
+          13,
+          1
+        ],
+        "preview": [
+          [
+            "Information"
+          ],
+          [
+            "Källa: Brottsförebyggande rådet (Brå)"
+          ],
+          [
+            "Första publicering: 2026-04-16 kl: 08.00"
+          ],
+          [
+            "Senaste uppdatering: 2026-07-07"
+          ],
+          [
+            "Teckenförklaringar till tabellerna"
+          ],
+          [
+            "BrB är förkortning av brottsbalken vid lagrumsangivelse."
+          ],
+          [
+            "Kap. är förkortning av kapitel i lagrum vid lagrumsangivelse."
+          ],
+          [
+            "Streck (−) innebär att värdet är noll. "
+          ],
+          [
+            null
+          ],
+          [
+            "Övrig information"
+          ],
+          [
+            "Statistiken har korrigerats 2026-07-07 - Ett fel i programmering innebar att 19 035 brott (1 % av totalt antal handlagda brott ) tidigare felaktigt redovisades som utredda istället för direktavskrivna. Det hade inverkan på måttet lagföringsprocent, som på total nivå  redovisades som 1 procentenhet lägre än det faktiska utfallet, det vill säga 27 % istället för 28 %. För vissa enskilda brottstyper kan skillnaden ha varit större eller mindre. Kontakta Enheten för rättsstatistik för mer information, statistik@bra.se."
+          ],
+          [
+            null
+          ],
+          [
+            "Fler tabeller, rapport, kvalitetsdeklaration samt övrig information finns på Brås webbsida för Handlagda brott"
+          ]
+        ]
+      },
+      "Förekomst av stora ärenden": {
+        "shape": [
+          12,
+          1
+        ],
+        "preview": [
+          [
+            "Stora ärenden"
+          ],
+          [
+            "Med stora ärenden avses här förekomst av enskilda ärenden som omfattar cirka 100 brott eller fler och som gett upphov till märkbara förändringar i statistiken."
+          ],
+          [
+            "Bedrägeribrott är en brottstyp där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 9 BrB."
+          ],
+          [
+            "Brott mot bidragsbrottslagen är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller bidragsbrott."
+          ],
+          [
+            "Brott mot ordningslagen - 2025 handlades 3 stora ärenden i region Väst med ca 100-130 brott mot ordningslagen, som direktavskrevs. Det handlades även 2 stora ärenden i region Bergslagen gällande ca 450 respektive 100 brott mot ordningslagen, som utreddes men lades ned."
+          ],
+          [
+            "Dataintrång är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten."
+          ],
+          [
+            "Narkotikastrafflagen - 2025 handlades ett stort ärende med ca 110 brott gällande överlåtelse av narkotika i region Nord, som utreddes men lades ned."
+          ],
+          [
+            "Penningtvättsbrott - 2025 handlades ett stort ärende med ca 130 brott gällande penningtvätt i region Stockholm. Brotten utreddes och för ca 50 brott väcktes åtal, resterande lades ned."
+          ],
+          [
+            "Tagande av muta - 2025 handlades ett stort ärende med ca 100 brott gällande tagande av muta i region Stockholm, där åtal väcktes."
+          ],
+          [
+            "Trolöshet mot huvudman och förskingring är brottstyper där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 10 BrB."
+          ],
+          [
+            "För mer information om stora ärenden se Kvalitetsdeklarationen för Handlagda brott på Brås webbisda"
+          ],
+          [
+            "Sammanhållna brott - År 2025 omfattar statistiken 1 sammanhållet brott och brottsmisstanke, som tillsammans motsvarar ca 200 brott och brottsmisstankar som personuppklarats. Det beror på en temporär lösning för hantering av stora ärenden, som innebär att verksamheten får hantera stora antal brottsmisstankar sammanhållet, med anledning av tekniska begränsningar i verksamhetsstödsystem, vid omfattande registrering av information. Det avser bidragsbrott i region Stockholm."
+          ]
+        ]
+      }
+    }
+  },
+  "320": {
+    "year": 2025,
+    "region_code": "La",
+    "file_name": "320La-2025.xlsx",
+    "sheets": {
+      "Samtliga handlagda brott": {
+        "shape": [
+          862,
+          8
+        ],
+        "preview": [
+          [
+            "Tabell 320 a. Handlagda brott efter brottstyp och anmälningsår, i hela landet, 2025.",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Samtliga handlagda brott 2025",
+            "Andel handlagda brott, anmälda 2025 (%)",
+            "Andel brott anmälda 2024 (%)",
+            "Andel brott anmälda 2023 (%)",
+            "Andel brott anmälda tidgare år (%)",
+            "Andel brott med okänt anmälningsår (%)"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            1466095,
+            84.6325783799822,
+            11.6511549388,
+            2.23696281618858,
+            1.23579986290111,
+            0.243504002128102
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            1150027,
+            87.9917601934563,
+            9.48264692915905,
+            1.61674465034299,
+            0.767981969118986,
+            0.14086625792264
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            330638,
+            79.9557219678319,
+            16.916385896358,
+            2.45404339489109,
+            0.636043044054222,
+            0.0378056968648492
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            102872,
+            77.3339684267828,
+            19.4844078077611,
+            2.52935687067424,
+            0.612411540555253,
+            0.0398553542266117
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            502,
+            64.5418326693227,
+            27.2908366533865,
+            4.58167330677291,
+            3.38645418326693,
+            0.199203187250996
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            154,
+            74.6753246753247,
+            20.7792207792208,
+            1.94805194805195,
+            2.5974025974026,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            22,
+            77.2727272727273,
+            22.7272727272727,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            132,
+            74.2424242424242,
+            20.4545454545455,
+            2.27272727272727,
+            3.03030303030303,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            348,
+            60.0574712643678,
+            30.1724137931034,
+            5.74712643678161,
+            3.73563218390805,
+            0.28735632183908
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            106,
+            42.4528301886792,
+            34.9056603773585,
+            12.2641509433962,
+            9.43396226415094,
+            0.943396226415094
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            242,
+            67.7685950413223,
+            28.099173553719,
+            2.89256198347107,
+            1.2396694214876,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1656,
+            63.3454106280193,
+            28.9855072463768,
+            4.64975845410628,
+            2.71739130434783,
+            0.301932367149758
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            163,
+            69.9386503067485,
+            25.1533742331288,
+            4.29447852760736,
+            0.613496932515337,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            47,
+            80.8510638297872,
+            12.7659574468085,
+            6.38297872340426,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            116,
+            65.5172413793103,
+            30.1724137931034,
+            3.44827586206897,
+            0.862068965517241,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            250,
+            75.6,
+            20.4,
+            2.4,
+            1.2,
+            0.4
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            58,
+            79.3103448275862,
+            20.6896551724138,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            24,
+            70.8333333333333,
+            29.1666666666667,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            32,
+            84.375,
+            12.5,
+            3.125,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            136,
+            72.7941176470588,
+            20.5882352941176,
+            3.67647058823529,
+            2.20588235294118,
+            0.735294117647059
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            1234,
+            60.4538087520259,
+            31.4424635332253,
+            5.18638573743922,
+            2.59319286871961,
+            0.324149108589951
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            19,
+            89.4736842105263,
+            5.26315789473684,
+            5.26315789473684,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            19,
+            84.2105263157895,
+            15.7894736842105,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "Personuppklarade brott": {
+        "shape": [
+          862,
+          8
+        ],
+        "preview": [
+          [
+            "Tabell 320 b. Handlagda personuppklarade brott efter brottstyp och anmälningsår, i hela landet, 2025.",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Samtliga person-uppklarade brott 2025",
+            "Andel personuppklarade brott anmälda 2025 (%)",
+            "Andel brott anmälda 2024 (%)",
+            "Andel brott anmälda 2023 (%)",
+            "Andel brott anmälda tidgare år (%)",
+            "Andel brott med okänt anmälningsår (%)"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            189908,
+            60.9795269288287,
+            29.9039534932704,
+            6.19563156897024,
+            2.54596962739853,
+            0.37491838153211
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            76753,
+            53.9705288392636,
+            35.5178299219574,
+            7.62706343725978,
+            2.57058356025172,
+            0.313994241267442
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            31016,
+            48.5813773536239,
+            41.3302811452154,
+            8.30539076605623,
+            1.77972659272633,
+            0.00322414237812742
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            10910,
+            50.7424381301558,
+            41.1824014665445,
+            6.6269477543538,
+            1.44821264894592,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            77,
+            42.8571428571429,
+            49.3506493506493,
+            6.49350649350649,
+            1.2987012987013,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            16,
+            56.25,
+            43.75,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            7,
+            71.4285714285714,
+            28.5714285714286,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            9,
+            44.4444444444444,
+            55.5555555555556,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            61,
+            39.344262295082,
+            50.8196721311475,
+            8.19672131147541,
+            1.63934426229508,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            32,
+            21.875,
+            68.75,
+            6.25,
+            3.125,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            29,
+            58.6206896551724,
+            31.0344827586207,
+            10.3448275862069,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            469,
+            57.3560767590618,
+            39.2324093816631,
+            2.13219616204691,
+            1.27931769722815,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            37,
+            70.2702702702703,
+            27.027027027027,
+            2.7027027027027,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            12,
+            83.3333333333333,
+            16.6666666666667,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            25,
+            64,
+            32,
+            4,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            74,
+            64.8648648648649,
+            35.1351351351351,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            16,
+            81.25,
+            18.75,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            14,
+            57.1428571428571,
+            42.8571428571429,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            6,
+            66.6666666666667,
+            33.3333333333333,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            38,
+            60.5263157894737,
+            39.4736842105263,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            358,
+            54.4692737430168,
+            41.340782122905,
+            2.51396648044693,
+            1.67597765363128,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            3,
+            66.6666666666667,
+            33.3333333333333,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            8,
+            75,
+            25,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "Övriga handlagda brott": {
+        "shape": [
+          862,
+          8
+        ],
+        "preview": [
+          [
+            "Tabell 320 c. Övriga handlagda brott efter brottstyp och anmälningsår, i hela landet, 2025.",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            "Lagrum",
+            "Brottstyp",
+            "Övriga handlagda brott 2025",
+            "Andel handlagda brott anmälda 2025 (%)",
+            "Andel brott anmälda 2024 (%)",
+            "Andel brott anmälda 2023 (%)",
+            "Andel brott anmälda tidgare år (%)",
+            "Andel brott med okänt anmälningsår (%)"
+          ],
+          [
+            "SAMTLIGA BROTT",
+            "SAMTLIGA BROTT",
+            1276187,
+            88.1523632508402,
+            8.93497583034461,
+            1.64787762295024,
+            1.04083492466229,
+            0.223948371202653
+          ],
+          [
+            "Brott mot brottsbalken",
+            "Brott mot brottsbalken, totalt",
+            1073274,
+            90.4247191304364,
+            7.62079394450998,
+            1.18692896688078,
+            0.639072594696229,
+            0.128485363476615
+          ],
+          [
+            "BrB 3-7 kap. Brott mot person",
+            "Brott mot person, totalt",
+            299622,
+            83.2035030805482,
+            14.3891303041833,
+            1.84832889440695,
+            0.517652241824699,
+            0.0413854790369199
+          ],
+          [
+            "3 kap. Brott mot liv och hälsa",
+            "Brott mot liv och hälsa, totalt",
+            91962,
+            80.4886801070007,
+            16.9102455361997,
+            2.04323524934212,
+            0.513255475087536,
+            0.0445836323698919
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord eller dråp",
+            "Fullbordat mord och dråp, totalt",
+            425,
+            68.4705882352941,
+            23.2941176470588,
+            4.23529411764706,
+            3.76470588235294,
+            0.235294117647059
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka",
+            138,
+            76.8115942028985,
+            18.1159420289855,
+            2.17391304347826,
+            2.89855072463768,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, med användning av skjutvapen",
+            15,
+            80,
+            20,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot kvinna/flicka, utan användning av skjutvapen",
+            123,
+            76.4227642276423,
+            17.8861788617886,
+            2.4390243902439,
+            3.2520325203252,
+            0
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp ",
+            "Mot man/pojke",
+            287,
+            64.4599303135889,
+            25.7839721254355,
+            5.22648083623693,
+            4.18118466898955,
+            0.348432055749129
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, med användning av skjutvapen",
+            74,
+            51.3513513513514,
+            20.2702702702703,
+            14.8648648648649,
+            12.1621621621622,
+            1.35135135135135
+          ],
+          [
+            "3 kap. 1-2 § BrB Fullbordat mord och dråp",
+            "Mot man/pojke, utan användning av skjutvapen",
+            213,
+            69.0140845070423,
+            27.6995305164319,
+            1.87793427230047,
+            1.40845070422535,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Försök till mord eller dråp, totalt",
+            1187,
+            65.7118786857624,
+            24.9368155012637,
+            5.64448188711036,
+            3.28559393428812,
+            0.4212299915754
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot barn under 18 år",
+            126,
+            69.8412698412698,
+            24.6031746031746,
+            4.76190476190476,
+            0.793650793650794,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot flicka under 18 år",
+            35,
+            80,
+            11.4285714285714,
+            8.57142857142857,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot pojke under 18 år",
+            91,
+            65.9340659340659,
+            29.6703296703297,
+            3.2967032967033,
+            1.0989010989011,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre",
+            176,
+            80.1136363636364,
+            14.2045454545455,
+            3.40909090909091,
+            1.70454545454545,
+            0.568181818181818
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom parrelation",
+            42,
+            78.5714285714286,
+            21.4285714285714,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, närstående genom släktskap/familj",
+            10,
+            90,
+            10,
+            0,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, annan sorts relation eller bekantskap",
+            26,
+            88.4615384615385,
+            7.69230769230769,
+            3.84615384615385,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot kvinna 18 år eller äldre, obekanta",
+            98,
+            77.5510204081633,
+            13.265306122449,
+            5.10204081632653,
+            3.06122448979592,
+            1.02040816326531
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre",
+            876,
+            62.8995433789954,
+            27.3972602739726,
+            6.27853881278539,
+            2.96803652968037,
+            0.45662100456621
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom parrelation",
+            16,
+            93.75,
+            0,
+            6.25,
+            0,
+            0
+          ],
+          [
+            "3 kap. 1, 2 § BrB Försök till mord eller dråp",
+            "Mot man 18 år eller äldre, närstående genom släktskap/familj",
+            11,
+            90.9090909090909,
+            9.09090909090909,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "Information": {
+        "shape": [
+          13,
+          1
+        ],
+        "preview": [
+          [
+            "Information"
+          ],
+          [
+            "Källa: Brottsförebyggande rådet (Brå)"
+          ],
+          [
+            "Första publicering: 2026-04-16 kl: 08.00"
+          ],
+          [
+            "Senaste uppdatering: 2026-07-07"
+          ],
+          [
+            "Teckenförklaringar till tabellerna"
+          ],
+          [
+            "BrB är förkortning av brottsbalken vid lagrumsangivelse."
+          ],
+          [
+            "Kap. är förkortning av kapitel i lagrum vid lagrumsangivelse."
+          ],
+          [
+            "Streck (−) innebär att värdet är noll. "
+          ],
+          [
+            null
+          ],
+          [
+            "Övrig information"
+          ],
+          [
+            "Statistiken har korrigerats 2026-07-07 - Ett fel i programmering innebar att 19 035 brott (1 % av totalt antal handlagda brott ) tidigare felaktigt redovisades som utredda istället för direktavskrivna. Det hade inverkan på måttet lagföringsprocent, som på total nivå  redovisades som 1 procentenhet lägre än det faktiska utfallet, det vill säga 27 % istället för 28 %. För vissa enskilda brottstyper kan skillnaden ha varit större eller mindre. Kontakta Enheten för rättsstatistik för mer information, statistik@bra.se."
+          ],
+          [
+            null
+          ],
+          [
+            "Fler tabeller, rapport, kvalitetsdeklaration samt övrig information finns på Brås webbsida för Handlagda brott"
+          ]
+        ]
+      },
+      "Förekomst av stora ärenden": {
+        "shape": [
+          12,
+          1
+        ],
+        "preview": [
+          [
+            "Stora ärenden"
+          ],
+          [
+            "Med stora ärenden avses här förekomst av enskilda ärenden som omfattar cirka 100 brott eller fler och som gett upphov till märkbara förändringar i statistiken."
+          ],
+          [
+            "Bedrägeribrott är en brottstyp där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 9 BrB."
+          ],
+          [
+            "Brott mot bidragsbrottslagen är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller bidragsbrott."
+          ],
+          [
+            "Brott mot ordningslagen - 2025 handlades 3 stora ärenden i region Väst med ca 100-130 brott mot ordningslagen, som direktavskrevs. Det handlades även 2 stora ärenden i region Bergslagen gällande ca 450 respektive 100 brott mot ordningslagen, som utreddes men lades ned."
+          ],
+          [
+            "Dataintrång är en brottstyp där det inte är ovanligt att enskilda stora ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten."
+          ],
+          [
+            "Narkotikastrafflagen - 2025 handlades ett stort ärende med ca 110 brott gällande överlåtelse av narkotika i region Nord, som utreddes men lades ned."
+          ],
+          [
+            "Penningtvättsbrott - 2025 handlades ett stort ärende med ca 130 brott gällande penningtvätt i region Stockholm. Brotten utreddes och för ca 50 brott väcktes åtal, resterande lades ned."
+          ],
+          [
+            "Tagande av muta - 2025 handlades ett stort ärende med ca 100 brott gällande tagande av muta i region Stockholm, där åtal väcktes."
+          ],
+          [
+            "Trolöshet mot huvudman och förskingring är brottstyper där det inte är ovanligt att enskilda ärenden med många brott förekommer. Dessa kan ha stor inverkan på personuppklaringsprocenten och lagföringsprocenten vad gäller kap. 10 BrB."
+          ],
+          [
+            "För mer information om stora ärenden se Kvalitetsdeklarationen för Handlagda brott på Brås webbisda"
+          ],
+          [
+            "Sammanhållna brott - År 2025 omfattar statistiken 1 sammanhållet brott och brottsmisstanke, som tillsammans motsvarar ca 200 brott och brottsmisstankar som personuppklarats. Det beror på en temporär lösning för hantering av stora ärenden, som innebär att verksamheten får hantera stora antal brottsmisstankar sammanhållet, med anledning av tekniska begränsningar i verksamhetsstödsystem, vid omfattande registrering av information. Det avser bidragsbrott i region Stockholm."
+          ]
+        ]
+      }
+    }
+  }
+}
