@@ -69,7 +69,130 @@ function fillSelect(id,items,selected){
     if(String(item.value)===String(selected))o.selected=true;
     s.appendChild(o);
   });
+  if(s.dataset.municipalitySearch==='1')buildMunicipalitySearch(id);
 }
+function buildMunicipalitySearch(selectId){
+  const select=el(selectId);
+  if(!select)return;
+  select.dataset.municipalitySearch='1';
+  select.classList.add('native-municipality-select');
+
+  const old=select.parentElement.querySelector('.municipality-picker');
+  if(old)old.remove();
+
+  const picker=document.createElement('div');
+  picker.className='municipality-picker';
+
+  const button=document.createElement('button');
+  button.type='button';
+  button.className='municipality-button';
+
+  const menu=document.createElement('div');
+  menu.className='municipality-menu hidden';
+
+  const search=document.createElement('input');
+  search.type='search';
+  search.className='municipality-search';
+  search.placeholder='Sök kommun…';
+  search.autocomplete='off';
+  search.setAttribute('aria-label','Sök kommun');
+
+  const list=document.createElement('div');
+  list.className='municipality-list';
+
+  menu.append(search,list);
+  picker.append(button,menu);
+  select.insertAdjacentElement('afterend',picker);
+
+  const options=()=>[...select.options].map(o=>({
+    value:o.value,
+    text:o.textContent||o.value
+  }));
+
+  const syncButton=()=>{
+    const selected=select.options[select.selectedIndex];
+    button.textContent=selected?.textContent||'Välj kommun';
+  };
+
+  const choose=item=>{
+    select.value=item.value;
+    syncButton();
+    menu.classList.add('hidden');
+    search.value='';
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+
+  const renderList=()=>{
+    const q=search.value.trim().toLocaleLowerCase('sv-SE');
+    const items=options()
+      .filter(item=>!q || item.text.toLocaleLowerCase('sv-SE').includes(q))
+      .sort((a,b)=>{
+        if(a.value==='__ALL__')return -1;
+        if(b.value==='__ALL__')return 1;
+        if(q){
+          const as=a.text.toLocaleLowerCase('sv-SE').startsWith(q);
+          const bs=b.text.toLocaleLowerCase('sv-SE').startsWith(q);
+          if(as!==bs)return as?-1:1;
+        }
+        return a.text.localeCompare(b.text,'sv-SE');
+      });
+
+    list.innerHTML='';
+    if(!items.length){
+      const empty=document.createElement('div');
+      empty.className='municipality-empty';
+      empty.textContent='Ingen kommun hittades';
+      list.appendChild(empty);
+      return;
+    }
+
+    items.forEach(item=>{
+      const row=document.createElement('button');
+      row.type='button';
+      row.className='municipality-option';
+      if(String(item.value)===String(select.value))row.classList.add('selected');
+      row.textContent=item.text;
+      row.addEventListener('click',()=>choose(item));
+      list.appendChild(row);
+    });
+  };
+
+  const openMenu=()=>{
+    document.querySelectorAll('.municipality-menu').forEach(m=>{
+      if(m!==menu)m.classList.add('hidden');
+    });
+    menu.classList.remove('hidden');
+    renderList();
+    requestAnimationFrame(()=>search.focus());
+  };
+
+  button.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(menu.classList.contains('hidden'))openMenu();
+    else menu.classList.add('hidden');
+  });
+  search.addEventListener('input',renderList);
+  search.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      menu.classList.add('hidden');
+      button.focus();
+    }else if(e.key==='Enter'){
+      const first=list.querySelector('.municipality-option');
+      if(first){e.preventDefault();first.click();}
+    }
+  });
+  picker.addEventListener('click',e=>e.stopPropagation());
+
+  syncButton();
+}
+
+function setupMunicipalitySearch(){
+  ['overviewMunicipality','trendMunicipality','profileMunicipality'].forEach(buildMunicipalitySearch);
+  document.addEventListener('click',()=>{
+    document.querySelectorAll('.municipality-menu').forEach(m=>m.classList.add('hidden'));
+  });
+}
+
 function buildCrimeTree(selectId,availableIds=null){
   const select=el(selectId);
   if(!select)return;
@@ -273,6 +396,7 @@ function setupControls(){
   fillSelect('trendSkrGroup',skrItems,'');
   refreshTrendMunicipalities();
   refreshProfileMunicipalities();
+  setupMunicipalitySearch();
   setupCrimeTrees();
 
   el('overviewMunicipality').addEventListener('change',async()=>{await refreshCrimeTreeForPage('overview');await renderOverview();});
@@ -1421,11 +1545,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=25',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=25',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=25',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=25',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=25',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=26',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=26',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=26',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=26',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=26',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
