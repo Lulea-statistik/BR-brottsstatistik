@@ -426,3 +426,11 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .change-grid{
   align-items:start;
 }
+
+
+/* SEO / maskinlasbar introduktion */
+.seo-intro{background:#fff;border:1px solid var(--line);border-radius:9px;padding:14px 16px;margin:0 0 14px;line-height:1.5}
+.seo-intro h2{margin:0 0 6px;font-size:16px}
+.seo-intro p{margin:0;color:#475569;font-size:13px}
+.inline-tab-link{border:0;background:transparent;padding:0;color:#2457a7;text-decoration:underline;cursor:pointer;font:inherit}
+.inline-tab-link:focus-visible{outline:2px solid #2f6fed;outline-offset:2px;border-radius:2px}
