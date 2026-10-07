@@ -265,14 +265,20 @@
     const points=(await Promise.all(entries.map(async entry=>{
       try{
         const payload=await loadJson(entry.path);
-        const sheet=payload.sheets?.[sheetName];
-        if(!sheet)return null;
-        const row=sheet.rows.find(r=>crimeKey(r)===targetKey);
-        if(!row)return null;
-        const idx=sheet.columns.findIndex(c=>canonicalMeasure(c,payload.year)===targetCanonical);
-        if(idx<2)return null;
-        const value=Number(row[idx]);
-        return Number.isFinite(value)?{year:Number(payload.year),value}:null;
+        const sheetEntries=Object.entries(payload.sheets||{});
+        const orderedSheets=[
+          ...sheetEntries.filter(([name])=>name===sheetName),
+          ...sheetEntries.filter(([name])=>name!==sheetName)
+        ];
+        for(const [,sheet] of orderedSheets){
+          const row=sheet?.rows?.find(r=>crimeKey(r)===targetKey);
+          if(!row)continue;
+          const idx=sheet.columns.findIndex(c=>canonicalMeasure(c,payload.year)===targetCanonical);
+          if(idx<2)continue;
+          const value=Number(row[idx]);
+          if(Number.isFinite(value))return {year:Number(payload.year),value};
+        }
+        return null;
       }catch{return null;}
     }))).filter(Boolean);
 
