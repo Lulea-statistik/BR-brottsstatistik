@@ -1767,30 +1767,38 @@ async function chatCountyComparison(year,crimeId){
   })).sort((a,b)=>(Number(b.rateDerived)||-Infinity)-(Number(a.rateDerived)||-Infinity));
 }
 
-async function chatCategoryComparison(year,municipality,level=3){
-  if(!municipality)return [];
+async function chatCategoryComparison(year,municipality){
+  if(!municipality)return {level:null,rows:[]};
   const rows=await query(`
     SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
            CAST("Antal" AS DOUBLE) AS count,
            CAST("Per100000" AS DOUBLE) AS rate
     FROM read_parquet('${parquetUrl(year)}')
     WHERE "Kommun"='${esc(municipality)}'
-      AND "Antal">-555
+      AND "Antal">0
   `);
   const catById=new Map(CATEGORIES.map(c=>[String(c.Brott_ID),c]));
-  return rows
-    .map(r=>{
-      const cat=catById.get(String(r.crimeId));
-      if(!cat || Number(cat['Brottsnivå'])!==Number(level))return null;
-      return {
-        crimeId:Number(r.crimeId),
-        category:conciseCrimeLabel(cat.Brott),
-        count:Number(r.count),
-        rate:r.rate==null?null:Number(r.rate)
-      };
-    })
-    .filter(Boolean)
-    .sort((a,b)=>b.count-a.count);
+  const preferredLevels=[2,3,1];
+
+  for(const level of preferredLevels){
+    const out=rows
+      .map(r=>{
+        const cat=catById.get(String(r.crimeId));
+        if(!cat || Number(cat['Brottsnivå'])!==level)return null;
+        if(String(cat.Brott_ID)===String(META.default_crime_id))return null;
+        return {
+          crimeId:Number(r.crimeId),
+          category:conciseCrimeLabel(cat.Brott),
+          count:Number(r.count),
+          rate:r.rate==null?null:Number(r.rate)
+        };
+      })
+      .filter(Boolean)
+      .sort((a,b)=>b.count-a.count);
+
+    if(out.length>=2)return {level,rows:out};
+  }
+  return {level:null,rows:[]};
 }
 
 async function buildChatContext(question=''){
@@ -1872,12 +1880,12 @@ async function buildChatContext(question=''){
   }
 
   if(categoryIntent && municipality){
-    const categoryRows=await chatCategoryComparison(comparisonYear,municipality,3);
+    const categoryData=await chatCategoryComparison(comparisonYear,municipality);
     context.categoryComparison={
       year:comparisonYear,
       municipality,
-      hierarchyLevel:3,
-      rows:categoryRows,
+      hierarchyLevel:categoryData.level,
+      rows:categoryData.rows,
       note:'Kategorierna jämförs inom samma Brå-hierarkinivå för att undvika att över- och underkategorier dubbelräknas. Raderna är sorterade efter antal brott.'
     };
   }
