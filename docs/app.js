@@ -1748,6 +1748,22 @@ function legislationDisplayLabel(crimeId,rawName){
   return raw||'Oklar brottskategori';
 }
 
+function explicitLegislationPeriod(name,minYear,maxYear){
+  const text=String(name||'');
+  const startMatch=text.match(/(?:fr\.?\s*o\.?\s*m\.?|från\s+och\s+med)\s*(\d{4})(?:[-/.](\d{1,2}))?/i);
+  const endMatch=text.match(/(?:t\.?\s*o\.?\s*m\.?|till\s+och\s+med)\s*(\d{4})(?:[-/.](\d{1,2}))?/i);
+
+  const startYear=startMatch ? Number(startMatch[1]) : null;
+  const endYear=endMatch ? Number(endMatch[1]) : null;
+
+  return {
+    startYear:Number.isFinite(startYear) && startYear>=minYear && startYear<=maxYear+1 ? startYear : null,
+    endYear:Number.isFinite(endYear) && endYear>=minYear-1 && endYear<=maxYear+1 ? endYear : null,
+    startText:startMatch ? startMatch[0] : null,
+    endText:endMatch ? endMatch[0] : null
+  };
+}
+
 async function loadLegislationTimeline(){
   if(legislationTimelineCache)return legislationTimelineCache;
 
@@ -1762,17 +1778,34 @@ async function loadLegislationTimeline(){
   `);
 
   const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  const minYear=Number(META.start_year);
+  const maxYear=Number(META.latest_year);
+
   legislationTimelineCache=observed.map(row=>{
     const cat=catById.get(String(row.crimeId));
     if(!cat)return null;
+
+    const observedFirstYear=Number(row.firstYear);
+    const observedLastYear=Number(row.lastYear);
+    const explicit=explicitLegislationPeriod(cat.Brott,minYear,maxYear);
+    const firstYear=explicit.startYear ?? observedFirstYear;
+    const lastYear=explicit.endYear ?? observedLastYear;
+    const explicitEnded=explicit.endYear!=null && explicit.endYear<maxYear;
+
     return {
       crimeId:Number(row.crimeId),
       name:String(cat.Brott||''),
       label:legislationDisplayLabel(cat.Brott_ID,cat.Brott),
       level:Number(cat['Brottsnivå']||0),
-      ended:cat['Upphört']===true || String(cat['Upphört']).toLowerCase()==='true',
-      firstYear:Number(row.firstYear),
-      lastYear:Number(row.lastYear),
+      ended:explicitEnded || cat['Upphört']===true || String(cat['Upphört']).toLowerCase()==='true',
+      firstYear,
+      lastYear,
+      observedFirstYear,
+      observedLastYear,
+      explicitStartYear:explicit.startYear,
+      explicitEndYear:explicit.endYear,
+      explicitStartText:explicit.startText,
+      explicitEndText:explicit.endText,
       observedYears:Number(row.observedYears)
     };
   }).filter(Boolean);
@@ -1923,16 +1956,37 @@ function buildLegislationGroups(rows){
 
 function legislationTooltipHtml(row,maxYear){
   const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
+  const observedEnd=row.observedLastYear===maxYear?'senaste dataår':String(row.observedLastYear);
+  const differs=row.observedFirstYear!=null && row.observedLastYear!=null
+    && (row.firstYear!==row.observedFirstYear || row.lastYear!==row.observedLastYear);
+
   let html='<strong>'+escapeHtml(row.label)+'</strong>'
-    +'<div class="legislation-tooltip-meta">Nivå '+row.level+' · '+row.firstYear+'–'+endText+'</div>';
+    +'<div class="legislation-tooltip-meta">Visad period: '+row.firstYear+'–'+endText+'</div>';
+
+  if(row.explicitStartYear!=null || row.explicitEndYear!=null){
+    const pieces=[];
+    if(row.explicitStartText)pieces.push(row.explicitStartText);
+    if(row.explicitEndText)pieces.push(row.explicitEndText);
+    html+='<div class="legislation-tooltip-rule">Explicit period i kategorinamnet: '+escapeHtml(pieces.join(' · '))+'</div>';
+  }
+
+  if(differs){
+    html+='<div class="legislation-tooltip-observed">Förekommer i Brå-data: '
+      +row.observedFirstYear+'–'+observedEnd+'</div>';
+  }
   if(row.children?.length){
     html+='<div class="legislation-tooltip-title">Underliggande kategorier</div>';
     html+=row.children.map(child=>{
       const childEnd=child.lastYear===maxYear && !child.ended?'pågår':String(child.lastYear);
+      const observedDiff=child.observedFirstYear!=null && child.observedLastYear!=null
+        && (child.firstYear!==child.observedFirstYear || child.lastYear!==child.observedLastYear);
       return '<div class="legislation-tooltip-child">'
         +'<span>Nivå '+child.level+':</span> '
         +escapeHtml(child.label)
         +' <small>'+child.firstYear+'–'+childEnd+'</small>'
+        +(observedDiff
+          ? '<div class="legislation-tooltip-child-observed">Brå-data: '+child.observedFirstYear+'–'+child.observedLastYear+'</div>'
+          : '')
       +'</div>';
     }).join('');
   }
