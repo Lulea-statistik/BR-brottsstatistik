@@ -6,6 +6,16 @@
     '320':'Anmälningsår'
   };
   const REGION_ORDER = ['La','Rn01','Rn02','Rn03','Rn04','Rn05','Rn06','Rn07'];
+  const REGION_NAMES = {
+    La:'Hela landet',
+    Rn01:'Region Nord',
+    Rn02:'Region Mitt',
+    Rn03:'Region Stockholm',
+    Rn04:'Region Öst',
+    Rn05:'Region Väst',
+    Rn06:'Region Syd',
+    Rn07:'Region Bergslagen'
+  };
   const cache = new Map();
   let manifest = null;
   let currentPayload = null;
@@ -86,7 +96,7 @@
   function availableRegions(table,year){
     const rows=(manifest?.files||[]).filter(x=>String(x.table_id)===String(table)&&Number(x.year)===Number(year));
     const map=new Map(rows.map(x=>[x.region_code,x.region_name]));
-    return REGION_ORDER.filter(code=>map.has(code)).map(code=>({value:code,text:map.get(code)}));
+    return REGION_ORDER.filter(code=>map.has(code)).map(code=>({value:code,text:REGION_NAMES[code]||map.get(code)}));
   }
 
   function selectedSheet(){
@@ -187,7 +197,7 @@
     $('handledCrimeKpi').textContent=String(row[1]??'–');
     $('handledLawKpi').textContent=String(row[0]??'–');
     $('handledSheetKpi').textContent=$('handledSheet').value;
-    $('handledSourceKpi').textContent=(currentPayload?.region_name||'')+' · '+(currentPayload?.year||'');
+    $('handledSourceKpi').textContent=(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · '+(currentPayload?.year||'');
     $('handledSourceLink').href=currentPayload?.source_file||currentPayload?.source_page||'#';
 
     renderDetail(sheet,row);
@@ -208,7 +218,7 @@
       tr.append(th,td);
       tbody.appendChild(tr);
     });
-    $('handledDetailStatus').textContent=(currentPayload?.year||'')+' · '+(currentPayload?.region_name||'')+' · '+crimeLabel(row);
+    $('handledDetailStatus').textContent=(currentPayload?.year||'')+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · '+crimeLabel(row);
   }
 
   function renderRanking(sheet,measureIndex,measure,percent){
@@ -235,7 +245,7 @@
       options:chartOptions(percent,'y')
     });
     $('handledRankTitle').textContent='Högsta värden – '+(currentPayload?.year||'');
-    $('handledRankStatus').textContent=measure+' · '+(currentPayload?.region_name||'')+' · Top 15 brottstyper';
+    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · Top 15 brottstyper';
   }
 
   async function renderTrend(currentRow,measure,percent){
@@ -303,7 +313,7 @@
       setSelect('handledSheet',sheets.map(x=>({value:x,text:x})),preserveSheet?$('handledSheet')?.value:'');
       refreshCrimeList(preserveCrime);
       refreshMeasures(preserveMeasure);
-      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+currentPayload.region_name+' · '+sheets.length+' deltabeller';
+      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+sheets.length+' deltabeller';
       renderCurrent();
     }catch(err){
       console.error(err);
