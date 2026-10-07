@@ -46,6 +46,7 @@ Om countyComparison finns får du jämföra län. Förklara vid behov kort att l
 Om municipalityComparison finns får du jämföra, rangordna och beskriva kommuner utifrån dessa rader.
 När municipalityComparison.requestedMunicipalities innehåller flera kommuner ska municipalityComparison.rows vara huvudkällan. Säg inte att en efterfrågad kommun saknas om den finns i rows.
 Ignorera en eventuell enkelkommun-serie när frågan uttryckligen jämför två eller flera kommuner.
+Om categoryComparison finns ska du använda dessa rader när användaren frågar om vanligaste brottstyper eller brottskategorier. Säg inte att brottskategorier saknas om categoryComparison.rows innehåller data. Förklara vid behov kort att kategorierna jämförs inom samma hierarkinivå för att undvika dubbelräkning.
 Om frågan gäller utveckling: beskriv riktning och storlek på förändringen och ange start- och slutår.
 Skilj alltid på antal och per 100 000 invånare. Ange relevanta årtal och enheter.
 Om underlaget inte räcker, säg kort vilken uppgift som saknas i stället för att konstruera ett tomt JSON-svar.
