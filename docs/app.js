@@ -4,6 +4,7 @@ import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
 let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false;
 const charts = {};
+let legislationTimelineCache=null;
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:1});
 
@@ -427,6 +428,13 @@ function setupControls(){
   el('profileYearEnd').addEventListener('input',()=>handleProfileYearRange('end',false));
   el('profileYearStart').addEventListener('change',()=>handleProfileYearRange('start',true));
   el('profileYearEnd').addEventListener('change',()=>handleProfileYearRange('end',true));
+
+  ['legislationSearch','legislationLevel','legislationStatus'].forEach(id=>{
+    const control=el(id);
+    if(!control)return;
+    const eventName=id==='legislationSearch'?'input':'change';
+    control.addEventListener(eventName,()=>renderLegislationTimeline(false));
+  });
 }
 
 function setupTabs(){
@@ -440,6 +448,9 @@ function setupTabs(){
     },60);
     if(btn.dataset.page==='profile')setTimeout(async()=>{
       await renderProfile();
+    },20);
+    if(btn.dataset.page==='legislation')setTimeout(async()=>{
+      await renderLegislationTimeline();
     },20);
   }));
 }
@@ -1654,6 +1665,126 @@ async function renderProfile(){
     el('profileTreemap').innerHTML='<div class="profile-empty">Fel: '+String(err.message||err)+'</div>';
   }finally{
     setLoading(null);
+  }
+}
+
+async function loadLegislationTimeline(){
+  if(legislationTimelineCache)return legislationTimelineCache;
+
+  const observed=await query(`
+    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+           MIN(CAST("År" AS INTEGER)) AS firstYear,
+           MAX(CAST("År" AS INTEGER)) AS lastYear,
+           COUNT(DISTINCT CAST("År" AS INTEGER)) AS observedYears
+    FROM read_parquet(${allParquetSql()})
+    WHERE "Antal">-555
+    GROUP BY "Brott_ID"
+  `);
+
+  const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  legislationTimelineCache=observed.map(row=>{
+    const cat=catById.get(String(row.crimeId));
+    if(!cat)return null;
+    return {
+      crimeId:Number(row.crimeId),
+      name:String(cat.Brott||''),
+      label:treemapCrimeLabel(cat.Brott_ID,cat.Brott),
+      level:Number(cat['Brottsnivå']||0),
+      ended:cat['Upphört']===true || String(cat['Upphört']).toLowerCase()==='true',
+      firstYear:Number(row.firstYear),
+      lastYear:Number(row.lastYear),
+      observedYears:Number(row.observedYears)
+    };
+  }).filter(Boolean);
+
+  return legislationTimelineCache;
+}
+
+function legislationYearTicks(minYear,maxYear){
+  const ticks=[minYear];
+  for(let y=Math.ceil(minYear/5)*5;y<maxYear;y+=5){
+    if(y>minYear)ticks.push(y);
+  }
+  if(!ticks.includes(maxYear))ticks.push(maxYear);
+  return ticks;
+}
+
+async function renderLegislationTimeline(showLoading=true){
+  const host=el('legislationTimeline');
+  if(!host)return;
+  if(showLoading)setLoading('Laddar kategori- och paragraftidslinje…');
+
+  try{
+    const rows=await loadLegislationTimeline();
+    const minYear=Number(META.start_year);
+    const maxYear=Number(META.latest_year);
+    const search=String(el('legislationSearch')?.value||'').trim().toLocaleLowerCase('sv');
+    const level=String(el('legislationLevel')?.value||'');
+    const status=String(el('legislationStatus')?.value||'changes');
+
+    let filtered=rows.filter(row=>{
+      if(level && String(row.level)!==level)return false;
+      if(search && !row.name.toLocaleLowerCase('sv').includes(search) && !row.label.toLocaleLowerCase('sv').includes(search))return false;
+
+      const isNew=row.firstYear>minYear;
+      const isEnded=row.lastYear<maxYear || row.ended;
+      const isActive=row.lastYear===maxYear && !row.ended;
+
+      if(status==='changes' && !(isNew||isEnded))return false;
+      if(status==='new' && !isNew)return false;
+      if(status==='ended' && !isEnded)return false;
+      if(status==='active' && !isActive)return false;
+      return true;
+    });
+
+    filtered=filtered.sort((a,b)=>
+      b.firstYear-a.firstYear ||
+      a.lastYear-b.lastYear ||
+      a.label.localeCompare(b.label,'sv')
+    );
+
+    const statusText=el('legislationStatusText');
+    if(statusText){
+      const changeCount=rows.filter(r=>r.firstYear>minYear || r.lastYear<maxYear || r.ended).length;
+      statusText.textContent=filtered.length+' kategorier visas · '+changeCount+' kategorier har en observerad förändring under '+minYear+'–'+maxYear+'.';
+    }
+
+    if(!filtered.length){
+      host.innerHTML='<div class="profile-empty">Inga kategorier matchar filtret.</div>';
+      return;
+    }
+
+    const ticks=legislationYearTicks(minYear,maxYear);
+    const span=maxYear-minYear+1;
+    const tickHtml=ticks.map(year=>{
+      const left=((year-minYear)/Math.max(1,maxYear-minYear))*100;
+      return '<span class="legislation-year-tick" style="left:'+left+'%">'+year+'</span>';
+    }).join('');
+
+    const rowsHtml=filtered.map(row=>{
+      const left=((row.firstYear-minYear)/span)*100;
+      const width=((row.lastYear-row.firstYear+1)/span)*100;
+      const state=(row.lastYear<maxYear || row.ended)?'ended':'active';
+      const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
+      const title=escapeHtml(row.name+' · Nivå '+row.level+' · Brott_ID '+row.crimeId);
+      return '<div class="legislation-row">'
+        +'<div class="legislation-label" title="'+title+'">'
+          +'<strong>'+escapeHtml(row.label)+'</strong>'
+          +'<small>Nivå '+row.level+' · '+row.firstYear+'–'+endText+'</small>'
+        +'</div>'
+        +'<div class="legislation-track">'
+          +'<div class="legislation-grid">'+tickHtml+'</div>'
+          +'<div class="legislation-bar '+state+'" style="left:'+left+'%;width:'+Math.max(width,1.2)+'%" title="'+title+' · observerad '+row.firstYear+'–'+row.lastYear+'"></div>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+
+    host.innerHTML='<div class="legislation-axis"><div></div><div class="legislation-axis-track">'+tickHtml+'</div></div>'+rowsHtml;
+  }catch(err){
+    console.error(err);
+    host.innerHTML='<div class="profile-empty">Fel: '+escapeHtml(String(err.message||err))+'</div>';
+  }finally{
+    if(showLoading)setLoading(null);
   }
 }
 
