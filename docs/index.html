@@ -29,6 +29,7 @@
   <button class="tab" data-page="trends">Trender</button>
   <button class="tab" data-page="map">Årskarta</button>
   <button class="tab" data-page="profile">Områdesprofil</button>
+  <button class="tab" data-page="legislation">Lag & kategorier över tid</button>
   <button class="tab" data-page="method">Metod & data</button>
 </nav>
 <main>
@@ -154,6 +155,52 @@
     </div>
   </section>
 
+  <section id="page-legislation" class="page">
+    <div class="controls legislation-controls">
+      <label>Sök
+        <input id="legislationSearch" type="search" placeholder="Exempel: cykel, skadegörelse, narkotika…" autocomplete="off">
+      </label>
+      <label>Nivå
+        <select id="legislationLevel">
+          <option value="">Alla nivåer</option>
+          <option value="1">Nivå 1</option>
+          <option value="2">Nivå 2</option>
+          <option value="3">Nivå 3</option>
+          <option value="4">Nivå 4</option>
+          <option value="5">Nivå 5</option>
+          <option value="6">Nivå 6</option>
+        </select>
+      </label>
+      <label>Status
+        <select id="legislationStatus">
+          <option value="changes" selected>Förändringar</option>
+          <option value="new">Tillkommit efter 1996</option>
+          <option value="ended">Avslutats före senaste år</option>
+          <option value="active">Aktiva senaste år</option>
+          <option value="all">Alla kategorier</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="panel legislation-panel">
+      <div class="legislation-heading">
+        <div>
+          <h2>Brottskategorier och paragrafer över tid</h2>
+          <p id="legislationStatusText" class="muted">Visar när kategorier först och sist förekommer i Brå:s kommunstatistik.</p>
+        </div>
+        <div class="legislation-note">
+          Första/sista förekomst i statistiken är inte alltid samma sak som datum då en lag trädde i kraft eller upphävdes.
+          Förändringar kan även bero på Brå:s klassificering eller statistikproduktion.
+        </div>
+      </div>
+      <div class="legislation-legend">
+        <span><i class="leg-dot active"></i>Finns senaste dataåret</span>
+        <span><i class="leg-dot ended"></i>Slutar före senaste dataåret / upphört</span>
+      </div>
+      <div id="legislationTimeline" class="legislation-timeline" aria-label="Tidslinje över brottskategorier"></div>
+    </div>
+  </section>
+
   <section id="page-method" class="page">
     <div class="panel prose">
       <h2>Metod & data</h2>
@@ -184,6 +231,6 @@
 <script src="chat-config.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=41"></script>
+<script type="module" src="app.js?v=42"></script>
 </body>
 </html>
