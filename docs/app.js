@@ -1668,6 +1668,86 @@ async function renderProfile(){
   }
 }
 
+function normalizeLegislationLabelText(text){
+  return String(text||'')
+    .replace(/\s+/g,' ')
+    .replace(/\s*([,;:])\s*/g,'$1 ')
+    .trim();
+}
+
+function legislationHasLetters(text){
+  return /[A-Za-zÅÄÖåäö]/.test(String(text||''));
+}
+
+function isWeakLegislationLabel(text){
+  const t=normalizeLegislationLabelText(text);
+  if(!t)return true;
+  if(!legislationHasLetters(t))return true;
+
+  const letterCount=(t.match(/[A-Za-zÅÄÖåäö]/g)||[]).length;
+  const digitSymbolCount=(t.match(/[0-9§().,:/\-–]/g)||[]).length;
+  const alphaWords=t.split(/\s+/).filter(w=>/[A-Za-zÅÄÖåäö]{2,}/.test(w)).length;
+
+  if(alphaWords===0)return true;
+  if(letterCount<4)return true;
+  if(digitSymbolCount>letterCount*1.5)return true;
+  return false;
+}
+
+function legislationCategoryById(crimeId){
+  return CATEGORIES.find(x=>String(x.Brott_ID)===String(crimeId))||null;
+}
+
+function legislationAncestorChain(cat){
+  const byId=new Map(CATEGORIES.map(x=>[String(x.Brott_ID),x]));
+  const chain=[];
+  const seen=new Set();
+  let current=cat;
+
+  while(current && !seen.has(String(current.Brott_ID))){
+    chain.push(current);
+    seen.add(String(current.Brott_ID));
+    const parentId=categoryParentId(current);
+    current=parentId ? byId.get(String(parentId)) : null;
+  }
+  return chain;
+}
+
+function firstMeaningfulLegislationAncestorLabel(cat){
+  const chain=legislationAncestorChain(cat);
+  for(const item of chain){
+    const candidate=normalizeLegislationLabelText(
+      treemapCrimeLabel(item.Brott_ID,item.Brott)||item.Brott
+    );
+    if(!isWeakLegislationLabel(candidate))return candidate;
+  }
+  return normalizeLegislationLabelText(cat?.Förälder||cat?.Brott||'');
+}
+
+function legislationDisplayLabel(crimeId,rawName){
+  const cat=legislationCategoryById(crimeId);
+  const shortLabel=normalizeLegislationLabelText(
+    treemapCrimeLabel(crimeId,rawName)||rawName
+  );
+
+  if(!isWeakLegislationLabel(shortLabel))return shortLabel;
+
+  const ancestorLabel=firstMeaningfulLegislationAncestorLabel(cat);
+  const raw=normalizeLegislationLabelText(rawName);
+  const parts=raw.split(',').map(x=>x.trim()).filter(Boolean);
+  const tail=parts.length ? parts[parts.length-1] : '';
+
+  if(tail && !isWeakLegislationLabel(tail) && tail!==ancestorLabel){
+    return ancestorLabel ? ancestorLabel+': '+tail : tail;
+  }
+
+  if(ancestorLabel){
+    return ancestorLabel+' (paragrafhänvisning)';
+  }
+
+  return raw||'Oklar brottskategori';
+}
+
 async function loadLegislationTimeline(){
   if(legislationTimelineCache)return legislationTimelineCache;
 
@@ -1688,7 +1768,7 @@ async function loadLegislationTimeline(){
     return {
       crimeId:Number(row.crimeId),
       name:String(cat.Brott||''),
-      label:treemapCrimeLabel(cat.Brott_ID,cat.Brott),
+      label:legislationDisplayLabel(cat.Brott_ID,cat.Brott),
       level:Number(cat['Brottsnivå']||0),
       ended:cat['Upphört']===true || String(cat['Upphört']).toLowerCase()==='true',
       firstYear:Number(row.firstYear),
