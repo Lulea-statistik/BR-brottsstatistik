@@ -133,19 +133,28 @@
     selectedCrimeKey=select.value||chosen?.key||'';
   }
 
-  function getTopN(){
-    return Number($('handledTopN')?.value||15);
+  const RANK_WINDOW_SIZE=15;
+
+  function rankWindowStart(){
+    return Math.max(0,Number($('handledTopN')?.value||0));
   }
 
-  function updateTopN(){
+  function updateRankSlider(totalRows){
     const slider=$('handledTopN');
     if(!slider)return;
-    const min=Number(slider.min||5);
-    const max=Number(slider.max||25);
-    const value=Number(slider.value||15);
-    const pct=max>min?((value-min)/(max-min))*100:50;
+    const total=Math.max(0,Number(totalRows)||0);
+    const maxStart=Math.max(0,total-RANK_WINDOW_SIZE);
+    slider.min='0';
+    slider.max=String(maxStart);
+    if(Number(slider.value)>maxStart)slider.value=String(maxStart);
+    const start=rankWindowStart();
+    const end=Math.min(total,start+RANK_WINDOW_SIZE);
+    const pct=maxStart>0?(start/maxStart)*100:0;
     slider.style.setProperty('--handled-topn-pct',pct+'%');
-    if($('handledTopNValue'))$('handledTopNValue').textContent=String(value);
+    slider.disabled=maxStart===0;
+    if($('handledTopNValue')){
+      $('handledTopNValue').textContent=total ? (start+1)+'–'+end+' av '+total : '–';
+    }
   }
 
   function refreshMeasures(preserve=true){
@@ -228,18 +237,22 @@
   }
 
   function renderRanking(sheet,measureIndex,measure,percent){
-    const rows=sheet.rows
+    const ranked=sheet.rows
       .map(r=>({row:r,value:Number(r[measureIndex])}))
       .filter(x=>Number.isFinite(x.value))
       .filter(x=>String(x.row?.[1]||'').trim().toUpperCase()!=='SAMTLIGA BROTT')
-      .sort((a,b)=>b.value-a.value)
-      .slice(0,getTopN());
+      .sort((a,b)=>b.value-a.value);
+
+    updateRankSlider(ranked.length);
+    const start=rankWindowStart();
+    const rows=ranked.slice(start,start+RANK_WINDOW_SIZE);
+    const end=Math.min(ranked.length,start+RANK_WINDOW_SIZE);
 
     if(rankChart)rankChart.destroy();
     rankChart=new Chart($('handledRankChart'),{
       type:'bar',
       data:{
-        labels:rows.map(x=>String(x.row[1]||x.row[0]||'')),
+        labels:rows.map((x,i)=>(start+i+1)+'. '+String(x.row[1]||x.row[0]||'')),
         datasets:[{
           data:rows.map(x=>x.value),
           backgroundColor:'rgba(15,118,110,.72)',
@@ -250,8 +263,8 @@
       },
       options:chartOptions(percent,'y')
     });
-    $('handledRankTitle').textContent='Högsta värden – '+(currentPayload?.year||'');
-    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · Top '+getTopN()+' brottstyper';
+    $('handledRankTitle').textContent='Rankade värden – '+(currentPayload?.year||'');
+    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · plats '+(start+1)+'–'+end+' av '+ranked.length;
   }
 
   async function renderTrend(currentRow,measure,percent){
@@ -374,9 +387,7 @@
         selectedCrimeKey=$('handledCrime').value;
         renderCurrent();
       });
-      updateTopN();
       $('handledTopN')?.addEventListener('input',()=>{
-        updateTopN();
         renderCurrent();
       });
     }catch(err){
