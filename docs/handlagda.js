@@ -59,6 +59,114 @@
     return law && law!==crime ? crime+' — '+law : crime||law||'Okänd brottstyp';
   }
 
+  function ensureCrimeSearch(){
+    const select=$('handledCrime');
+    if(!select)return;
+    select.classList.add('handled-crime-native');
+
+    let picker=select.parentElement.querySelector('.handled-crime-picker');
+    if(!picker){
+      picker=document.createElement('div');
+      picker.className='handled-crime-picker';
+
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='handled-crime-button';
+
+      const menu=document.createElement('div');
+      menu.className='handled-crime-menu hidden';
+
+      const search=document.createElement('input');
+      search.type='search';
+      search.className='handled-crime-search';
+      search.placeholder='Sök brottstyp…';
+      search.autocomplete='off';
+      search.setAttribute('aria-label','Sök brottstyp');
+
+      const list=document.createElement('div');
+      list.className='handled-crime-list';
+
+      menu.append(search,list);
+      picker.append(button,menu);
+      select.insertAdjacentElement('afterend',picker);
+
+      const syncButton=()=>{
+        const selected=select.options[select.selectedIndex];
+        button.textContent=selected?.textContent||'Välj brottstyp';
+      };
+
+      const renderList=()=>{
+        const q=search.value.trim().toLocaleLowerCase('sv-SE');
+        const items=[...select.options]
+          .map(o=>({value:o.value,text:o.textContent||o.value}))
+          .filter(item=>!q||item.text.toLocaleLowerCase('sv-SE').includes(q))
+          .sort((a,b)=>{
+            if(q){
+              const as=a.text.toLocaleLowerCase('sv-SE').startsWith(q);
+              const bs=b.text.toLocaleLowerCase('sv-SE').startsWith(q);
+              if(as!==bs)return as?-1:1;
+            }
+            return a.text.localeCompare(b.text,'sv-SE');
+          });
+
+        list.innerHTML='';
+        if(!items.length){
+          const empty=document.createElement('div');
+          empty.className='handled-crime-empty';
+          empty.textContent='Ingen brottstyp hittades';
+          list.appendChild(empty);
+          return;
+        }
+
+        items.forEach(item=>{
+          const row=document.createElement('button');
+          row.type='button';
+          row.className='handled-crime-option';
+          if(String(item.value)===String(select.value))row.classList.add('selected');
+          row.textContent=item.text;
+          row.addEventListener('click',()=>{
+            select.value=item.value;
+            syncButton();
+            menu.classList.add('hidden');
+            search.value='';
+            select.dispatchEvent(new Event('change',{bubbles:true}));
+          });
+          list.appendChild(row);
+        });
+      };
+
+      button.addEventListener('click',e=>{
+        e.stopPropagation();
+        document.querySelectorAll('.handled-crime-menu').forEach(m=>{
+          if(m!==menu)m.classList.add('hidden');
+        });
+        if(menu.classList.contains('hidden')){
+          menu.classList.remove('hidden');
+          renderList();
+          requestAnimationFrame(()=>search.focus());
+        }else{
+          menu.classList.add('hidden');
+        }
+      });
+      search.addEventListener('input',renderList);
+      search.addEventListener('keydown',e=>{
+        if(e.key==='Escape'){
+          menu.classList.add('hidden');
+          button.focus();
+        }else if(e.key==='Enter'){
+          const first=list.querySelector('.handled-crime-option');
+          if(first){e.preventDefault();first.click();}
+        }
+      });
+      picker.addEventListener('click',e=>e.stopPropagation());
+      document.addEventListener('click',()=>menu.classList.add('hidden'));
+    }
+
+    const button=picker.querySelector('.handled-crime-button');
+    const selected=select.options[select.selectedIndex];
+    if(button)button.textContent=selected?.textContent||'Välj brottstyp';
+  }
+
   function fileEntry(table,year,region){
     return manifest?.files?.find(x=>String(x.table_id)===String(table)&&String(x.year)===String(year)&&x.region_code===region);
   }
@@ -316,6 +424,7 @@
     );
 
     selectedCrimeKey=select.value||chosen?.key||'';
+    ensureCrimeSearch();
   }
 
   const RANK_WINDOW_SIZE=15;
@@ -432,6 +541,7 @@
 
     selectedCrimeKey=crimeKey(row);
     $('handledCrime').value=selectedCrimeKey;
+    ensureCrimeSearch();
 
     const measure=currentMeasure();
     const result=measureResult(currentPayload,$('handledSheet').value,row,measure);
@@ -577,7 +687,7 @@
           ? 'Utredda brott'
           : (preserveSheet?$('handledSheet')?.value:''));
       setSelect('handledSheet',visibleSheets.map(x=>({value:x,text:x})),preferredSheet);
-      $('handledSheetLabel')?.classList.toggle('hidden',is320);
+      $('handledSheetLabel')?.classList.toggle('hidden',is300||is320);
       refreshMeasures(preserveMeasure&&!is320);
       refreshCrimeList(preserveCrime);
       $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':visibleSheets.length+' deltabeller');
