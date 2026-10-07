@@ -1086,6 +1086,7 @@ function categoryParentId(cat){
 
 function buildProfileTree(rows,metric){
   const valueById=new Map(rows.map(r=>[String(r.crimeId),Number(r.value)]));
+  const countById=new Map(rows.map(r=>[String(r.crimeId),Number(r.countValue)]));
   const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
   const totalId=String(META.default_crime_id);
 
@@ -1117,7 +1118,8 @@ function buildProfileTree(rows,metric){
       name:String(cat.Brott),
       level:Number(cat['Brottsnivå']||1),
       children:[],
-      rawValue:valueById.get(id)||0
+      rawValue:valueById.get(id)||0,
+      rawCount:countById.get(id)||0
     });
   }
 
@@ -1138,13 +1140,16 @@ function buildProfileTree(rows,metric){
     node.children=positiveChildren;
     if(positiveChildren.length){
       node.value=positiveChildren.reduce((s,ch)=>s+ch.value,0);
+      node.count=positiveChildren.reduce((s,ch)=>s+ch.count,0);
     }else{
       node.value=Number(node.rawValue)||0;
+      node.count=Number(node.rawCount)||0;
     }
   }
   root.children.forEach(assignLeafValues);
   root.children=root.children.filter(ch=>ch.value>0);
   root.value=root.children.reduce((s,ch)=>s+ch.value,0);
+  root.count=root.children.reduce((s,ch)=>s+ch.count,0);
   return root;
 }
 
@@ -1182,7 +1187,20 @@ function renderTreemap(tree,metric){
   const topNames=root.children.map(d=>d.data.name);
   const color=d3.scaleOrdinal()
     .domain(topNames)
-    .range(['#dbeafe','#ccfbf1','#fef3c7','#ede9fe','#fee2e2','#e0f2fe','#dcfce7','#f3e8ff','#ffedd5','#e5e7eb']);
+    .range(['#6ea8eb','#56c8b4','#e9b94f','#9b7be5','#e98282','#62b9e8','#72c78b','#b780df','#eaa064','#9aa4b2']);
+
+  const levelIntensity=level=>{
+    if(level<=1)return .95;
+    if(level===2)return .82;
+    if(level===3)return .62;
+    if(level===4)return .42;
+    return .24;
+  };
+  const leafFill=d=>{
+    const base=color(topAncestor(d).data.name);
+    const level=Number(d.data.level||5);
+    return d3.interpolateRgb('#ffffff',base)(levelIntensity(level));
+  };
 
   const svg=d3.select(host).append('svg')
     .attr('viewBox',`0 0 ${width} ${height}`)
@@ -1216,7 +1234,7 @@ function renderTreemap(tree,metric){
     .attr('width',d=>Math.max(0,d.x1-d.x0))
     .attr('height',d=>Math.max(0,d.y1-d.y0))
     .attr('rx',3)
-    .attr('fill',d=>color(topAncestor(d).data.name))
+    .attr('fill',d=>leafFill(d))
     .on('mousemove',(event,d)=>{
       const share=total>0?100*d.value/total:0;
       const info=metricInfo(metric);
@@ -1225,7 +1243,7 @@ function renderTreemap(tree,metric){
         : info.isCount
           ? fmt0.format(d.value)+' brott'
           : fmt1.format(d.value)+' per 100 000';
-      tooltip.innerHTML='<b>'+d.data.name+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %';
+      tooltip.innerHTML='<b>'+d.data.name+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %<br>Nivå: '+Number(d.data.level||0);
       tooltip.style.display='block';
       tooltip.style.left=(event.clientX+14)+'px';
       tooltip.style.top=(event.clientY+14)+'px';
@@ -1288,7 +1306,8 @@ async function renderProfile(){
 
     const rows=await query(`
       SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
-             CAST(${expression} AS DOUBLE) AS value
+             CAST(${expression} AS DOUBLE) AS value,
+             CAST(SUM(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS countValue
       FROM read_parquet(${parquetSqlForRange(start,end)})
       WHERE "Antal">0${municipalityWhere}
         AND "Brott_ID"<>${Number(META.default_crime_id)}
@@ -1301,6 +1320,8 @@ async function renderProfile(){
     const periodText=multi?start+'–'+end:String(start);
     el('profileTitle').textContent='Områdesprofil – '+scope;
     el('profileStatus').textContent=periodText+' · '+info.label+' · '+tree.children.length+' huvudgrupper';
+    el('profileTotalCrimes').textContent=fmt0.format(tree.count||0);
+    el('profileTotalCrimesPeriod').textContent=multi ? 'summa för '+start+'–'+end : 'år '+start;
     renderTreemap(tree,metric);
     profileRendered=true;
   }catch(err){
@@ -1319,11 +1340,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=22',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=22',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=22',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=22',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=22',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=23',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=23',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=23',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=23',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=23',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
