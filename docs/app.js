@@ -1844,16 +1844,29 @@ async function chatSpecificCrimeContext(year,municipality,question){
   if(!matches.length)return null;
 
   const ids=matches.map(c=>Number(c.Brott_ID)).filter(Number.isFinite);
-  const rows=await query(`
-    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
-           CAST("Antal" AS DOUBLE) AS count,
-           CAST("Per100000" AS DOUBLE) AS rate
-    FROM read_parquet('${parquetUrl(year)}')
-    WHERE "Kommun"='${esc(municipality)}'
-      AND "Brott_ID" IN (${ids.join(',')})
-      AND "Antal">-555
-  `);
+  const [rows,totalRows]=await Promise.all([
+    query(`
+      SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+             CAST("Antal" AS DOUBLE) AS count,
+             CAST("Per100000" AS DOUBLE) AS rate
+      FROM read_parquet('${parquetUrl(year)}')
+      WHERE "Kommun"='${esc(municipality)}'
+        AND "Brott_ID" IN (${ids.join(',')})
+        AND "Antal">-555
+    `),
+    query(`
+      SELECT CAST("Antal" AS DOUBLE) AS totalCount,
+             CAST("Per100000" AS DOUBLE) AS totalRate
+      FROM read_parquet('${parquetUrl(year)}')
+      WHERE "Kommun"='${esc(municipality)}'
+        AND "Brott_ID"=${Number(META.default_crime_id)}
+        AND "Antal">-555
+      LIMIT 1
+    `)
+  ]);
 
+  const totalCount=Number(totalRows[0]?.totalCount);
+  const totalRate=Number(totalRows[0]?.totalRate);
   const byId=new Map(rows.map(r=>[String(r.crimeId),r]));
   const out=matches.map(cat=>{
     const row=byId.get(String(cat.Brott_ID));
@@ -1864,7 +1877,12 @@ async function chatSpecificCrimeContext(year,municipality,question){
       category:conciseCrimeLabel(cat.Brott),
       fullCategory:String(cat.Brott),
       count:Number(row.count),
-      rate:row.rate==null?null:Number(row.rate)
+      rate:row.rate==null?null:Number(row.rate),
+      totalReportedCrimes:Number.isFinite(totalCount)?totalCount:null,
+      totalReportedRate:Number.isFinite(totalRate)?totalRate:null,
+      shareOfAllReportedPercent:Number.isFinite(totalCount) && totalCount>0
+        ? Number(row.count)/totalCount*100
+        : null
     };
   }).filter(Boolean);
 
@@ -1872,7 +1890,7 @@ async function chatSpecificCrimeContext(year,municipality,question){
     year,
     municipality,
     matches:out,
-    note:'Specifika brottstyper söks i Brå-hierarkin på nivå 2–6. Använd den mest semantiskt relevanta träffen, och var tydlig om flera närliggande kategorier finns.'
+    note:'Specifika brottstyper söks i Brå-hierarkin på nivå 2–6. shareOfAllReportedPercent är brottstypens antal dividerat med Totalt antal brott för samma kommun och år.'
   } : null;
 }
 
