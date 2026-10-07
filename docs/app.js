@@ -1748,6 +1748,99 @@ function aggregateLegislationRows(rows,maxDisplayLevel=4){
   return [...groups.values()];
 }
 
+function buildLegislationGroups(rows){
+  const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  const rowById=new Map(rows.map(row=>[String(row.crimeId),row]));
+
+  function ancestorAtLevel(cat,targetLevel){
+    let current=cat;
+    const seen=new Set();
+    while(current && Number(current['Brottsnivå']||0)>targetLevel){
+      const id=String(current.Brott_ID);
+      if(seen.has(id))break;
+      seen.add(id);
+      const parentId=categoryParentId(current);
+      if(!parentId)break;
+      current=catById.get(String(parentId));
+    }
+    return current && Number(current['Brottsnivå']||0)===targetLevel ? current : null;
+  }
+
+  function groupAnchorFor(row){
+    const cat=catById.get(String(row.crimeId));
+    if(!cat)return null;
+    const level1=String(cat.Nivå1||'').toLocaleLowerCase('sv');
+
+    // Specialstraffrätt: group by named law / chapter on level 2.
+    if(level1.includes('specialstraffrättsliga')){
+      return ancestorAtLevel(cat,2);
+    }
+
+    // Brottsbalken: group by the more concrete chapter/category on level 3.
+    if(level1.includes('brott mot brottsbalken')){
+      return ancestorAtLevel(cat,3);
+    }
+
+    return null;
+  }
+
+  const groups=new Map();
+  const ungrouped=[];
+
+  for(const row of rows){
+    const anchorCat=groupAnchorFor(row);
+    if(!anchorCat){
+      ungrouped.push(row);
+      continue;
+    }
+
+    const anchorId=String(anchorCat.Brott_ID);
+    const anchorRow=rowById.get(anchorId);
+    if(!anchorRow){
+      ungrouped.push(row);
+      continue;
+    }
+
+    if(!groups.has(anchorId)){
+      groups.set(anchorId,{
+        ...anchorRow,
+        group:true,
+        children:[]
+      });
+    }
+
+    if(String(row.crimeId)!==anchorId){
+      groups.get(anchorId).children.push(row);
+    }
+  }
+
+  const groupedIds=new Set();
+  for(const [anchorId,group] of groups){
+    if(!group.children.length){
+      groups.delete(anchorId);
+      continue;
+    }
+    groupedIds.add(anchorId);
+    for(const child of group.children)groupedIds.add(String(child.crimeId));
+
+    group.firstYear=Math.min(group.firstYear,...group.children.map(ch=>ch.firstYear));
+    group.lastYear=Math.max(group.lastYear,...group.children.map(ch=>ch.lastYear));
+    group.ended=group.ended || group.children.some(ch=>ch.ended);
+    group.children.sort((a,b)=>
+      a.level-b.level ||
+      a.firstYear-b.firstYear ||
+      a.label.localeCompare(b.label,'sv')
+    );
+  }
+
+  const topLevel=[
+    ...groups.values(),
+    ...rows.filter(row=>!groupedIds.has(String(row.crimeId)))
+  ];
+
+  return topLevel;
+}
+
 function legislationTooltipHtml(row,maxYear){
   const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
   let html='<strong>'+escapeHtml(row.label)+'</strong>'
@@ -1789,7 +1882,8 @@ async function renderLegislationTimeline(showLoading=true){
     const level=String(el('legislationLevel')?.value||'');
     const status=String(el('legislationStatus')?.value||'changes');
 
-    const displayRows=detail==='aggregate' ? aggregateLegislationRows(rows,4) : rows;
+    const baseRows=detail==='aggregate' ? aggregateLegislationRows(rows,4) : rows;
+    const displayRows=buildLegislationGroups(baseRows);
     let filtered=displayRows.filter(row=>{
       if(level && String(row.level)!==level)return false;
       if(search){
@@ -1836,25 +1930,64 @@ async function renderLegislationTimeline(showLoading=true){
       return '<span class="legislation-year-tick" style="left:'+left+'%">'+year+'</span>';
     }).join('');
 
-    const rowsHtml=filtered.map((row,index)=>{
+    function legislationRowHtml(row,index,child=false){
       const left=((row.firstYear-minYear)/span)*100;
       const width=((row.lastYear-row.firstYear+1)/span)*100;
       const state=(row.lastYear<maxYear || row.ended)?'ended':'active';
       const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
-      const childText=row.children?.length ? ' · '+row.children.length+' underkategorier' : '';
-      return '<div class="legislation-row">'
+      const childCount=row.children?.length||0;
+      const childText=childCount ? ' · '+childCount+' underkategorier' : '';
+      const rowClass=child?' legislation-row-child':'';
+      const toggle=childCount
+        ? '<button class="legislation-toggle" type="button" data-legislation-toggle="'+index+'" aria-expanded="false">▸</button>'
+        : '<span class="legislation-toggle-spacer"></span>';
+
+      return '<div class="legislation-row'+rowClass+'">'
         +'<div class="legislation-label" data-legislation-index="'+index+'">'
-          +'<strong>'+escapeHtml(row.label)+'</strong>'
-          +'<small>Nivå '+row.level+' · '+row.firstYear+'–'+endText+childText+'</small>'
+          +toggle
+          +'<div class="legislation-label-text">'
+            +'<strong>'+escapeHtml(row.label)+'</strong>'
+            +'<small>Nivå '+row.level+' · '+row.firstYear+'–'+endText+childText+'</small>'
+          +'</div>'
         +'</div>'
         +'<div class="legislation-track">'
           +'<div class="legislation-grid">'+tickHtml+'</div>'
           +'<div class="legislation-bar '+state+'" data-legislation-index="'+index+'" style="left:'+left+'%;width:'+Math.max(width,1.2)+'%"></div>'
         +'</div>'
       +'</div>';
+    }
+
+    const renderedRows=[];
+    const rowsHtml=filtered.map((row,index)=>{
+      renderedRows.push(row);
+      const parentIndex=renderedRows.length-1;
+      let html=legislationRowHtml(row,parentIndex,false);
+
+      if(row.children?.length){
+        const childrenHtml=row.children.map(child=>{
+          renderedRows.push(child);
+          return legislationRowHtml(child,renderedRows.length-1,true);
+        }).join('');
+        html+='<div class="legislation-children" data-legislation-children="'+parentIndex+'" hidden>'+childrenHtml+'</div>';
+      }
+      return html;
     }).join('');
 
     host.innerHTML='<div class="legislation-axis"><div></div><div class="legislation-axis-track">'+tickHtml+'</div></div>'+rowsHtml;
+
+    host.querySelectorAll('[data-legislation-toggle]').forEach(button=>{
+      button.addEventListener('click',event=>{
+        event.stopPropagation();
+        const index=button.dataset.legislationToggle;
+        const children=host.querySelector('[data-legislation-children="'+index+'"]');
+        if(!children)return;
+        const opening=children.hasAttribute('hidden');
+        if(opening)children.removeAttribute('hidden');
+        else children.setAttribute('hidden','');
+        button.textContent=opening?'▾':'▸';
+        button.setAttribute('aria-expanded',String(opening));
+      });
+    });
 
     let tooltip=document.querySelector('.legislation-tooltip');
     if(!tooltip){
@@ -1865,7 +1998,7 @@ async function renderLegislationTimeline(showLoading=true){
     }
     host.querySelectorAll('[data-legislation-index]').forEach(node=>{
       node.addEventListener('mousemove',event=>{
-        const row=filtered[Number(node.dataset.legislationIndex)];
+        const row=renderedRows[Number(node.dataset.legislationIndex)];
         if(!row)return;
         tooltip.innerHTML=legislationTooltipHtml(row,maxYear);
         tooltip.style.display='block';
