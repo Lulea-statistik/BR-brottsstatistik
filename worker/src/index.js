@@ -45,7 +45,7 @@ Gör bara enkla beräkningar som direkt kan härledas från underlaget.
 Svara kort och sakligt på svenska. Avsluta med "Källa: Brå." när svaret innehåller statistik.`;
 
     const payload={
-      model: env.MISTRAL_MODEL || "mistral-small-latest",
+      model: env.MISTRAL_MODEL || "ministral-3b-2512",
       temperature:0.1,
       messages:[
         {role:"system",content:system},
