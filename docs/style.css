@@ -66,3 +66,18 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .profile-kpi span{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
 .profile-kpi strong{display:block;font-size:22px;line-height:1.15;color:var(--text)}
 .profile-kpi small{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+
+.native-municipality-select{display:none}
+.municipality-picker{position:relative;min-width:220px}
+.municipality-button{width:100%;min-height:36px;text-align:left;padding:8px 34px 8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--text);cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.municipality-button:after{content:"▾";position:absolute;right:10px;top:8px;color:var(--muted)}
+.municipality-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:1100;width:max(100%,260px);max-width:min(360px,90vw);background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 30px rgba(23,32,51,.16);padding:7px}
+.municipality-menu.hidden{display:none}
+.municipality-search{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:6px;outline:none;font:inherit;color:var(--text);background:#fff}
+.municipality-search:focus{border-color:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.12)}
+.municipality-list{max-height:360px;overflow:auto;margin-top:6px}
+.municipality-option{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--text);padding:7px 9px;border-radius:5px;cursor:pointer;font:inherit}
+.municipality-option:hover,.municipality-option.selected{background:#eef3fb}
+.municipality-option.selected{font-weight:600}
+.municipality-empty{padding:10px;color:var(--muted);font-size:12px}
+@media(max-width:600px){.municipality-picker{width:100%;min-width:0}.municipality-menu{width:100%;max-width:none}}
