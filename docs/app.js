@@ -1801,6 +1801,75 @@ async function chatCategoryComparison(year,municipality){
   return {level:null,rows:[]};
 }
 
+function chatSpecificCrimeMatches(question){
+  const q=String(question||'').toLocaleLowerCase('sv')
+    .replace(/[^a-zåäö0-9\s-]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+  if(!q)return [];
+
+  const terms=q.split(/\s+/).filter(t=>t.length>=4);
+  const scored=[];
+
+  for(const cat of CATEGORIES){
+    const level=Number(cat['Brottsnivå']||0);
+    if(level<2 || level>6)continue;
+    const name=String(cat.Brott||'').toLocaleLowerCase('sv');
+    let score=0;
+
+    for(const term of terms){
+      if(name.includes(term))score+=term.length;
+      if(term.startsWith('cykel') && /cykel/.test(name))score+=8;
+      if(term.startsWith('stöld') && /stöld|tillgrepp/.test(name))score+=8;
+    }
+
+    if(score>0)scored.push({cat,score});
+  }
+
+  return scored
+    .sort((a,b)=>b.score-a.score || Number(b.cat['Brottsnivå'])-Number(a.cat['Brottsnivå']))
+    .slice(0,12)
+    .map(x=>x.cat);
+}
+
+async function chatSpecificCrimeContext(year,municipality,question){
+  if(!municipality)return null;
+  const matches=chatSpecificCrimeMatches(question);
+  if(!matches.length)return null;
+
+  const ids=matches.map(c=>Number(c.Brott_ID)).filter(Number.isFinite);
+  const rows=await query(`
+    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+           CAST("Antal" AS DOUBLE) AS count,
+           CAST("Per100000" AS DOUBLE) AS rate
+    FROM read_parquet('${parquetUrl(year)}')
+    WHERE "Kommun"='${esc(municipality)}'
+      AND "Brott_ID" IN (${ids.join(',')})
+      AND "Antal">-555
+  `);
+
+  const byId=new Map(rows.map(r=>[String(r.crimeId),r]));
+  const out=matches.map(cat=>{
+    const row=byId.get(String(cat.Brott_ID));
+    if(!row)return null;
+    return {
+      crimeId:Number(cat.Brott_ID),
+      hierarchyLevel:Number(cat['Brottsnivå']||0),
+      category:conciseCrimeLabel(cat.Brott),
+      fullCategory:String(cat.Brott),
+      count:Number(row.count),
+      rate:row.rate==null?null:Number(row.rate)
+    };
+  }).filter(Boolean);
+
+  return out.length ? {
+    year,
+    municipality,
+    matches:out,
+    note:'Specifika brottstyper söks i Brå-hierarkin på nivå 2–6. Använd den mest semantiskt relevanta träffen, och var tydlig om flera närliggande kategorier finns.'
+  } : null;
+}
+
 async function buildChatContext(question=''){
   const page=chatActivePage();
   let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
@@ -1877,6 +1946,11 @@ async function buildChatContext(question=''){
       complete:wanted.size===0 || comparisonRows.length===wanted.size,
       note:'Kommunvärden kommer direkt från Brå-underlaget. Om requestedMunicipalities innehåller flera namn ska rows användas som huvudunderlag för jämförelsen.'
     };
+  }
+
+  const specificCrimeContext=await chatSpecificCrimeContext(comparisonYear,municipality,question);
+  if(specificCrimeContext){
+    context.specificCrime=specificCrimeContext;
   }
 
   if(categoryIntent && municipality){
