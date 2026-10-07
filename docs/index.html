@@ -27,6 +27,7 @@
 <nav class="tabs">
   <button class="tab active" data-page="overview">Översikt</button>
   <button class="tab" data-page="trends">Trender</button>
+  <button class="tab" data-page="change">Förändring</button>
   <button class="tab" data-page="map">Årskarta</button>
   <button class="tab" data-page="profile">Områdesprofil</button>
   <button class="tab" data-page="legislation">Lag & kategorier över tid</button>
@@ -65,6 +66,53 @@
     <div class="panel tall">
       <h2 id="trendTitle">Trend</h2>
       <canvas id="trendChart"></canvas>
+    </div>
+  </section>
+
+  <section id="page-change" class="page">
+    <div class="controls change-controls">
+      <label>Kommun<select id="changeMunicipality"></select></label>
+      <label>Mått<select id="changeMetric">
+        <option value="Per100000" selected>Brott per 100 000 inv.</option>
+        <option value="Antal">Antal brott</option>
+      </select></label>
+      <label>Förändring<select id="changeMode">
+        <option value="percent" selected>Procentuell förändring</option>
+        <option value="absolute">Absolut förändring</option>
+      </select></label>
+      <label>Brottsnivå<select id="changeLevel">
+        <option value="2">Nivå 2</option>
+        <option value="3" selected>Nivå 3</option>
+        <option value="4">Nivå 4</option>
+        <option value="5">Nivå 5</option>
+      </select></label>
+      <label class="change-year-label">Basår
+        <div class="change-year-control">
+          <div class="change-year-head">
+            <strong id="changeYearPeriod">–</strong>
+            <small id="changeWindowText">–</small>
+          </div>
+          <input id="changeBaseYear" type="range" step="1" aria-label="Basår för förändringsanalys">
+        </div>
+      </label>
+    </div>
+
+    <div class="change-note">
+      Rankningen jämför samma brottsnivå mellan basåret och senaste året. Kategorier måste ha giltiga värden båda åren.
+      Procentuell förändring kan bli stor när basvärdet är lågt; kontrollera därför bas- och slutvärde i hover.
+    </div>
+
+    <div class="change-grid">
+      <div class="panel change-panel">
+        <h2 id="changeIncreaseTitle">Störst ökning</h2>
+        <p id="changeIncreaseStatus" class="muted"></p>
+        <div class="change-chart-wrap"><canvas id="changeIncreaseChart"></canvas></div>
+      </div>
+      <div class="panel change-panel">
+        <h2 id="changeDecreaseTitle">Störst minskning</h2>
+        <p id="changeDecreaseStatus" class="muted"></p>
+        <div class="change-chart-wrap"><canvas id="changeDecreaseChart"></canvas></div>
+      </div>
     </div>
   </section>
 
@@ -238,6 +286,6 @@
 <script src="chat-config.js?v=1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=47"></script>
+<script type="module" src="app.js?v=48"></script>
 </body>
 </html>
