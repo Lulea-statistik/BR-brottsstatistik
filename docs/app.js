@@ -1724,20 +1724,81 @@ function firstMeaningfulLegislationAncestorLabel(cat){
   return normalizeLegislationLabelText(cat?.Förälder||cat?.Brott||'');
 }
 
+function cleanSpecialLegislationLabel(rawName){
+  let text=normalizeLegislationLabelText(rawName)
+    .replace(/^Brott mot specialstraffrättsliga författningar,?\s*/i,'')
+    .trim();
+
+  // Remove legal citations from the visible label, but keep meaningful law/offence wording.
+  text=text
+    .replace(/\s*\([^)]*§[^)]*\)\s*/g,' ')
+    .replace(/\s+/g,' ')
+    .replace(/\s+,/g,',')
+    .trim();
+
+  // Make a final ", överträdelse" read as explanatory context rather than a loose fragment.
+  text=text.replace(/,\s*(överträdelse(?:r)?)$/i,' – $1');
+
+  return text;
+}
+
+function isGenericLegislationLabel(text){
+  const t=normalizeLegislationLabelText(text).toLocaleLowerCase('sv');
+  return t==='brott mot specialstraffrättsliga författningar'
+    || t==='brott mot brottsbalken'
+    || t==='specialstraffrättsliga författningar';
+}
+
+function needsLegislationContext(label){
+  const t=normalizeLegislationLabelText(label);
+  if(isWeakLegislationLabel(t))return true;
+
+  // Short trailing fragments often lose the law/context after concise-label trimming.
+  if(/^(?:badanläggningar|bibliotek|butiker|överträdelse|underlåtenhet|övriga brott)\b/i.test(t))return true;
+  if(t.length<28 && !/^(?:Lag|Lagen|Förordning|Brott mot|Aktiebolagslagen|Alkohollagen|Arbetsmiljölagen|Vapenlagen|Ordningslagen)\b/i.test(t)){
+    return true;
+  }
+  return false;
+}
+
 function legislationDisplayLabel(crimeId,rawName){
   const cat=legislationCategoryById(crimeId);
+  const raw=normalizeLegislationLabelText(rawName);
   const shortLabel=normalizeLegislationLabelText(
     treemapCrimeLabel(crimeId,rawName)||rawName
   );
 
-  if(!isWeakLegislationLabel(shortLabel))return shortLabel;
+  const isSpecial=/^Brott mot specialstraffrättsliga författningar\b/i.test(raw);
+  if(isSpecial){
+    const specific=cleanSpecialLegislationLabel(raw);
+    if(specific && !isWeakLegislationLabel(specific)){
+      // Prefer the fuller law/offence wording whenever the concise form has lost context.
+      if(needsLegislationContext(shortLabel) || isGenericLegislationLabel(shortLabel)){
+        return specific;
+      }
+      return shortLabel;
+    }
+  }
 
-  const ancestorLabel=firstMeaningfulLegislationAncestorLabel(cat);
-  const raw=normalizeLegislationLabelText(rawName);
+  if(!isWeakLegislationLabel(shortLabel) && !isGenericLegislationLabel(shortLabel)){
+    return shortLabel;
+  }
+
+  const chain=legislationAncestorChain(cat);
+  const ancestorItem=chain.find(item=>{
+    const candidate=normalizeLegislationLabelText(
+      treemapCrimeLabel(item.Brott_ID,item.Brott)||item.Brott
+    );
+    return !isWeakLegislationLabel(candidate) && !isGenericLegislationLabel(candidate);
+  });
+  const ancestorLabel=ancestorItem
+    ? normalizeLegislationLabelText(treemapCrimeLabel(ancestorItem.Brott_ID,ancestorItem.Brott)||ancestorItem.Brott)
+    : '';
+
   const parts=raw.split(',').map(x=>x.trim()).filter(Boolean);
   const tail=parts.length ? parts[parts.length-1] : '';
 
-  if(tail && !isWeakLegislationLabel(tail) && tail!==ancestorLabel){
+  if(tail && !isWeakLegislationLabel(tail) && !isGenericLegislationLabel(tail) && tail!==ancestorLabel){
     return ancestorLabel ? ancestorLabel+': '+tail : tail;
   }
 
