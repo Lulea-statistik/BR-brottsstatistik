@@ -62,7 +62,7 @@
   }
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
 <header class="topbar">
@@ -340,12 +340,12 @@
         <select id="handledCrime"></select>
       </label>
       <label>Mått<select id="handledMeasure"></select></label>
-      <label class="handled-topn-label">Antal kategorier
+      <label class="handled-topn-label">Placering i rankingen
         <div class="handled-topn-control">
           <div class="handled-topn-head">
-            <span>Top</span><strong id="handledTopNValue">15</strong>
+            <span>Visar alltid 15:</span><strong id="handledTopNValue">1–15</strong>
           </div>
-          <input id="handledTopN" type="range" min="5" max="25" step="1" value="15" aria-label="Antal kategorier i rankingen">
+          <input id="handledTopN" type="range" min="0" max="0" step="1" value="0" aria-label="Flytta fönstret med 15 kategorier genom rankingen">
         </div>
       </label>
     </div>
@@ -434,7 +434,7 @@
     if(tab)tab.click();
   });
 </script>
-<script src="handlagda.js?v=5"></script>
+<script src="handlagda.js?v=6"></script>
 <script type="module" src="app.js?v=50"></script>
 </body>
 </html>
