@@ -1390,6 +1390,43 @@ function conciseCrimeLabel(name){
   return text || String(name||'');
 }
 
+function treemapCrimeLabel(id,name){
+  const base=conciseCrimeLabel(name).replace(/\s+/g,' ').trim();
+  if(!base)return String(name||'');
+
+  // Legal fragments can be split by commas in Brå's hierarchy, e.g.
+  // "Skadegörelse inkl. grov, åverkan (1-3 §)".
+  // Rejoin the nearest semantic fragment and remove the legal citation.
+  if(/§/.test(base)){
+    const parts=String(name||'').split(/,\s*/).map(x=>x.trim()).filter(Boolean);
+    const last=parts[parts.length-1]||base;
+    const previous=parts.length>1?parts[parts.length-2]:'';
+    const combined=(previous+' '+last)
+      .replace(/\s*\([^)]*§[^)]*\)\s*/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+    if(combined)return combined;
+  }
+
+  const cryptic=
+    base.length<18 ||
+    /\b(?:o\.?\s*d\.?|m\.?\s*m\.?|m\.?\s*fl\.?)\b/i.test(base);
+
+  if(cryptic){
+    const hierarchy=crimeHierarchyRows(id);
+    if(hierarchy.length>1){
+      const parent=conciseCrimeLabel(hierarchy[hierarchy.length-2].name)
+        .replace(/\s+/g,' ')
+        .trim();
+      if(parent && parent!==base && !/^Brott mot\b/i.test(parent)){
+        return parent+': '+base;
+      }
+    }
+  }
+
+  return base;
+}
+
 function crimeHierarchyRows(id){
   const byId=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
   const parts=[];
@@ -1519,25 +1556,30 @@ function renderTreemap(tree,metric){
 
   g.each(function(d){
     const w=d.x1-d.x0,h=d.y1-d.y0;
-    if(w<70 || h<34)return;
+    if(w<56 || h<26)return;
     const group=d3.select(this);
     const share=total>0?100*d.value/total:0;
-    const label=conciseCrimeLabel(d.data.name);
+    const label=treemapCrimeLabel(d.data.id,d.data.name);
+    const fs=w<105?9:10.5;
+    const maxLines=h>=62?3:2;
     const words=label.split(/\s+/);
-    const maxChars=Math.max(8,Math.floor(w/7));
+    const maxChars=Math.max(7,Math.floor(w/(fs*.58)));
     let line='',lines=[];
     for(const word of words){
       const test=(line+' '+word).trim();
-      if(test.length>maxChars && line){lines.push(line);line=word;}
-      else line=test;
-      if(lines.length>=2)break;
+      if(test.length>maxChars && line){
+        lines.push(line);
+        line=word;
+      }else{
+        line=test;
+      }
+      if(lines.length>=maxLines)break;
     }
-    if(line && lines.length<2)lines.push(line);
-    const fs=w<120?10:12;
-    const text=group.append('text').attr('class','profile-tile-label').attr('x',7).attr('y',16).style('font-size',fs+'px');
-    lines.slice(0,2).forEach((ln,i)=>text.append('tspan').attr('x',7).attr('dy',i===0?0:fs+2).text(ln));
-    if(h>55){
-      group.append('text').attr('class','profile-tile-share').attr('x',7).attr('y',h-8).style('font-size','10px').text(fmt1.format(share)+' %');
+    if(line && lines.length<maxLines)lines.push(line);
+    const text=group.append('text').attr('class','profile-tile-label').attr('x',6).attr('y',14).style('font-size',fs+'px');
+    lines.slice(0,maxLines).forEach((ln,i)=>text.append('tspan').attr('x',6).attr('dy',i===0?0:fs+1.5).text(ln));
+    if(h>50){
+      group.append('text').attr('class','profile-tile-share').attr('x',6).attr('y',h-7).style('font-size','9px').text(fmt1.format(share)+' %');
     }
   });
 
