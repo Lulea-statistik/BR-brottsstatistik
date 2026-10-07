@@ -81,3 +81,7 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .municipality-option.selected{font-weight:600}
 .municipality-empty{padding:10px;color:var(--muted);font-size:12px}
 @media(max-width:600px){.municipality-picker{width:100%;min-width:0}.municipality-menu{width:100%;max-width:none}}
+
+.profile-tooltip-hierarchy{margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,.18)}
+.profile-tooltip-level{margin-top:2px;padding-left:4.6em;text-indent:-4.6em}
+.profile-tooltip-level span{font-weight:700}
