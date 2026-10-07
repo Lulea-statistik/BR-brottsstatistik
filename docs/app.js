@@ -1390,6 +1390,23 @@ function conciseCrimeLabel(name){
   return text || String(name||'');
 }
 
+function crimeHierarchyPath(id){
+  const byId=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  const parts=[];
+  let current=byId.get(String(id));
+  const seen=new Set();
+
+  while(current && !seen.has(String(current.Brott_ID))){
+    seen.add(String(current.Brott_ID));
+    parts.unshift(String(current.Brott));
+    const parent=categoryParentId(current);
+    if(!parent)break;
+    current=byId.get(parent);
+  }
+
+  return parts.join(' › ');
+}
+
 function renderTreemap(tree,metric){
   const host=el('profileTreemap');
   host.innerHTML='';
@@ -1474,7 +1491,12 @@ function renderTreemap(tree,metric){
         : info.isCount
           ? fmt0.format(displayValue)+' brott'
           : fmt1.format(displayValue)+' per 100 000';
-      tooltip.innerHTML='<b>'+conciseCrimeLabel(d.data.name)+'</b><br>'+valueText+'<br>Andel: '+fmt1.format(share)+' %<br>Nivå: '+Number(d.data.level||0);
+      const hierarchy=crimeHierarchyPath(d.data.id);
+      tooltip.innerHTML='<b>'+conciseCrimeLabel(d.data.name)+'</b>'
+        +'<br>'+valueText
+        +'<br>Andel: '+fmt1.format(share)+' %'
+        +'<br>Nivå: '+Number(d.data.level||0)
+        +(hierarchy?'<br>Hierarki: '+hierarchy:'');
       tooltip.style.display='block';
       tooltip.style.left=(event.clientX+14)+'px';
       tooltip.style.top=(event.clientY+14)+'px';
@@ -1587,11 +1609,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=27',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=27',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=27',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=27',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=27',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=28',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=28',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=28',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=28',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=28',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
