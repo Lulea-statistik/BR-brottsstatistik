@@ -104,12 +104,27 @@
     return currentPayload?.sheets?.[name]||null;
   }
 
+  function selectedMeasureIndex(){
+    return Number($('handledMeasure')?.value||2);
+  }
+
+  function hasPositiveMeasureValue(row,measureIndex=selectedMeasureIndex()){
+    const raw=row?.[measureIndex];
+    if(raw===null||raw===undefined||raw==='')return false;
+    const value=Number(raw);
+    return Number.isFinite(value)&&value>0;
+  }
+
   function resolveCrimeRow(sheet){
     if(!sheet?.rows?.length)return null;
+    const measureIndex=selectedMeasureIndex();
+    const validRows=sheet.rows.filter(r=>hasPositiveMeasureValue(r,measureIndex));
+    if(!validRows.length)return null;
     const selectedKey=$('handledCrime')?.value||selectedCrimeKey;
-    return sheet.rows.find(r=>crimeKey(r)===selectedKey)
-      || sheet.rows.find(r=>crimeKey(r)===selectedCrimeKey)
-      || sheet.rows[0];
+    return validRows.find(r=>crimeKey(r)===selectedKey)
+      || validRows.find(r=>crimeKey(r)===selectedCrimeKey)
+      || validRows.find(r=>String(r?.[1]||'').trim().toUpperCase()==='SAMTLIGA BROTT')
+      || validRows[0];
   }
 
   function refreshCrimeList(preserve=true){
@@ -118,7 +133,10 @@
     if(!sheet||!select)return;
 
     const oldKey=preserve?selectedCrimeKey:'';
-    crimeOptions=sheet.rows.map(row=>({key:crimeKey(row),label:crimeLabel(row),row}));
+    const measureIndex=selectedMeasureIndex();
+    crimeOptions=sheet.rows
+      .filter(row=>hasPositiveMeasureValue(row,measureIndex))
+      .map(row=>({key:crimeKey(row),label:crimeLabel(row),row}));
 
     let chosen=crimeOptions.find(x=>x.key===oldKey)
       || crimeOptions.find(x=>String(x.row?.[1]||'').trim().toUpperCase()==='SAMTLIGA BROTT')
@@ -238,8 +256,8 @@
 
   function renderRanking(sheet,measureIndex,measure,percent){
     const ranked=sheet.rows
+      .filter(r=>hasPositiveMeasureValue(r,measureIndex))
       .map(r=>({row:r,value:Number(r[measureIndex])}))
-      .filter(x=>Number.isFinite(x.value))
       .filter(x=>String(x.row?.[1]||'').trim().toUpperCase()!=='SAMTLIGA BROTT')
       .sort((a,b)=>b.value-a.value);
 
@@ -336,8 +354,8 @@
       currentPayload=await loadJson(entry.path);
       const sheets=Object.keys(currentPayload.sheets||{});
       setSelect('handledSheet',sheets.map(x=>({value:x,text:x})),preserveSheet?$('handledSheet')?.value:'');
-      refreshCrimeList(preserveCrime);
       refreshMeasures(preserveMeasure);
+      refreshCrimeList(preserveCrime);
       $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+sheets.length+' deltabeller';
       renderCurrent();
     }catch(err){
@@ -378,11 +396,16 @@
       $('handledRegion').addEventListener('change',()=>loadSelection());
       $('handledSheet').addEventListener('change',()=>{
         selectedCrimeKey='';
-        refreshCrimeList(false);
         refreshMeasures(false);
+        refreshCrimeList(false);
+        $('handledTopN').value='0';
         renderCurrent();
       });
-      $('handledMeasure').addEventListener('change',renderCurrent);
+      $('handledMeasure').addEventListener('change',()=>{
+        refreshCrimeList(true);
+        $('handledTopN').value='0';
+        renderCurrent();
+      });
       $('handledCrime').addEventListener('change',()=>{
         selectedCrimeKey=$('handledCrime').value;
         renderCurrent();
