@@ -429,7 +429,7 @@ function setupControls(){
   el('profileYearStart').addEventListener('change',()=>handleProfileYearRange('start',true));
   el('profileYearEnd').addEventListener('change',()=>handleProfileYearRange('end',true));
 
-  ['legislationSearch','legislationLevel','legislationStatus'].forEach(id=>{
+  ['legislationSearch','legislationDetail','legislationLevel','legislationStatus'].forEach(id=>{
     const control=el(id);
     if(!control)return;
     const eventName=id==='legislationSearch'?'input':'change';
@@ -1700,6 +1700,72 @@ async function loadLegislationTimeline(){
   return legislationTimelineCache;
 }
 
+function aggregateLegislationRows(rows,maxDisplayLevel=4){
+  const byId=new Map(rows.map(r=>[String(r.crimeId),r]));
+  const catById=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
+  const groups=new Map();
+
+  function anchorFor(row){
+    let cat=catById.get(String(row.crimeId));
+    const seen=new Set();
+    while(cat && Number(cat['Brottsnivå']||0)>maxDisplayLevel){
+      const id=String(cat.Brott_ID);
+      if(seen.has(id))break;
+      seen.add(id);
+      const parent=categoryParentId(cat);
+      if(!parent)break;
+      cat=catById.get(String(parent));
+    }
+    return cat ? String(cat.Brott_ID) : String(row.crimeId);
+  }
+
+  for(const row of rows){
+    const anchorId=anchorFor(row);
+    const anchorRow=byId.get(anchorId) || row;
+    if(!groups.has(anchorId)){
+      groups.set(anchorId,{
+        ...anchorRow,
+        crimeId:Number(anchorId),
+        children:[]
+      });
+    }
+    const group=groups.get(anchorId);
+    group.firstYear=Math.min(group.firstYear,row.firstYear);
+    group.lastYear=Math.max(group.lastYear,row.lastYear);
+    group.ended=group.ended || row.ended;
+    if(String(row.crimeId)!==anchorId){
+      group.children.push(row);
+    }
+  }
+
+  for(const group of groups.values()){
+    group.children.sort((a,b)=>
+      a.level-b.level ||
+      a.firstYear-b.firstYear ||
+      a.label.localeCompare(b.label,'sv')
+    );
+  }
+  return [...groups.values()];
+}
+
+function legislationTooltipHtml(row,maxYear){
+  const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
+  let html='<strong>'+escapeHtml(row.label)+'</strong>'
+    +'<div class="legislation-tooltip-meta">Nivå '+row.level+' · '+row.firstYear+'–'+endText+'</div>';
+  if(row.children?.length){
+    html+='<div class="legislation-tooltip-title">Underliggande kategorier</div>';
+    html+=row.children.map(child=>{
+      const childEnd=child.lastYear===maxYear && !child.ended?'pågår':String(child.lastYear);
+      return '<div class="legislation-tooltip-child">'
+        +'<span>Nivå '+child.level+':</span> '
+        +escapeHtml(child.label)
+        +' <small>'+child.firstYear+'–'+childEnd+'</small>'
+      +'</div>';
+    }).join('');
+  }
+  return html;
+}
+
 function legislationYearTicks(minYear,maxYear){
   const ticks=[minYear];
   for(let y=Math.ceil(minYear/5)*5;y<maxYear;y+=5){
@@ -1719,12 +1785,20 @@ async function renderLegislationTimeline(showLoading=true){
     const minYear=Number(META.start_year);
     const maxYear=Number(META.latest_year);
     const search=String(el('legislationSearch')?.value||'').trim().toLocaleLowerCase('sv');
+    const detail=String(el('legislationDetail')?.value||'aggregate');
     const level=String(el('legislationLevel')?.value||'');
     const status=String(el('legislationStatus')?.value||'changes');
 
-    let filtered=rows.filter(row=>{
+    const displayRows=detail==='aggregate' ? aggregateLegislationRows(rows,4) : rows;
+    let filtered=displayRows.filter(row=>{
       if(level && String(row.level)!==level)return false;
-      if(search && !row.name.toLocaleLowerCase('sv').includes(search) && !row.label.toLocaleLowerCase('sv').includes(search))return false;
+      if(search){
+        const ownMatch=row.name.toLocaleLowerCase('sv').includes(search) || row.label.toLocaleLowerCase('sv').includes(search);
+        const childMatch=(row.children||[]).some(ch=>
+          ch.name.toLocaleLowerCase('sv').includes(search) || ch.label.toLocaleLowerCase('sv').includes(search)
+        );
+        if(!ownMatch && !childMatch)return false;
+      }
 
       const isNew=row.firstYear>minYear;
       const isEnded=row.lastYear<maxYear || row.ended;
@@ -1746,7 +1820,8 @@ async function renderLegislationTimeline(showLoading=true){
     const statusText=el('legislationStatusText');
     if(statusText){
       const changeCount=rows.filter(r=>r.firstYear>minYear || r.lastYear<maxYear || r.ended).length;
-      statusText.textContent=filtered.length+' kategorier visas · '+changeCount+' kategorier har en observerad förändring under '+minYear+'–'+maxYear+'.';
+      const detailText=detail==='aggregate'?'sammanfattat till nivå 1–4':'alla nivåer 1–6';
+      statusText.textContent=filtered.length+' rader visas · '+detailText+' · '+changeCount+' kategorier har en observerad förändring under '+minYear+'–'+maxYear+'.';
     }
 
     if(!filtered.length){
@@ -1761,25 +1836,47 @@ async function renderLegislationTimeline(showLoading=true){
       return '<span class="legislation-year-tick" style="left:'+left+'%">'+year+'</span>';
     }).join('');
 
-    const rowsHtml=filtered.map(row=>{
+    const rowsHtml=filtered.map((row,index)=>{
       const left=((row.firstYear-minYear)/span)*100;
       const width=((row.lastYear-row.firstYear+1)/span)*100;
       const state=(row.lastYear<maxYear || row.ended)?'ended':'active';
       const endText=row.lastYear===maxYear && !row.ended?'pågår':String(row.lastYear);
-      const title=escapeHtml(row.name+' · Nivå '+row.level+' · Brott_ID '+row.crimeId);
+      const childText=row.children?.length ? ' · '+row.children.length+' underkategorier' : '';
       return '<div class="legislation-row">'
-        +'<div class="legislation-label" title="'+title+'">'
+        +'<div class="legislation-label" data-legislation-index="'+index+'">'
           +'<strong>'+escapeHtml(row.label)+'</strong>'
-          +'<small>Nivå '+row.level+' · '+row.firstYear+'–'+endText+'</small>'
+          +'<small>Nivå '+row.level+' · '+row.firstYear+'–'+endText+childText+'</small>'
         +'</div>'
         +'<div class="legislation-track">'
           +'<div class="legislation-grid">'+tickHtml+'</div>'
-          +'<div class="legislation-bar '+state+'" style="left:'+left+'%;width:'+Math.max(width,1.2)+'%" title="'+title+' · observerad '+row.firstYear+'–'+row.lastYear+'"></div>'
+          +'<div class="legislation-bar '+state+'" data-legislation-index="'+index+'" style="left:'+left+'%;width:'+Math.max(width,1.2)+'%"></div>'
         +'</div>'
       +'</div>';
     }).join('');
 
     host.innerHTML='<div class="legislation-axis"><div></div><div class="legislation-axis-track">'+tickHtml+'</div></div>'+rowsHtml;
+
+    let tooltip=document.querySelector('.legislation-tooltip');
+    if(!tooltip){
+      tooltip=document.createElement('div');
+      tooltip.className='legislation-tooltip';
+      tooltip.style.display='none';
+      document.body.appendChild(tooltip);
+    }
+    host.querySelectorAll('[data-legislation-index]').forEach(node=>{
+      node.addEventListener('mousemove',event=>{
+        const row=filtered[Number(node.dataset.legislationIndex)];
+        if(!row)return;
+        tooltip.innerHTML=legislationTooltipHtml(row,maxYear);
+        tooltip.style.display='block';
+        const pad=14;
+        const maxLeft=window.innerWidth-tooltip.offsetWidth-pad;
+        const maxTop=window.innerHeight-tooltip.offsetHeight-pad;
+        tooltip.style.left=Math.max(pad,Math.min(event.clientX+14,maxLeft))+'px';
+        tooltip.style.top=Math.max(pad,Math.min(event.clientY+14,maxTop))+'px';
+      });
+      node.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+    });
   }catch(err){
     console.error(err);
     host.innerHTML='<div class="profile-empty">Fel: '+escapeHtml(String(err.message||err))+'</div>';
@@ -1810,14 +1907,7 @@ function chatCountyNames(){
 }
 
 function chatQuestionGeography(question){
-  const historyItems=Array.isArray(history)?history:[];
-  const recentUserHistory=historyItems
-    .filter(m=>m?.role==='user')
-    .slice(-3)
-    .map(m=>String(m.content||''))
-    .join(' ');
-  const lookupQuestion=(recentUserHistory+' '+String(question||'')).trim();
-  const q=String(lookupQuestion||'').toLocaleLowerCase('sv');
+  const q=String(question||'').toLocaleLowerCase('sv');
   const municipalities=MUNICIPALITIES.filter(name=>
     q.includes(String(name).toLocaleLowerCase('sv'))
   );
