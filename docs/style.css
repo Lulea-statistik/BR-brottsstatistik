@@ -438,3 +438,28 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .seo-intro p{margin:0;color:#475569;font-size:13px}
 .inline-tab-link{border:0;background:transparent;padding:0;color:#2457a7;text-decoration:underline;cursor:pointer;font:inherit}
 .inline-tab-link:focus-visible{outline:2px solid #2f6fed;outline-offset:2px;border-radius:2px}
+
+ 
+/* Handlagda brott */
+.handled-intro{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.handled-intro h2{margin:0 0 6px}
+.handled-intro p{margin:0;color:#475569;max-width:900px;line-height:1.5}
+.handled-intro a{white-space:nowrap}
+.handled-controls{grid-template-columns:minmax(180px,240px) minmax(220px,300px)}
+.handled-status{margin:0 0 12px;color:#64748b;font-size:13px}
+.handled-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.handled-card{min-height:310px!important;display:flex;flex-direction:column}
+.handled-card h2{font-size:18px;margin:8px 0}
+.handled-card p{color:#475569;line-height:1.5;margin:0 0 16px}
+.handled-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.handled-table-no{font-weight:700;color:#334155}
+.handled-badge{font-size:11px;padding:4px 7px;border-radius:999px;background:#f1f5f9;color:#64748b}
+.handled-badge.available{background:#dcfce7;color:#166534}
+.handled-file{margin-top:auto;padding-top:12px;border-top:1px solid #e2e8f0}
+.handled-file-meta{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.handled-file-meta span{font-size:11px;color:#64748b;overflow-wrap:anywhere}
+.handled-file-links{display:flex;gap:8px;flex-wrap:wrap}
+.handled-file-links a{display:inline-block;padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#f8fafc;text-decoration:none}
+.handled-empty{font-size:12px;color:#64748b}
+.handled-method{margin-top:14px}
+@media(max-width:1050px){.handled-grid{grid-template-columns:1fr}.handled-intro{display:block}.handled-intro a{display:inline-block;margin-top:10px}}
