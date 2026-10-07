@@ -1679,7 +1679,8 @@ function chatCountyNames(){
 }
 
 function chatQuestionGeography(question){
-  const recentUserHistory=(history||[])
+  const historyItems=Array.isArray(history)?history:[];
+  const recentUserHistory=historyItems
     .filter(m=>m?.role==='user')
     .slice(-3)
     .map(m=>String(m.content||''))
