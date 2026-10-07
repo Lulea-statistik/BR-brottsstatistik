@@ -1631,7 +1631,7 @@ function chatMetricLabel(value){
   const labels={Antal:'Antal',Per100000:'Per 100 000 inv.',RankAntal:'Placering antal',RankPer100000:'Placering per 100 000',AvgAntal:'Medelantal',AvgPer100000:'Medel per 100 000'};
   return labels[value]||value||null;
 }
-async function buildChatContext(){
+async function buildChatContext(question=''){
   const page=chatActivePage();
   let municipality=null,crimeId=null,metric=null,year=null,startYear=null,endYear=null;
 
@@ -1657,6 +1657,14 @@ async function buildChatContext(){
   }
 
   if(municipality==='__ALL__')municipality=null;
+
+  const q=String(question||'').toLocaleLowerCase('sv');
+  const mentionedMunicipality=MUNICIPALITIES.find(name=>q.includes(String(name).toLocaleLowerCase('sv')));
+  if(mentionedMunicipality) municipality=mentionedMunicipality;
+
+  const totalIntent=/\b(total|totalt|samtliga brott|alla brott|brottslighet(?:en)? totalt)\b/i.test(q);
+  if(totalIntent) crimeId=String(META.default_crime_id);
+
   const context={
     source:'Brottsförebyggande rådet (Brå), anmälda brott',
     report:'BRÅ brottsstatistik – Sveriges kommuner',
@@ -1679,6 +1687,27 @@ async function buildChatContext(){
       ORDER BY "År"
     `);
     context.series=series.map(r=>({year:Number(r.year),count:Number(r.count),rate:r.rate==null?null:Number(r.rate)}));
+
+    const valid=context.series.filter(r=>Number.isFinite(r.count));
+    if(valid.length){
+      const first=valid[0], latest=valid[valid.length-1];
+      const minRow=valid.reduce((a,b)=>b.count<a.count?b:a);
+      const maxRow=valid.reduce((a,b)=>b.count>a.count?b:a);
+      context.summary={
+        firstYear:first.year,
+        firstCount:first.count,
+        firstRate:first.rate,
+        latestYear:latest.year,
+        latestCount:latest.count,
+        latestRate:latest.rate,
+        absoluteChange:latest.count-first.count,
+        percentChange:first.count!==0?((latest.count-first.count)/first.count*100):null,
+        minYear:minRow.year,
+        minCount:minRow.count,
+        maxYear:maxRow.year,
+        maxCount:maxRow.count
+      };
+    }
   }
   return context;
 }
@@ -1716,7 +1745,7 @@ function setupChat(){
     }
     send.disabled=true;status.textContent='Tar fram underlag…';
     try{
-      const context=await buildChatContext();
+      const context=await buildChatContext(question);
       status.textContent='Frågar modellen…';
       const response=await fetch(endpoint,{
         method:'POST',
