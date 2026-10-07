@@ -106,40 +106,46 @@
 
   function resolveCrimeRow(sheet){
     if(!sheet?.rows?.length)return null;
-    let row=sheet.rows.find(r=>crimeKey(r)===selectedCrimeKey);
-    if(row)return row;
-
-    const text=($('handledCrime')?.value||'').trim().toLocaleLowerCase('sv-SE');
-    if(text){
-      row=sheet.rows.find(r=>crimeLabel(r).toLocaleLowerCase('sv-SE')===text)
-        || sheet.rows.find(r=>String(r?.[1]||'').toLocaleLowerCase('sv-SE')===text)
-        || sheet.rows.find(r=>crimeLabel(r).toLocaleLowerCase('sv-SE').includes(text));
-    }
-    return row || sheet.rows[0];
+    const selectedKey=$('handledCrime')?.value||selectedCrimeKey;
+    return sheet.rows.find(r=>crimeKey(r)===selectedKey)
+      || sheet.rows.find(r=>crimeKey(r)===selectedCrimeKey)
+      || sheet.rows[0];
   }
 
   function refreshCrimeList(preserve=true){
     const sheet=selectedSheet();
-    const list=$('handledCrimeList');
-    if(!sheet||!list)return;
+    const select=$('handledCrime');
+    if(!sheet||!select)return;
 
     const oldKey=preserve?selectedCrimeKey:'';
     crimeOptions=sheet.rows.map(row=>({key:crimeKey(row),label:crimeLabel(row),row}));
-    list.innerHTML='';
-    crimeOptions.forEach(item=>{
-      const opt=document.createElement('option');
-      opt.value=item.label;
-      list.appendChild(opt);
-    });
 
     let chosen=crimeOptions.find(x=>x.key===oldKey)
       || crimeOptions.find(x=>String(x.row?.[1]||'').trim().toUpperCase()==='SAMTLIGA BROTT')
       || crimeOptions[0];
 
-    if(chosen){
-      selectedCrimeKey=chosen.key;
-      $('handledCrime').value=chosen.label;
-    }
+    setSelect(
+      'handledCrime',
+      crimeOptions.map(item=>({value:item.key,text:item.label})),
+      chosen?.key||''
+    );
+
+    selectedCrimeKey=select.value||chosen?.key||'';
+  }
+
+  function getTopN(){
+    return Number($('handledTopN')?.value||15);
+  }
+
+  function updateTopN(){
+    const slider=$('handledTopN');
+    if(!slider)return;
+    const min=Number(slider.min||5);
+    const max=Number(slider.max||25);
+    const value=Number(slider.value||15);
+    const pct=max>min?((value-min)/(max-min))*100:50;
+    slider.style.setProperty('--handled-topn-pct',pct+'%');
+    if($('handledTopNValue'))$('handledTopNValue').textContent=String(value);
   }
 
   function refreshMeasures(preserve=true){
@@ -185,7 +191,7 @@
     if(!row)return;
 
     selectedCrimeKey=crimeKey(row);
-    $('handledCrime').value=crimeLabel(row);
+    $('handledCrime').value=selectedCrimeKey;
 
     const measureIndex=Number($('handledMeasure').value||2);
     const measure=sheet.columns[measureIndex]||'Värde';
@@ -227,7 +233,7 @@
       .filter(x=>Number.isFinite(x.value))
       .filter(x=>String(x.row?.[1]||'').trim().toUpperCase()!=='SAMTLIGA BROTT')
       .sort((a,b)=>b.value-a.value)
-      .slice(0,15);
+      .slice(0,getTopN());
 
     if(rankChart)rankChart.destroy();
     rankChart=new Chart($('handledRankChart'),{
@@ -245,7 +251,7 @@
       options:chartOptions(percent,'y')
     });
     $('handledRankTitle').textContent='Högsta värden – '+(currentPayload?.year||'');
-    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · Top 15 brottstyper';
+    $('handledRankStatus').textContent=measure+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · Top '+getTopN()+' brottstyper';
   }
 
   async function renderTrend(currentRow,measure,percent){
@@ -365,11 +371,12 @@
       });
       $('handledMeasure').addEventListener('change',renderCurrent);
       $('handledCrime').addEventListener('change',()=>{
-        const text=$('handledCrime').value.trim().toLocaleLowerCase('sv-SE');
-        const chosen=crimeOptions.find(x=>x.label.toLocaleLowerCase('sv-SE')===text)
-          || crimeOptions.find(x=>String(x.row?.[1]||'').toLocaleLowerCase('sv-SE')===text)
-          || crimeOptions.find(x=>x.label.toLocaleLowerCase('sv-SE').includes(text));
-        if(chosen)selectedCrimeKey=chosen.key;
+        selectedCrimeKey=$('handledCrime').value;
+        renderCurrent();
+      });
+      updateTopN();
+      $('handledTopN')?.addEventListener('input',()=>{
+        updateTopN();
         renderCurrent();
       });
     }catch(err){
