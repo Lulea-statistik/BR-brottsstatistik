@@ -1390,7 +1390,7 @@ function conciseCrimeLabel(name){
   return text || String(name||'');
 }
 
-function crimeHierarchyPath(id){
+function crimeHierarchyRows(id){
   const byId=new Map(CATEGORIES.map(cat=>[String(cat.Brott_ID),cat]));
   const parts=[];
   let current=byId.get(String(id));
@@ -1398,13 +1398,25 @@ function crimeHierarchyPath(id){
 
   while(current && !seen.has(String(current.Brott_ID))){
     seen.add(String(current.Brott_ID));
-    parts.unshift(String(current.Brott));
+    parts.unshift({
+      level:Number(current['Brottsnivå']||parts.length+1),
+      name:String(current.Brott)
+    });
     const parent=categoryParentId(current);
     if(!parent)break;
     current=byId.get(parent);
   }
 
-  return parts.join(' › ');
+  return parts;
+}
+
+function escapeHtml(value){
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
 }
 
 function renderTreemap(tree,metric){
@@ -1491,12 +1503,14 @@ function renderTreemap(tree,metric){
         : info.isCount
           ? fmt0.format(displayValue)+' brott'
           : fmt1.format(displayValue)+' per 100 000';
-      const hierarchy=crimeHierarchyPath(d.data.id);
-      tooltip.innerHTML='<b>'+conciseCrimeLabel(d.data.name)+'</b>'
-        +'<br>'+valueText
+      const hierarchyRows=crimeHierarchyRows(d.data.id);
+      const hierarchyHtml=hierarchyRows.map(item=>
+        '<div class="profile-tooltip-level"><span>Nivå '+item.level+':</span> '+escapeHtml(item.name)+'</div>'
+      ).join('');
+      tooltip.innerHTML='<b>'+escapeHtml(conciseCrimeLabel(d.data.name))+'</b>'
+        +'<br>'+escapeHtml(valueText)
         +'<br>Andel: '+fmt1.format(share)+' %'
-        +'<br>Nivå: '+Number(d.data.level||0)
-        +(hierarchy?'<br>Hierarki: '+hierarchy:'');
+        +(hierarchyHtml?'<div class="profile-tooltip-hierarchy">'+hierarchyHtml+'</div>':'');
       tooltip.style.display='block';
       tooltip.style.left=(event.clientX+14)+'px';
       tooltip.style.top=(event.clientY+14)+'px';
@@ -1609,11 +1623,11 @@ async function main(){
   try{
     setLoading('Förbereder rapport…');
     [META,CATEGORIES,MUNICIPALITIES,MUNICIPAL_META,GEO]=await Promise.all([
-      fetch('data/metadata.json?v=28',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/categories.json?v=28',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.json?v=28',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipality_meta.json?v=28',{cache:'no-store'}).then(r=>r.json()),
-      fetch('data/municipalities.geojson?v=28',{cache:'no-store'}).then(r=>r.json())
+      fetch('data/metadata.json?v=29',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/categories.json?v=29',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.json?v=29',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipality_meta.json?v=29',{cache:'no-store'}).then(r=>r.json()),
+      fetch('data/municipalities.geojson?v=29',{cache:'no-store'}).then(r=>r.json())
     ]);
     await initDuck();
     setupTabs();setupControls();initMap();renderMethod();
