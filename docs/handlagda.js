@@ -33,6 +33,14 @@
     return new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0}).format(n);
   }
 
+  function percentColor(value,alpha=.82){
+    const t=Math.max(0,Math.min(100,Number(value)||0))/100;
+    const blue=[37,99,235];
+    const green=[22,163,74];
+    const rgb=blue.map((v,i)=>Math.round(v+(green[i]-v)*t));
+    return 'rgba('+rgb.join(',')+','+alpha+')';
+  }
+
   function isPercentMeasure(label){
     return /\(%\)|procent|andel/i.test(label||'');
   }
@@ -533,7 +541,7 @@
     };
   }
 
-  function renderCurrent(){
+  function renderCurrent({updateTrend=true}={}){
     const sheet=selectedSheet();
     if(!sheet)return;
     const row=resolveCrimeRow(sheet);
@@ -556,7 +564,7 @@
 
     renderDetail(sheet,row);
     renderRanking(sheet,measure);
-    renderTrend(row,measure);
+    if(updateTrend)renderTrend(row,measure);
   }
 
   function renderDetail(sheet,row){
@@ -597,8 +605,12 @@
         datasets:[{
           data:rows.map(x=>x.value),
           _counts:rows.map(x=>x.count),
-          backgroundColor:'rgba(15,118,110,.72)',
-          borderColor:'rgb(15,118,110)',
+          backgroundColor:measure.percent
+            ? rows.map(x=>percentColor(x.value,.82))
+            : 'rgba(15,118,110,.72)',
+          borderColor:measure.percent
+            ? rows.map(x=>percentColor(x.value,1))
+            : 'rgb(15,118,110)',
           borderWidth:1,
           borderRadius:3
         }]
@@ -663,7 +675,7 @@
     $('handledTrendStatus').textContent=measure.label+' · '+($('handledRegion').selectedOptions[0]?.textContent||region)+' · '+points.length+' år';
   }
 
-  async function loadSelection({preserveSheet=true,preserveCrime=true,preserveMeasure=true}={}){
+  async function loadSelection({preserveSheet=true,preserveCrime=true,preserveMeasure=true,updateTrend=true}={}){
     const table=$('handledTable').value;
     const year=$('handledYear').value;
     const region=$('handledRegion').value;
@@ -691,7 +703,7 @@
       refreshMeasures(preserveMeasure&&!is320);
       refreshCrimeList(preserveCrime);
       $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':visibleSheets.length+' deltabeller');
-      renderCurrent();
+      renderCurrent({updateTrend});
     }catch(err){
       console.error(err);
       $('handledStatus').textContent='Kunde inte läsa data: '+err.message;
@@ -725,7 +737,7 @@
         const table=$('handledTable').value;
         const regions=availableRegions(table,$('handledYear').value);
         setSelect('handledRegion',regions,$('handledRegion').value);
-        await loadSelection();
+        await loadSelection({updateTrend:false});
       });
       $('handledRegion').addEventListener('change',()=>loadSelection());
       $('handledSheet').addEventListener('change',()=>{
@@ -745,7 +757,9 @@
         renderCurrent();
       });
       $('handledTopN')?.addEventListener('input',()=>{
-        renderCurrent();
+        const sheet=selectedSheet();
+        if(!sheet)return;
+        renderRanking(sheet,currentMeasure());
       });
     }catch(err){
       console.error(err);
