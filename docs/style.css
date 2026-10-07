@@ -411,8 +411,12 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 }
 .change-chart-wrap{
   position:relative;
-  height:820px;
+  height:900px;
   margin-top:12px;
+}
+.change-chart-wrap canvas{
+  width:100%!important;
+  height:100%!important;
 }
 @media (max-width:1100px){
   .change-grid{
