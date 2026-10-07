@@ -157,11 +157,13 @@
         if(!s?.columns||!s?.rows)continue;
         const matchedRow=s.rows.find(r=>crimeKey(r)===crimeKey(row));
         if(!matchedRow)continue;
-        const idx=s.columns.findIndex(c=>canonicalMeasure(c,year)===target);
-        const countIdx=findColumnIndex(s,label=>{
+        let idx=s.columns.findIndex(c=>canonicalMeasure(c,year)===target);
+        let countIdx=findColumnIndex(s,label=>{
           const x=label.toLocaleLowerCase('sv-SE');
           return x.includes('handlagda brott')&&x.includes('totalt')&&!x.includes('personuppklarade')&&!x.includes('övriga');
         });
+        if(idx<2&&String(table)==='320'&&s.columns.length>=4)idx=3;
+        if(countIdx<2&&String(table)==='320'&&s.columns.length>=3)countIdx=2;
         const value=Number(matchedRow[idx]);
         const count=Number(matchedRow[countIdx]);
         if(idx>=2&&Number.isFinite(value)){
@@ -265,12 +267,15 @@
     const old=preserve?$('handledMeasure')?.value:'';
     let measures=[];
 
-    if(table==='300'&&$('handledSheet')?.value==='Samtliga handlagda brott'){
+    if(table==='300'){
       measures=[
         {value:'derived:investigated_share',text:'Andel utredda brott (%)'},
         {value:'derived:direct_share',text:'Andel direktavskrivna brott (%)'}
       ];
-      sheet.columns.forEach(label=>{
+      const percentageSource=Object.values(currentPayload?.sheets||{}).find(s=>
+        (s?.columns||[]).some(label=>/lagföringsprocent|personuppklaringsprocent/i.test(String(label||'')))
+      );
+      (percentageSource?.columns||[]).forEach(label=>{
         if(/lagföringsprocent|personuppklaringsprocent/i.test(String(label||''))){
           measures.push({
             value:'column:'+canonicalMeasure(label,currentPayload?.year),
