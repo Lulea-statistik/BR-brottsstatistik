@@ -32,6 +32,7 @@ Rapporten visar bland annat:
 - Årskarta: jämför geografiska nivåer på karta.
 - Områdesprofil: visar brottskategoriernas fördelning.
 - Lag & kategorier över tid: visar första och sista observerade år i data; detta är inte nödvändigtvis samma sak som lagens ikraftträdande eller upphävande.
+- Handlagda brott: länkar till Brå:s slutliga tabeller 300, 310 och 320 för hela landet och polisregioner från 2014.
 - Metod & data: beskriver källa, period och viktiga tolkningsfrågor.
 
 ## Tolkning
