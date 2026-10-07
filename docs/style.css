@@ -360,3 +360,62 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
   color:#94a3b8;
   font-size:10px;
 }
+
+
+/* Förändringsranking */
+.change-controls{
+  align-items:flex-end;
+}
+.change-year-label{
+  min-width:260px;
+}
+.change-year-control{
+  min-width:250px;
+}
+.change-year-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:4px;
+}
+.change-year-head strong{
+  font-size:13px;
+}
+.change-year-head small{
+  color:#64748b;
+}
+#changeBaseYear{
+  width:100%;
+}
+.change-note{
+  margin:0 0 12px;
+  padding:9px 11px;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  background:#f8fafc;
+  color:#475569;
+  font-size:12px;
+  line-height:1.45;
+}
+.change-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.change-panel{
+  min-width:0;
+}
+.change-panel h2{
+  margin-bottom:3px;
+}
+.change-chart-wrap{
+  position:relative;
+  height:560px;
+  margin-top:8px;
+}
+@media (max-width:1100px){
+  .change-grid{
+    grid-template-columns:1fr;
+  }
+}
