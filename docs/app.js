@@ -748,6 +748,11 @@ function drawChangeRankingChart(id,rows,mode,metric,title){
       plugins:{
         legend:{display:false},
         tooltip:{
+          titleFont:{size:15,weight:'700'},
+          bodyFont:{size:14},
+          padding:12,
+          titleSpacing:4,
+          bodySpacing:5,
           callbacks:{
             title:items=>rows[items[0].dataIndex]?.fullCategory||items[0].label,
             label:ctx=>{
@@ -773,7 +778,7 @@ function drawChangeRankingChart(id,rows,mode,metric,title){
           grid:{display:false},
           ticks:{
             autoSkip:false,
-            font:{size:10}
+            font:{size:12}
           }
         }
       }
