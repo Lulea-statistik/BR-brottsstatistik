@@ -590,3 +590,20 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
   .handled-crime-picker{min-width:0}
   .handled-crime-menu{width:100%;max-width:none}
 }
+
+.handled-rank-tools{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  margin:12px 0 4px;
+}
+.handled-rank-tools label{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  font-size:11px;
+  color:var(--muted);
+}
+.handled-rank-tools select{
+  min-width:150px;
+}
