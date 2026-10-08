@@ -437,6 +437,14 @@
       <p><strong>Lag & kategorier över tid:</strong> första och sista år i tidslinjen avser observerad förekomst i rapportens Brå-data. Det är inte automatiskt samma sak som juridiskt datum för ikraftträdande eller upphävande. Om ett kategorinamn innehåller ett explicit årtal används detta som stöd, men juridiska slutsatser bör verifieras mot lagtext eller Brå:s dokumentation.</p>
       <p><strong>Länsvärden:</strong> när rapporten härleder länstal från kommundata grupperas kommunerna. Frekvens per 100 000 bygger då på summerade brott och en härledd befolkning, vilket kan ge mindre avrundningsskillnader jämfört med separat publicerade länstal.</p>
 
+      <h3>AI-chatten och Mistral AI</h3>
+      <p>Rapportens AI-chatt använder språkmodeller från <strong>Mistral AI</strong> via Mistrals API. Mistral AI är ett franskt AI-företag med säte i Paris och utvecklar både kommersiella tjänster och öppna AI-modeller. I den här rapporten skickas användarens fråga tillsammans med ett begränsat statistikunderlag från rapporten till modellen, som formulerar ett svar på svenska. Standardmodellen i den nuvarande serverkonfigurationen är <code>ministral-3b-2512</code>, men modellen kan bytas utan att rapportens gränssnitt ändras.</p>
+      <p>Fördelar med Mistral i detta sammanhang är bland annat att företaget är europeiskt, erbjuder modeller med fokus på effektivitet och att flera av Mistrals modeller publiceras med öppna vikter eller öppna licenser. Det ger goda möjligheter att senare anpassa lösningen, byta modell eller välja annan driftsmiljö. AI-chatten ska samtidigt ses som ett stöd för att tolka rapporten – modellen kan missförstå frågor eller formulera felaktiga slutsatser. Viktiga uppgifter bör därför kontrolleras mot diagrammen och Brå:s originaldata.</p>
+      <p><strong>Mer om Mistral:</strong>
+        <a href="https://computersweden.se/article/4231666/le-chonk-ar-har-mistral-lanserar-large-4.html" target="_blank" rel="noopener">Computer Sweden – om Mistral AI och företagets modeller</a>
+        · <a href="https://mistral.ai/" target="_blank" rel="noopener">Mistral AI</a>
+      </p>
+
       <h3>Källor och dokumentation</h3>
       <p>
         <a href="https://bra.se/statistik" target="_blank" rel="noopener">Brå – Statistik</a><br>
@@ -481,6 +489,6 @@
   });
 </script>
 <script src="handlagda.js?v=15"></script>
-<script type="module" src="app.js?v=54"></script>
+<script type="module" src="app.js?v=55"></script>
 </body>
 </html>
