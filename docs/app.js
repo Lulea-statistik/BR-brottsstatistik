@@ -10,6 +10,17 @@ const focusColorOverrides=new Map();
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:1});
 
+function fmtAverage(value){
+  const n=Number(value);
+  if(!Number.isFinite(n))return '–';
+  const a=Math.abs(n);
+  const digits=a>=5 ? 0 : a>=1 ? 1 : 2;
+  return new Intl.NumberFormat('sv-SE',{
+    minimumFractionDigits:digits,
+    maximumFractionDigits:digits
+  }).format(n);
+}
+
 const el=id=>document.getElementById(id);
 const esc=s=>String(s).replaceAll("'","''");
 
@@ -630,7 +641,11 @@ function drawLine(id,data,metric,label,municipality=null){
           reverse:info.isRank,
           suggestedMin:info.isRank?1:undefined,
           title:{display:true,text:label},
-          ticks:info.isRank?{precision:0}:undefined
+          ticks:info.isRank
+            ? {precision:0}
+            : info.isAverage
+              ? {callback:value=>fmtAverage(value)}
+              : undefined
         }
       }
     }
@@ -959,7 +974,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
               return info.isRank
                 ? 'Placering '+fmt0.format(value)+' av '+ranked.length
                 : info.isAverage
-                  ? fmt1.format(value)+(info.isCount?' brott':' per 100 000')
+                  ? fmtAverage(value)+(info.isCount?' brott':' per 100 000')
                   : info.isCount
                     ? fmt0.format(value)+' brott'
                     : fmt1.format(value)+' per 100 000';
@@ -1054,7 +1069,11 @@ function continuousLegendHtml(values,metric){
   const info=metricInfo(metric);
   const [low,midColor,high]=info.style.gradient;
   const colors=info.isRank?[high,midColor,low]:[low,midColor,high];
-  const fmt=v=>info.isRank?fmt0.format(v):((metric==='Antal')?fmt0.format(v):fmt1.format(v));
+  const fmt=v=>info.isRank
+    ? fmt0.format(v)
+    : info.isAverage
+      ? fmtAverage(v)
+      : ((metric==='Antal')?fmt0.format(v):fmt1.format(v));
   const suffix=(metric==='Per100000'||metric==='AvgPer100000')?' /100 000':'';
   return '<div class="gradient-legend" style="background:linear-gradient(90deg,'+colors.join(',')+')"></div>'+
     '<div class="gradient-labels"><span>'+fmt(min)+suffix+'</span><span>'+fmt(mid)+suffix+'</span><span>'+fmt(max)+suffix+'</span></div>';
@@ -1544,7 +1563,7 @@ async function renderMap(){
         let label=noCrime?'0 brott':'Data saknas';
         if(!noCrime && value!=null){
           if(info.isAverage){
-            label=fmt1.format(value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år');
+            label=fmtAverage(value)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år');
           }else if(metric==='Antal'){
             label=fmt0.format(value)+(multi?' brott totalt':' brott');
           }else{
@@ -1921,7 +1940,7 @@ function renderTreemap(tree,metric){
       const info=metricInfo(metric);
       const displayValue=Number(d.data.displayValue ?? d.data.rawValue ?? d.value);
       const valueText=info.isAverage
-        ? fmt1.format(displayValue)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år')
+        ? fmtAverage(displayValue)+(info.isCount?' brott i medel per år':' per 100 000 i medel per år')
         : info.isCount
           ? fmt0.format(displayValue)+' brott'
           : fmt1.format(displayValue)+' per 100 000';
