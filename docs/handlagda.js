@@ -752,6 +752,51 @@
     setSelect('handledRegion',regions,preserveRegion?$('handledRegion')?.value:(regions.find(x=>x.value==='Rn01')?.value||regions[0]?.value));
   }
 
+  window.getHandledChatContext=()=>{
+    const sheet=selectedSheet();
+    if(!sheet||!currentPayload)return null;
+    const row=resolveCrimeRow(sheet);
+    const measure=currentMeasure();
+    const result=row ? measureResult(currentPayload,$('handledSheet').value,row,measure) : {value:null,count:null};
+
+    const trendLabels=trendChart?.data?.labels||[];
+    const trendValues=trendChart?.data?.datasets?.[0]?.data||[];
+    const trendCounts=trendChart?.data?.datasets?.[0]?._counts||[];
+    const trend=trendLabels.map((year,i)=>({
+      year:Number(year),
+      value:Number.isFinite(Number(trendValues[i]))?Number(trendValues[i]):null,
+      count:Number.isFinite(Number(trendCounts[i]))?Number(trendCounts[i]):null
+    })).filter(x=>x.value!=null);
+
+    const rankLabels=rankChart?.data?.labels||[];
+    const rankValues=rankChart?.data?.datasets?.[0]?.data||[];
+    const rankCounts=rankChart?.data?.datasets?.[0]?._counts||[];
+    const ranking=rankLabels.map((label,i)=>({
+      label:String(label),
+      value:Number.isFinite(Number(rankValues[i]))?Number(rankValues[i]):null,
+      count:Number.isFinite(Number(rankCounts[i]))?Number(rankCounts[i]):null
+    })).filter(x=>x.value!=null);
+
+    return {
+      tableId:String($('handledTable')?.value||''),
+      tableLabel:$('handledTable')?.selectedOptions?.[0]?.textContent||null,
+      selectedYear:Number($('handledYear')?.value)||null,
+      region:$('handledRegion')?.selectedOptions?.[0]?.textContent||null,
+      subtable:$('handledSheet')?.value||null,
+      crimeType:row?String(row[1]||row[0]||''):null,
+      legalCategory:row?String(row[0]||''):null,
+      measure:measure.label,
+      isPercent:measure.percent,
+      selectedValue:Number.isFinite(Number(result.value))?Number(result.value):null,
+      selectedCount:Number.isFinite(Number(result.count))?Number(result.count):null,
+      rankingLevel:$('handledRankLevel')?.value||'alla',
+      rankingWindow:$('handledTopNValue')?.textContent||null,
+      ranking,
+      trend,
+      note:'År-filtret styr rankingdiagrammet. Trendserien visar tillgänglig utveckling över tid för vald brottstyp och valt mått.'
+    };
+  };
+
   async function init(){
     if(!$('handledTable'))return;
     try{
