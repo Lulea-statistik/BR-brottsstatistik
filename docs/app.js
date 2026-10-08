@@ -2627,6 +2627,146 @@ function chatCountyNames(){
     .sort((a,b)=>a.localeCompare(b,'sv'));
 }
 
+async function chatProfilePageContext(){
+  const {start,end,multi}=profileYearRange();
+  const metric=el('profileMetric')?.value||'Antal';
+  const info=metricInfo(metric);
+  const municipalities=profileMunicipalityNames();
+  const allMunicipalities=municipalities.length===MUNICIPAL_META.length;
+  const municipalityWhere=(!municipalities.length||allMunicipalities)
+    ? ''
+    : ' AND "Kommun" IN ('+sqlStringList(municipalities)+')';
+  const years=Math.max(1,end-start+1);
+  const expression=metric==='Antal'
+    ? 'SUM(CAST("Antal" AS DOUBLE))'
+    : metric==='Per100000'
+      ? 'SUM(CAST("Per100000" AS DOUBLE))'
+      : metric==='AvgAntal'
+        ? 'SUM(CAST("Antal" AS DOUBLE)) / '+years
+        : 'SUM(CAST("Per100000" AS DOUBLE)) / '+years;
+
+  const totalRows=await query(`
+    SELECT CAST(SUM(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS totalCount
+    FROM read_parquet(${parquetSqlForRange(start,end)})
+    WHERE "Antal">-555${municipalityWhere}
+      AND "Brott_ID"=${Number(META.default_crime_id)}
+  `);
+
+  const rows=await query(`
+    SELECT CAST("Brott_ID" AS INTEGER) AS crimeId,
+           CAST(${expression} AS DOUBLE) AS value,
+           CAST(SUM(CAST("Antal" AS DOUBLE)) AS DOUBLE) AS countValue
+    FROM read_parquet(${parquetSqlForRange(start,end)})
+    WHERE "Antal">0${municipalityWhere}
+      AND "Brott_ID"<>${Number(META.default_crime_id)}
+    GROUP BY "Brott_ID"
+    HAVING ${expression}>0
+  `);
+
+  const categoryById=new Map(CATEGORIES.map(c=>[String(c.Brott_ID),c]));
+  const level2=rows
+    .map(r=>({r,cat:categoryById.get(String(r.crimeId))}))
+    .filter(x=>x.cat&&Number(x.cat['Brottsnivå'])===2)
+    .map(x=>({
+      category:legislationDisplayLabel(x.cat.Brott_ID,x.cat.Brott),
+      value:Number(x.r.value),
+      count:Number(x.r.countValue)
+    }))
+    .filter(x=>Number.isFinite(x.value)&&x.value>0)
+    .sort((a,b)=>b.value-a.value)
+    .slice(0,15);
+
+  return {
+    scope:profileScopeText(),
+    municipalities:municipalities.length,
+    startYear:start,
+    endYear:end,
+    period:multi?start+'–'+end:String(start),
+    metric:info.label,
+    totalReportedCrimes:Number(totalRows[0]?.totalCount)||0,
+    topLevel2Categories:level2,
+    note:'Topplistan använder Brå-hierarkins nivå 2 för att undvika dubbelräkning mellan över- och underkategorier. Områdesprofilens treemap kan dessutom normalisera överlappande grenar för visningen.'
+  };
+}
+
+async function chatLegislationPageContext(){
+  const rows=await loadLegislationTimeline();
+  const minYear=Number(META.start_year);
+  const maxYear=Number(META.latest_year);
+  const search=String(el('legislationSearch')?.value||'').trim().toLocaleLowerCase('sv');
+  const detail=String(el('legislationDetail')?.value||'aggregate');
+  const level=String(el('legislationLevel')?.value||'');
+  const status=String(el('legislationStatus')?.value||'changes');
+  const baseRows=detail==='aggregate'?aggregateLegislationRows(rows,4):rows;
+  const displayRows=buildLegislationGroups(baseRows);
+  const filtered=displayRows.filter(row=>{
+    if(level&&String(row.level)!==level)return false;
+    if(search){
+      const own=row.name.toLocaleLowerCase('sv').includes(search)||row.label.toLocaleLowerCase('sv').includes(search);
+      const child=(row.children||[]).some(ch=>
+        ch.name.toLocaleLowerCase('sv').includes(search)||ch.label.toLocaleLowerCase('sv').includes(search)
+      );
+      if(!own&&!child)return false;
+    }
+    const isNew=row.firstYear>minYear;
+    const isEnded=row.lastYear<maxYear||row.ended;
+    const isActive=row.lastYear===maxYear&&!row.ended;
+    if(status==='changes'&&!(isNew||isEnded))return false;
+    if(status==='new'&&!isNew)return false;
+    if(status==='ended'&&!isEnded)return false;
+    if(status==='active'&&!isActive)return false;
+    return true;
+  }).sort((a,b)=>b.firstYear-a.firstYear||a.lastYear-b.lastYear||a.label.localeCompare(b.label,'sv'));
+
+  return {
+    search:search||null,
+    detail,
+    level:level||'alla',
+    status,
+    dataPeriod:[minYear,maxYear],
+    matchingRows:filtered.length,
+    rows:filtered.slice(0,40).map(row=>({
+      category:row.label,
+      level:row.level,
+      firstYear:row.firstYear,
+      lastYear:row.lastYear,
+      ended:Boolean(row.ended),
+      observedFirstYear:row.observedFirstYear,
+      observedLastYear:row.observedLastYear,
+      childCount:row.children?.length||0
+    })),
+    note:'Första och sista förekomst avser i första hand förekomst i rapportens Brå-data. Det är inte automatiskt samma sak som juridiskt ikraftträdande eller upphävande; explicita årtal i kategorinamnet används när sådana finns.'
+  };
+}
+
+function chatMethodologyContext(){
+  return {
+    officialStatistics:'Brå ansvarar för officiell statistik inom rättsväsendet.',
+    reportedCrime:{
+      scope:'Anmälda brott omfattar händelser som anmälts och registrerats som brott hos polis, tull eller åklagare. Även händelser som senare visar sig inte vara brott kan ingå.',
+      caution:'Anmälda brott beskriver inte den faktiska brottsligheten eftersom alla brott inte kommer till rättsväsendets kännedom.',
+      geography:'Kommunredovisningen avser kommunen där brottet har begåtts när kommunuppgift finns. Från 2015 redovisas polisens regionala statistik efter sju polisregioner i stället för tidigare län/polismyndigheter.'
+    },
+    handledCrime:{
+      scope:'Handlagda brott omfattar anmälda brott där polis, åklagare eller annan utredande myndighet fattat ett beslut som avslutar handläggningen under redovisningsåret.',
+      revision:'Den reviderade statistiken över handlagda brott infördes från helåret 2014 och ersatte statistiken över uppklarade brott.',
+      caution:'Lagföringsprocenten ska enligt Brå tolkas som en grov indikator; flera faktorer som myndigheterna inte råder över kan påverka måttet.'
+    },
+    timeComparison:'Brå anger att statistikrutiner, insamling, redovisningssätt, juridiska förändringar och enskilda stora ärenden kan påverka jämförelser över tid.',
+    reportSpecific:{
+      municipalityRates:'Kommunvärden per 100 000 kommer från Brå-underlaget. När rapporten härleder länstal grupperas kommuner och befolkning härleds från kommunernas antal och publicerade frekvenser, vilket kan ge mindre avrundningsskillnader.',
+      legislationTimeline:'Tidslinjen Lag & kategorier över tid visar observerad första/sista förekomst i data och ska inte ensam användas som belägg för lagens ikraftträdande eller upphävande.',
+      profile:'Områdesprofilen visualiserar brottshierarkin och normaliserar vid behov överlappande grenar för att undvika visuell dubbelräkning.'
+    },
+    sources:[
+      {title:'Brå – Statistik',url:'https://bra.se/statistik'},
+      {title:'Brå – Om statistiken över anmälda brott',url:'https://bra.se/statistik/statistik-om-rattsvasendet/anmalda-brott/om-statistiken-over-anmalda-brott'},
+      {title:'Brå – Handlagda brott',url:'https://bra.se/statistik/statistik-om-rattsvasendet/handlagda-brott'},
+      {title:'Brå – Om statistiken över handlagda brott',url:'https://bra.se/statistik/statistik-om-rattsvasendet/handlagda-brott/om-statistiken-over-handlagda-brott'}
+    ]
+  };
+}
+
 function chatQuestionGeography(question){
   const q=String(question||'').toLocaleLowerCase('sv');
   const municipalities=MUNICIPALITIES.filter(name=>
@@ -2887,13 +3027,14 @@ async function buildChatContext(question='',history=[]){
   const categoryIntent=/\b(vanligast|vanligaste|mest förekommande|brottstyp(?:er)?|brottskategor(?:i|ier)|typ(?:er)? av brott)\b/i.test(q);
 
   const context={
-    source:'Brottsförebyggande rådet (Brå), anmälda brott',
+    source:'Brottsförebyggande rådet (Brå)',
     report:'BRÅ brottsstatistik – Sveriges kommuner',
     page,municipality,crimeId:crimeId?Number(crimeId):null,
     crimeCategory:crimeId?chatCategoryName(crimeId):null,
     metric:chatMetricLabel(metric),
     selectedYear:year,startYear,endYear,
     availableYears:[META.start_year,META.latest_year],
+    methodology:chatMethodologyContext(),
     geographyCapabilities:{
       municipalityLevel:true,
       municipalityCount:MUNICIPALITIES.length,
@@ -2902,6 +3043,22 @@ async function buildChatContext(question='',history=[]){
       note:'Län byggs genom att gruppera kommuner. Länets frekvens per 100 000 beräknas som summa brott dividerat med summa härledd kommunbefolkning.'
     }
   };
+
+  if(page==='handled'&&typeof window.getHandledChatContext==='function'){
+    context.handled=window.getHandledChatContext();
+  }
+  if(page==='profile'){
+    context.profile=await chatProfilePageContext();
+  }
+  if(page==='legislation'){
+    context.legislation=await chatLegislationPageContext();
+  }
+  if(page==='method'){
+    context.methodPage={
+      purpose:'Förklara datakällor, definitioner, metod, jämförbarhet och begränsningar i rapporten.',
+      guidance:'Använd methodology som primärt underlag. Var tydlig med skillnaden mellan anmälda brott, faktisk brottslighet och handlagda brott.'
+    };
+  }
 
   const comparisonYear=Number(year||endYear||META.latest_year);
   if(crimeId && geography.asksMunicipality){
