@@ -1321,6 +1321,7 @@ function setupFocusColorPicker(){
   const menu=el('focusColorMenu');
   const search=el('focusColorSearch');
   const list=el('focusColorList');
+  const clearAll=el('focusColorClearAll');
   const resetAll=el('focusColorResetAll');
   if(!button||!menu||!search||!list)return;
 
@@ -1428,6 +1429,13 @@ function setupFocusColorPicker(){
       button.setAttribute('aria-expanded','false');
       button.focus();
     }
+  });
+  clearAll?.addEventListener('click',async()=>{
+    focusColorOverrides.clear();
+    (MUNICIPALITIES||[]).forEach(name=>focusColorOverrides.set(name,null));
+    saveFocusColorOverrides();
+    render();
+    await rerenderFocusSensitiveView();
   });
   resetAll?.addEventListener('click',async()=>{
     focusColorOverrides.clear();
