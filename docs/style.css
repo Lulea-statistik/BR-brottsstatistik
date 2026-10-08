@@ -607,3 +607,57 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .handled-rank-tools select{
   min-width:150px;
 }
+
+/* Global färg fokus */
+.topbar-status{display:flex;align-items:center;gap:12px}
+.focus-color-picker{position:relative}
+.focus-color-button{
+  min-height:36px;padding:7px 34px 7px 12px;border:1px solid rgba(255,255,255,.35);
+  border-radius:7px;background:rgba(255,255,255,.12);color:inherit;font:inherit;font-weight:600;
+  cursor:pointer;position:relative;white-space:nowrap;
+}
+.focus-color-button:after{content:"▾";position:absolute;right:11px;top:7px;opacity:.75}
+.focus-color-menu{
+  position:absolute;right:0;top:calc(100% + 7px);z-index:5000;
+  width:min(520px,calc(100vw - 24px));max-height:70vh;overflow:hidden;
+  background:#fff;color:var(--text);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 16px 38px rgba(23,32,51,.22);padding:10px;
+}
+.focus-color-menu.hidden{display:none}
+.focus-color-head{display:flex;gap:8px;align-items:center}
+.focus-color-head input[type="search"]{
+  flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font:inherit;
+}
+.focus-color-head button{
+  border:1px solid var(--line);border-radius:7px;background:#f8fafc;color:var(--text);
+  padding:8px 10px;cursor:pointer;font:inherit;white-space:nowrap;
+}
+.focus-color-note{font-size:11px;color:var(--muted);line-height:1.4;margin:8px 2px}
+.focus-color-list{max-height:52vh;overflow:auto;border-top:1px solid #eef2f7}
+.focus-color-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:38px;padding:5px 3px;border-bottom:1px solid #f1f5f9;
+}
+.focus-color-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.focus-color-row-controls{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.focus-color-swatch{
+  --focus-swatch:#2563eb;width:25px;height:25px;border-radius:5px;cursor:pointer;
+  border:2px solid #fff;box-shadow:0 0 0 1px #94a3b8;background:var(--focus-swatch);
+}
+.focus-color-swatch.inactive{
+  background:
+    linear-gradient(135deg,transparent 43%,#94a3b8 44%,#94a3b8 56%,transparent 57%),
+    #fff;
+}
+.focus-color-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.focus-color-reset{
+  border:0;background:transparent;color:#64748b;padding:4px 6px;cursor:pointer;font-size:11px;
+}
+.focus-color-reset:hover{text-decoration:underline}
+.focus-color-empty{padding:16px 8px;color:var(--muted);text-align:center}
+@media(max-width:700px){
+  .topbar-status{align-items:flex-end}
+  .focus-color-menu{right:-4px}
+  .focus-color-head{align-items:stretch;flex-direction:column}
+  .focus-color-head button{width:100%}
+}
