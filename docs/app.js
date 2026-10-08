@@ -5,6 +5,8 @@ let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
 let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false;
 const charts = {};
 let legislationTimelineCache=null;
+const FOCUS_COLOR_STORAGE='bra-focus-colors-v1';
+const focusColorOverrides=new Map();
 const fmt0 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat('sv-SE',{maximumFractionDigits:1});
 
@@ -887,8 +889,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
     shown=ranked.filter((r,i)=>
       i<15 ||
       r.Kommun===selectedMunicipality ||
-      r.Kommun==='Luleå' ||
-      r.Kommun==='Boden'
+      municipalityHighlight(r.Kommun)
     );
   }
 
@@ -1250,14 +1251,194 @@ function municipalityMeta(name){
   return MUNICIPAL_META.find(x=>x.Kommun===name);
 }
 
-function municipalityHighlight(name){
-  if(name==='Luleå')return {line:'#dc2626',fill:'#dc2626',soft:'rgba(220,38,38,.22)',kind:'lulea'};
-  if(name==='Boden')return {line:'#d4a800',fill:'#d4a800',soft:'rgba(212,168,0,.22)',kind:'boden'};
+function defaultMunicipalityFocus(name){
+  if(name==='Luleå')return {color:'#dc2626',kind:'lulea'};
+  if(name==='Boden')return {color:'#d4a800',kind:'boden'};
   const meta=municipalityMeta(name);
-  if(meta?.Lan==='Norrbottens län'){
-    return {line:'#6b7280',fill:'#6b7280',soft:'rgba(107,114,128,.24)',kind:'norrbotten'};
-  }
+  if(meta?.Lan==='Norrbottens län')return {color:'#6b7280',kind:'norrbotten'};
   return null;
+}
+
+function hexToRgba(hex,alpha=.22){
+  const raw=String(hex||'').replace('#','');
+  if(!/^[0-9a-fA-F]{6}$/.test(raw))return 'rgba(107,114,128,'+alpha+')';
+  const r=parseInt(raw.slice(0,2),16);
+  const g=parseInt(raw.slice(2,4),16);
+  const b=parseInt(raw.slice(4,6),16);
+  return 'rgba('+r+','+g+','+b+','+alpha+')';
+}
+
+function municipalityFocusState(name){
+  if(focusColorOverrides.has(name)){
+    const value=focusColorOverrides.get(name);
+    if(!value)return null;
+    return {color:value,kind:'custom'};
+  }
+  return defaultMunicipalityFocus(name);
+}
+
+function municipalityHighlight(name){
+  const state=municipalityFocusState(name);
+  if(!state)return null;
+  return {
+    line:state.color,
+    fill:state.color,
+    soft:hexToRgba(state.color,state.kind==='norrbotten'?.24:.22),
+    kind:state.kind
+  };
+}
+
+function loadFocusColorOverrides(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(FOCUS_COLOR_STORAGE)||'{}');
+    Object.entries(raw).forEach(([name,value])=>{
+      if(value===null || /^#[0-9a-fA-F]{6}$/.test(String(value))){
+        focusColorOverrides.set(name,value);
+      }
+    });
+  }catch{}
+}
+
+function saveFocusColorOverrides(){
+  try{
+    localStorage.setItem(FOCUS_COLOR_STORAGE,JSON.stringify(Object.fromEntries(focusColorOverrides)));
+  }catch{}
+}
+
+function activePageName(){
+  return document.querySelector('.page.active')?.id?.replace(/^page-/,'')||'overview';
+}
+
+async function rerenderFocusSensitiveView(){
+  const page=activePageName();
+  if(page==='overview')await renderOverview();
+  else if(page==='trends')await renderTrend();
+  else if(page==='map')await renderMap();
+}
+
+function setupFocusColorPicker(){
+  const button=el('focusColorButton');
+  const menu=el('focusColorMenu');
+  const search=el('focusColorSearch');
+  const list=el('focusColorList');
+  const resetAll=el('focusColorResetAll');
+  if(!button||!menu||!search||!list)return;
+
+  const defaultInactiveColor='#2563eb';
+
+  const render=()=>{
+    const q=search.value.trim().toLocaleLowerCase('sv-SE');
+    const names=(MUNICIPALITIES||[])
+      .filter(name=>!q||name.toLocaleLowerCase('sv-SE').includes(q))
+      .sort((a,b)=>{
+        const af=municipalityFocusState(a)?0:1;
+        const bf=municipalityFocusState(b)?0:1;
+        if(af!==bf)return af-bf;
+        return a.localeCompare(b,'sv-SE');
+      });
+
+    list.innerHTML='';
+    names.forEach(name=>{
+      const state=municipalityFocusState(name);
+      const def=defaultMunicipalityFocus(name);
+
+      const row=document.createElement('div');
+      row.className='focus-color-row';
+
+      const label=document.createElement('span');
+      label.className='focus-color-name';
+      label.textContent=name;
+
+      const controls=document.createElement('div');
+      controls.className='focus-color-row-controls';
+
+      const swatch=document.createElement('button');
+      swatch.type='button';
+      swatch.className='focus-color-swatch'+(state?' active':' inactive');
+      swatch.title=state?'Ändra färg för '+name:'Välj fokusfärg för '+name;
+      swatch.setAttribute('aria-label',swatch.title);
+      if(state)swatch.style.setProperty('--focus-swatch',state.color);
+
+      const color=document.createElement('input');
+      color.type='color';
+      color.className='focus-color-input';
+      color.value=state?.color||defaultInactiveColor;
+      color.tabIndex=-1;
+      color.setAttribute('aria-label','Färg för '+name);
+
+      swatch.addEventListener('click',()=>color.click());
+      color.addEventListener('input',()=>{
+        focusColorOverrides.set(name,color.value);
+        saveFocusColorOverrides();
+        swatch.classList.remove('inactive');
+        swatch.classList.add('active');
+        swatch.style.setProperty('--focus-swatch',color.value);
+      });
+      color.addEventListener('change',async()=>{
+        focusColorOverrides.set(name,color.value);
+        saveFocusColorOverrides();
+        render();
+        await rerenderFocusSensitiveView();
+      });
+
+      controls.append(swatch,color);
+
+      if(focusColorOverrides.has(name)){
+        const reset=document.createElement('button');
+        reset.type='button';
+        reset.className='focus-color-reset';
+        reset.textContent='Återställ';
+        reset.title=def?'Återställ standardfärg':'Ta bort fokusfärg';
+        reset.addEventListener('click',async()=>{
+          focusColorOverrides.delete(name);
+          saveFocusColorOverrides();
+          render();
+          await rerenderFocusSensitiveView();
+        });
+        controls.appendChild(reset);
+      }
+
+      row.append(label,controls);
+      list.appendChild(row);
+    });
+
+    if(!names.length){
+      const empty=document.createElement('div');
+      empty.className='focus-color-empty';
+      empty.textContent='Ingen kommun hittades';
+      list.appendChild(empty);
+    }
+  };
+
+  button.addEventListener('click',e=>{
+    e.stopPropagation();
+    const opening=menu.classList.contains('hidden');
+    menu.classList.toggle('hidden',!opening);
+    button.setAttribute('aria-expanded',opening?'true':'false');
+    if(opening){
+      render();
+      requestAnimationFrame(()=>search.focus());
+    }
+  });
+  menu.addEventListener('click',e=>e.stopPropagation());
+  search.addEventListener('input',render);
+  search.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      menu.classList.add('hidden');
+      button.setAttribute('aria-expanded','false');
+      button.focus();
+    }
+  });
+  resetAll?.addEventListener('click',async()=>{
+    focusColorOverrides.clear();
+    saveFocusColorOverrides();
+    render();
+    await rerenderFocusSensitiveView();
+  });
+  document.addEventListener('click',()=>{
+    menu.classList.add('hidden');
+    button.setAttribute('aria-expanded','false');
+  });
 }
 
 function mapFilterNames(){
@@ -2855,8 +3036,9 @@ async function main(){
       fetch('data/municipality_meta.json?v=29',{cache:'no-store'}).then(r=>r.json()),
       fetch('data/municipalities.geojson?v=29',{cache:'no-store'}).then(r=>r.json())
     ]);
+    loadFocusColorOverrides();
     await initDuck();
-    setupTabs();setupControls();initMap();renderMethod();setupChat();
+    setupTabs();setupControls();setupFocusColorPicker();initMap();renderMethod();setupChat();
     await refreshCrimeTreeForPage('overview');
     await refreshCrimeTreeForPage('trend');
     await refreshCrimeTreeForPage('map');
