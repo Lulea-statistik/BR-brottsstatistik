@@ -1264,6 +1264,8 @@ function drawAllTrends(id,data,metric,label){
 function initMap(){
   map=L.map('crimeMap',{zoomControl:true}).setView([62.2,16.5],5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  const bounds=swedenDisplayBounds();
+  if(bounds && bounds.isValid())map.fitBounds(bounds,{padding:[8,8],animate:false});
 }
 
 function municipalityMeta(name){
@@ -1477,6 +1479,21 @@ function swedenBounds(){
   return layer.getBounds();
 }
 
+function latitudeOffsetForMeters(meters){
+  const earthRadius=6371008.8;
+  return (Number(meters||0)/earthRadius)*(180/Math.PI);
+}
+
+function swedenDisplayBounds(){
+  const bounds=swedenBounds();
+  if(!bounds || !bounds.isValid())return bounds;
+  const marginLat=latitudeOffsetForMeters(10000);
+  return L.latLngBounds(
+    [bounds.getSouth()-marginLat,bounds.getWest()],
+    [bounds.getNorth()+marginLat,bounds.getEast()]
+  );
+}
+
 function boundsForMunicipalities(names){
   if(!names || !names.size)return null;
   const layer=L.geoJSON(GEO,{filter:f=>names.has(f.properties.Kommun)});
@@ -1486,9 +1503,9 @@ function boundsForMunicipalities(names){
 
 function fitMapToVisible(){
   if(!map)return;
-  const bounds=(mapAutoBounds && mapAutoBounds.isValid()) ? mapAutoBounds : swedenBounds();
+  const bounds=swedenDisplayBounds();
   if(bounds && bounds.isValid()){
-    map.fitBounds(bounds,{padding:[18,18],maxZoom:9,animate:false});
+    map.fitBounds(bounds,{padding:[8,8],maxZoom:9,animate:false});
   }
 }
 
@@ -1523,10 +1540,9 @@ async function renderMap(){
     const rankedForMetric=addMetricRank(activeData,metric);
 
     const byName=new Map(data.map(r=>[r.Kommun,r]));
-    mapAutoBounds=null;
-    const municipalitiesWithCrime=new Set(activeData.map(r=>r.Kommun));
-    const crimeBounds=boundsForMunicipalities(municipalitiesWithCrime);
-    mapAutoBounds=(crimeBounds && crimeBounds.isValid()) ? crimeBounds : swedenBounds();
+    // Årskartan ska alltid visa hela Sveriges nord-syd-utsträckning,
+    // oberoende av vilka kommuner som har träffar för valt brott.
+    mapAutoBounds=swedenDisplayBounds();
 
     const values=data
       .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
