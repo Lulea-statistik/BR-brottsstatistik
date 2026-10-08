@@ -661,3 +661,15 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
   .focus-color-head{align-items:stretch;flex-direction:column}
   .focus-color-head button{width:100%}
 }
+
+/* Tillfällig visuell signal medan data laddas */
+.loading-tint{
+  background:rgba(254,226,226,.78);
+  border-radius:6px;
+  padding:5px 8px;
+  box-shadow:0 0 0 1px rgba(220,38,38,.10) inset;
+  transition:background-color .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+.global-loading.loading-tint{
+  padding:7px 10px;
+}
