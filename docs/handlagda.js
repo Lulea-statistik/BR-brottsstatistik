@@ -23,6 +23,7 @@
   let rankChart = null;
   let crimeOptions = [];
   let selectedCrimeKey = '';
+  let crimeCategoryLevels = [];
 
   const $ = id => document.getElementById(id);
 
@@ -65,6 +66,36 @@
     const law=String(row?.[0]??'').trim();
     const crime=String(row?.[1]??'').trim();
     return law && law!==crime ? crime+' — '+law : crime||law||'Okänd brottstyp';
+  }
+
+  function normalizeCrimeText(value){
+    return String(value||'')
+      .toLocaleLowerCase('sv-SE')
+      .replace(/\bbrb\s*/g,'')
+      .replace(/,?\s*totalt\s*$/g,'')
+      .replace(/[–—]/g,'-')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function rowCrimeLevel(row){
+    if(!crimeCategoryLevels.length||!row)return null;
+    const law=normalizeCrimeText(row[0]);
+    const crime=normalizeCrimeText(row[1]);
+    const candidates=[law,crime].filter(Boolean);
+
+    for(const needle of candidates){
+      const exact=crimeCategoryLevels.find(c=>c.norm===needle);
+      if(exact)return exact.level;
+    }
+
+    for(const needle of candidates){
+      const matches=crimeCategoryLevels
+        .filter(c=>c.norm.endsWith(', '+needle)||c.norm.endsWith(needle))
+        .sort((a,b)=>a.level-b.level||a.norm.length-b.norm.length);
+      if(matches.length)return matches[0].level;
+    }
+    return null;
   }
 
   function ensureCrimeSearch(){
@@ -586,10 +617,12 @@
   }
 
   function renderRanking(sheet,measure){
+    const level=String($('handledRankLevel')?.value||'');
     const ranked=sheet.rows
-      .map(r=>({row:r,...measureResult(currentPayload,$('handledSheet').value,r,measure)}))
+      .map(r=>({row:r,level:rowCrimeLevel(r),...measureResult(currentPayload,$('handledSheet').value,r,measure)}))
       .filter(x=>Number.isFinite(x.value)&&x.value>0)
       .filter(x=>String(x.row?.[1]||'').trim().toUpperCase()!=='SAMTLIGA BROTT')
+      .filter(x=>!level||String(x.level)===level)
       .sort((a,b)=>b.value-a.value);
 
     updateRankSlider(ranked.length);
@@ -618,7 +651,8 @@
       options:chartOptions(measure.percent,'y')
     });
     $('handledRankTitle').textContent='Rankade värden – '+(currentPayload?.year||'');
-    $('handledRankStatus').textContent=measure.label+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+' · plats '+(start+1)+'–'+end+' av '+ranked.length;
+    const levelText=level?' · nivå '+level:'';
+    $('handledRankStatus').textContent=measure.label+' · '+(REGION_NAMES[currentPayload?.region_code]||currentPayload?.region_name||'')+levelText+' · plats '+(start+1)+'–'+end+' av '+ranked.length;
   }
 
   async function renderTrend(currentRow,measure){
@@ -721,9 +755,21 @@
   async function init(){
     if(!$('handledTable'))return;
     try{
-      const r=await fetch(ROOT+'manifest.json',{cache:'no-store'});
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      manifest=await r.json();
+      const [manifestResponse,categoriesResponse]=await Promise.all([
+        fetch(ROOT+'manifest.json',{cache:'no-store'}),
+        fetch('data/categories.json',{cache:'no-store'})
+      ]);
+      if(!manifestResponse.ok)throw new Error('HTTP '+manifestResponse.status);
+      manifest=await manifestResponse.json();
+      if(categoriesResponse.ok){
+        const categories=await categoriesResponse.json();
+        crimeCategoryLevels=(categories||[])
+          .map(c=>({
+            level:Number(c['Brottsnivå']),
+            norm:normalizeCrimeText(c['Brott'])
+          }))
+          .filter(c=>c.level>=1&&c.level<=3&&c.norm);
+      }
 
       refreshYearRegion({preserveYear:false,preserveRegion:false});
       await loadSelection({preserveSheet:false,preserveCrime:false,preserveMeasure:false});
@@ -759,6 +805,12 @@
       $('handledTopN')?.addEventListener('input',()=>{
         const sheet=selectedSheet();
         if(!sheet)return;
+        renderRanking(sheet,currentMeasure());
+      });
+      $('handledRankLevel')?.addEventListener('change',()=>{
+        const sheet=selectedSheet();
+        if(!sheet)return;
+        $('handledTopN').value='0';
         renderRanking(sheet,currentMeasure());
       });
     }catch(err){
