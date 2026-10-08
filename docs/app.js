@@ -442,8 +442,16 @@ function setupControls(){
   el('mapYearEnd').addEventListener('change',()=>handleMapYearRange('end',true));
   el('mapCrime').addEventListener('change',renderMap);
   el('mapMetric').addEventListener('change',renderMap);
-  el('mapCounty').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
-  el('mapSkrGroup').addEventListener('change',async()=>{await refreshCrimeTreeForPage('map');await renderMap();});
+  el('mapCounty').addEventListener('change',async()=>{
+    await refreshCrimeTreeForPage('map');
+    await renderMap();
+    fitMapToCurrentFilter();
+  });
+  el('mapSkrGroup').addEventListener('change',async()=>{
+    await refreshCrimeTreeForPage('map');
+    await renderMap();
+    fitMapToCurrentFilter();
+  });
 
   el('profileMunicipality').addEventListener('change',renderProfile);
   el('profileMetric').addEventListener('change',renderProfile);
@@ -1515,6 +1523,29 @@ function fitMapToVisible({force=false}={}){
   }
 }
 
+function fitMapToCurrentFilter(){
+  if(!map)return;
+  const county=String(el('mapCounty')?.value||'');
+  const skr=String(el('mapSkrGroup')?.value||'');
+  map.invalidateSize(false);
+
+  if(!county&&!skr){
+    const bounds=swedenDisplayBounds();
+    if(bounds&&bounds.isValid()){
+      map.fitBounds(bounds,{padding:[8,8],animate:false});
+      mapInitialFitDone=true;
+    }
+    return;
+  }
+
+  const names=mapFilterNames();
+  const bounds=boundsForMunicipalities(names);
+  if(bounds&&bounds.isValid()){
+    map.fitBounds(bounds,{padding:[28,28],maxZoom:9,animate:false});
+    mapInitialFitDone=true;
+  }
+}
+
 async function renderMap(){
   setLoading('Laddar årskarta…');
   try{
@@ -1546,9 +1577,9 @@ async function renderMap(){
     const rankedForMetric=addMetricRank(activeData,metric);
 
     const byName=new Map(data.map(r=>[r.Kommun,r]));
-    // Årskartan ska alltid visa hela Sveriges nord-syd-utsträckning,
-    // oberoende av vilka kommuner som har träffar för valt brott.
-    mapAutoBounds=swedenDisplayBounds();
+    // Kartans dataurval följer län/SKR-filtret. Själva zoomningen styrs
+    // separat så brott, mått och år inte återställer användarens manuella zoom.
+    mapAutoBounds=boundsForMunicipalities(visibleNames)||swedenDisplayBounds();
 
     const values=data
       .filter(r=>Number.isFinite(Number(r.count)) && Number(r.count)>0)
