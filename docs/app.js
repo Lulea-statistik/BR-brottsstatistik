@@ -52,11 +52,23 @@ async function query(sql){
 }
 function setLoading(msg){
   const x=el('loading'); if(!x)return;
-  if(!msg){x.classList.add('hidden');return;}
+  if(!msg){
+    x.classList.add('hidden');
+    x.classList.remove('loading-tint');
+    return;
+  }
   const t=el('loadingText');
   if(t)t.textContent=msg;
   else x.textContent=msg;
+  x.classList.add('loading-tint');
   x.classList.remove('hidden');
+}
+
+function setInlineLoading(id,text,isLoading){
+  const node=el(id);
+  if(!node)return;
+  node.textContent=text;
+  node.classList.toggle('loading-tint',Boolean(isLoading));
 }
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 
@@ -1571,7 +1583,7 @@ function scheduleMapFilterFit(){
 
 async function renderMap(){
   setLoading('Laddar årskarta…');
-  if(el('mapStatus'))el('mapStatus').textContent='Laddar kartdata…';
+  setInlineLoading('mapStatus','Laddar kartdata…',true);
   try{
     const {start,end,multi}=mapYearRange();
     const crimeId=el('mapCrime').value;
@@ -1671,14 +1683,18 @@ async function renderMap(){
     const skr=el('mapSkrGroup').value;
     const filterText=[county,skr].filter(Boolean).join(' · ');
     const valueCount=municipalitiesWithCrime.size;
-    el('mapStatus').textContent=valueCount+' kommuner med brott'
-      +(filterText?' · '+filterText:'')
-      +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ');
+    setInlineLoading(
+      'mapStatus',
+      valueCount+' kommuner med brott'
+        +(filterText?' · '+filterText:'')
+        +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. '),
+      false
+    );
 
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
   }catch(err){
     console.error(err);
-    if(el('mapStatus'))el('mapStatus').textContent='Fel vid kartuppdatering: '+String(err.message||err);
+    setInlineLoading('mapStatus','Fel vid kartuppdatering: '+String(err.message||err),false);
     throw err;
   }finally{
     setLoading(null);
