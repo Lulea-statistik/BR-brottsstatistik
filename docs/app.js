@@ -445,12 +445,12 @@ function setupControls(){
   el('mapCounty').addEventListener('change',async()=>{
     await refreshCrimeTreeForPage('map');
     await renderMap();
-    fitMapToCurrentFilter();
+    scheduleMapFilterFit();
   });
   el('mapSkrGroup').addEventListener('change',async()=>{
     await refreshCrimeTreeForPage('map');
     await renderMap();
-    fitMapToCurrentFilter();
+    scheduleMapFilterFit();
   });
 
   el('profileMunicipality').addEventListener('change',renderProfile);
@@ -1538,12 +1538,20 @@ function fitMapToCurrentFilter(){
     return;
   }
 
-  const names=mapFilterNames();
-  const bounds=boundsForMunicipalities(names);
+  const bounds=geoLayer?.getBounds?.();
   if(bounds&&bounds.isValid()){
-    map.fitBounds(bounds,{padding:[28,28],maxZoom:9,animate:false});
+    map.fitBounds(bounds,{padding:[24,24],maxZoom:10,animate:false});
     mapInitialFitDone=true;
   }
+}
+
+function scheduleMapFilterFit(){
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      map?.invalidateSize(false);
+      fitMapToCurrentFilter();
+    },80);
+  });
 }
 
 async function renderMap(){
