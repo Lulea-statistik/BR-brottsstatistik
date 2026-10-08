@@ -419,21 +419,45 @@
   <section id="page-method" class="page">
     <div class="panel prose">
       <h2>Metod & data</h2>
-      <p>Rapporten bygger på Brå:s årsvisa kommunstatistik över anmälda brott.</p>
-      <p><strong>Källa:</strong> Brottsförebyggande rådet (Brå), anmälda brott</p>
-      <p><strong>Period:</strong> 1996–2025</p>
-      <p><strong>Lag & kategorier över tid:</strong> tidslinjen visar första och sista observerade år för varje Brå-kategori i rapportens data. Detta ska inte tolkas som verifierat datum för ikraftträdande eller upphävande av en lag; skillnader kan även bero på förändrad brottsklassificering eller statistikproduktion.</p>
+      <p>Rapporten bygger huvudsakligen på Brå:s officiella statistik över <strong>anmälda brott</strong> på kommunnivå samt Brå:s statistik över <strong>handlagda brott</strong>. För definitioner, kvalitetsfrågor och förändringar över tid används Brå:s egen dokumentation.</p>
+
+      <h3>Anmälda brott</h3>
+      <p>Statistiken över anmälda brott omfattar händelser som har anmälts och registrerats som brott hos polis, tull eller åklagare. Även händelser som efter utredning visar sig inte vara brott kan ingå. Statistiken ska därför inte tolkas som ett direkt mått på den faktiska brottsligheten; alla brott kommer inte heller till rättsväsendets kännedom.</p>
+      <p>Kommunuppgifterna avser i normalfallet den kommun där brottet har begåtts när en kommun kan anges. Från och med 2015 redovisas polisens regionala statistik efter sju polisregioner; tidigare användes län/polismyndigheternas områden.</p>
+
+      <h3>Handlagda brott</h3>
+      <p>Statistiken över handlagda brott omfattar anmälda brott där polis, åklagare eller annan brottsutredande myndighet har fattat ett beslut som avslutar handläggningen under redovisningsåret. Den reviderade statistiken infördes från helåret 2014 och ersatte statistiken över uppklarade brott.</p>
+      <p>Brå betonar att exempelvis <strong>lagföringsprocenten</strong> ska tolkas som en grov indikator. Resultatet kan påverkas av flera faktorer som de brottsutredande myndigheterna inte råder över.</p>
+
+      <h3>Jämförelser över tid</h3>
+      <p>Förändringar i statistikrutiner, insamling, redovisningssätt, juridik och enskilda ärenden med många brott kan påverka jämförbarheten mellan år. Tidsserier bör därför tolkas tillsammans med Brå:s kvalitetsdokumentation, särskilt när ett tydligt nivåbrott uppstår.</p>
+
+      <h3>Rapportspecifika bearbetningar</h3>
+      <p><strong>Områdesprofil:</strong> treemap-diagrammet använder Brå:s brottshierarki. Överlappande grenar kan normaliseras i visualiseringen för att undvika visuell dubbelräkning. För analys bör kategorier på samma hierarkinivå jämföras med varandra.</p>
+      <p><strong>Lag & kategorier över tid:</strong> första och sista år i tidslinjen avser observerad förekomst i rapportens Brå-data. Det är inte automatiskt samma sak som juridiskt datum för ikraftträdande eller upphävande. Om ett kategorinamn innehåller ett explicit årtal används detta som stöd, men juridiska slutsatser bör verifieras mot lagtext eller Brå:s dokumentation.</p>
+      <p><strong>Länsvärden:</strong> när rapporten härleder länstal från kommundata grupperas kommunerna. Frekvens per 100 000 bygger då på summerade brott och en härledd befolkning, vilket kan ge mindre avrundningsskillnader jämfört med separat publicerade länstal.</p>
+
+      <h3>Källor och dokumentation</h3>
+      <p>
+        <a href="https://bra.se/statistik" target="_blank" rel="noopener">Brå – Statistik</a><br>
+        <a href="https://bra.se/statistik/statistik-om-rattsvasendet/anmalda-brott/om-statistiken-over-anmalda-brott" target="_blank" rel="noopener">Brå – Om statistiken över anmälda brott</a><br>
+        <a href="https://bra.se/statistik/statistik-om-rattsvasendet/handlagda-brott" target="_blank" rel="noopener">Brå – Handlagda brott</a><br>
+        <a href="https://bra.se/statistik/statistik-om-rattsvasendet/handlagda-brott/om-statistiken-over-handlagda-brott" target="_blank" rel="noopener">Brå – Om statistiken över handlagda brott</a>
+      </p>
+      <p>På Brå:s sidor finns även kvalitetsdeklarationer, statistikrapporter samt dokumentet <em>Begrepp och definitioner</em>. Dessa är primära referenser när rapportens siffror eller tidsserier behöver tolkas mer detaljerat.</p>
+
+      <p><strong>Period för kommunstatistiken i denna rapport:</strong> 1996–2025. <strong>Handlagda brott:</strong> från 2014, med regional redovisning från 2015.</p>
     </div>
   </section>
 </main>
 <button id="chatLauncher" class="chat-launcher" type="button" aria-controls="chatPanel" aria-expanded="false">Fråga om statistiken</button>
 <aside id="chatPanel" class="chat-panel hidden" aria-label="Fråga om statistiken">
   <div class="chat-head">
-    <div><strong>Fråga om statistiken</strong><small>Svar baseras på rapportens aktuella val och Brå-data.</small></div>
+    <div><strong>Fråga om statistiken</strong><small>Svar baseras på aktuell sida, valda filter, Brå-data och rapportens metodunderlag.</small></div>
     <button id="chatClose" class="chat-close" type="button" aria-label="Stäng">×</button>
   </div>
   <div id="chatMessages" class="chat-messages" aria-live="polite">
-    <div class="chat-message assistant">Välj gärna kommun och brottskategori i rapporten och ställ sedan en fråga om utvecklingen.</div>
+    <div class="chat-message assistant">Ställ en fråga om den sida du står på. Jag kan använda aktuella filter, diagramdata och rapportens metodunderlag.</div>
   </div>
   <form id="chatForm" class="chat-form">
     <textarea id="chatInput" rows="3" maxlength="800" placeholder="Exempel: Hur har detta utvecklats sedan 2015?"></textarea>
@@ -456,7 +480,7 @@
     if(tab)tab.click();
   });
 </script>
-<script src="handlagda.js?v=14"></script>
-<script type="module" src="app.js?v=53"></script>
+<script src="handlagda.js?v=15"></script>
+<script type="module" src="app.js?v=54"></script>
 </body>
 </html>
