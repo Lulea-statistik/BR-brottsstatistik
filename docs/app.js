@@ -2,7 +2,7 @@ import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
-let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false;
+let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false, mapInitialFitDone=false;
 const charts = {};
 let legislationTimelineCache=null;
 const FOCUS_COLOR_STORAGE='bra-focus-colors-v1';
@@ -468,8 +468,9 @@ function setupTabs(){
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
     el('page-'+btn.dataset.page).classList.add('active');
     if(btn.dataset.page==='map'&&map)setTimeout(async()=>{
-      map.invalidateSize();
+      map.invalidateSize(false);
       await renderMap();
+      if(!mapInitialFitDone)fitMapToVisible();
     },60);
     if(btn.dataset.page==='profile')setTimeout(async()=>{
       await renderProfile();
@@ -1262,10 +1263,12 @@ function drawAllTrends(id,data,metric,label){
 }
 
 function initMap(){
-  map=L.map('crimeMap',{zoomControl:true}).setView([62.2,16.5],5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-  const bounds=swedenDisplayBounds();
-  if(bounds && bounds.isValid())map.fitBounds(bounds,{padding:[8,8],animate:false});
+  map=L.map('crimeMap',{zoomControl:true,minZoom:3,maxZoom:19}).setView([62.2,16.5],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxNativeZoom:19,
+    maxZoom:19,
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
 }
 
 function municipalityMeta(name){
@@ -1501,11 +1504,14 @@ function boundsForMunicipalities(names){
   return bounds && bounds.isValid()?bounds:null;
 }
 
-function fitMapToVisible(){
+function fitMapToVisible({force=false}={}){
   if(!map)return;
+  if(mapInitialFitDone&&!force)return;
   const bounds=swedenDisplayBounds();
   if(bounds && bounds.isValid()){
-    map.fitBounds(bounds,{padding:[8,8],maxZoom:9,animate:false});
+    map.invalidateSize(false);
+    map.fitBounds(bounds,{padding:[8,8],animate:false});
+    mapInitialFitDone=true;
   }
 }
 
@@ -1596,9 +1602,9 @@ async function renderMap(){
 
     if(el('page-map').classList.contains('active')){
       setTimeout(()=>{
-        map.invalidateSize();
-        fitMapToVisible();
-      },30);
+        map.invalidateSize(false);
+        if(!mapInitialFitDone)fitMapToVisible();
+      },60);
     }
 
     const category=CATEGORIES.find(c=>String(c['Brott_ID'])===crimeId);
