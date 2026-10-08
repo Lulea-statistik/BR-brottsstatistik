@@ -1341,11 +1341,26 @@ function activePageName(){
   return document.querySelector('.page.active')?.id?.replace(/^page-/,'')||'overview';
 }
 
+function refreshMapFocusStyles(){
+  if(!geoLayer)return;
+  geoLayer.eachLayer(layer=>{
+    const name=layer?.feature?.properties?.Kommun;
+    if(!name)return;
+    const h=municipalityHighlight(name);
+    const noCrime=Number(layer.options?.fillOpacity||0)<=0;
+    layer.setStyle({
+      color:noCrime?'transparent':(h?.line||'#aab2bd'),
+      weight:noCrime?0:(h?(h.kind==='norrbotten'?1.7:3):0.7),
+      opacity:noCrime?0:1
+    });
+  });
+}
+
 async function rerenderFocusSensitiveView(){
   const page=activePageName();
   if(page==='overview')await renderOverview();
   else if(page==='trends')await renderTrend();
-  else if(page==='map')await renderMap();
+  else if(page==='map')refreshMapFocusStyles();
 }
 
 function setupFocusColorPicker(){
@@ -1556,6 +1571,7 @@ function scheduleMapFilterFit(){
 
 async function renderMap(){
   setLoading('Laddar årskarta…');
+  if(el('mapStatus'))el('mapStatus').textContent='Laddar kartdata…';
   try{
     const {start,end,multi}=mapYearRange();
     const crimeId=el('mapCrime').value;
@@ -1581,6 +1597,7 @@ async function renderMap(){
       const count=Number(r.count);
       return Number.isFinite(count) && count>0;
     });
+    const municipalitiesWithCrime=new Set(activeData.map(r=>r.Kommun));
     addRanks(activeData);
     const rankedForMetric=addMetricRank(activeData,metric);
 
@@ -1659,7 +1676,13 @@ async function renderMap(){
       +(valueCount===0?' · inga kommuner har värde, kartan visar hela Sverige.':'. ');
 
     el('mapLegend').innerHTML=continuousLegendHtml(values,metric);
-  }finally{setLoading(null);}
+  }catch(err){
+    console.error(err);
+    if(el('mapStatus'))el('mapStatus').textContent='Fel vid kartuppdatering: '+String(err.message||err);
+    throw err;
+  }finally{
+    setLoading(null);
+  }
 }
 
 function profileMunicipalityNames(){
