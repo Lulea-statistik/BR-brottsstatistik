@@ -62,7 +62,7 @@
   }
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
 <header class="topbar">
@@ -359,6 +359,16 @@
       <article class="panel handled-chart-panel">
         <h2 id="handledRankTitle">Högsta värden – valt år</h2>
         <div id="handledRankStatus" class="sub"></div>
+        <div class="handled-rank-tools">
+          <label>Nivå av brottskategori
+            <select id="handledRankLevel">
+              <option value="" selected>Alla</option>
+              <option value="1">Nivå 1</option>
+              <option value="2">Nivå 2</option>
+              <option value="3">Nivå 3</option>
+            </select>
+          </label>
+        </div>
         <div class="handled-rank-slider">
           <div class="handled-topn-head">
             <span>Placering i rankingen · visar alltid 15:</span><strong id="handledTopNValue">1–15</strong>
@@ -432,7 +442,7 @@
     if(tab)tab.click();
   });
 </script>
-<script src="handlagda.js?v=13"></script>
+<script src="handlagda.js?v=14"></script>
 <script type="module" src="app.js?v=50"></script>
 </body>
 </html>
