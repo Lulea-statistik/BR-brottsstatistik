@@ -62,7 +62,7 @@
   }
   </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 <header class="topbar">
@@ -74,6 +74,19 @@
     </div>
   </div>
   <div class="topbar-status">
+    <div class="focus-color-picker">
+      <button id="focusColorButton" class="focus-color-button" type="button" aria-expanded="false" aria-controls="focusColorMenu">
+        Färg fokus
+      </button>
+      <div id="focusColorMenu" class="focus-color-menu hidden" aria-label="Färg fokus">
+        <div class="focus-color-head">
+          <input id="focusColorSearch" type="search" placeholder="Sök kommun…" autocomplete="off" aria-label="Sök kommun för färgfokus">
+          <button id="focusColorResetAll" type="button">Återställ standard</button>
+        </div>
+        <div class="focus-color-note">Klicka på färgrutan för att välja fokusfärg. Kommuner utan egen fokusfärg visas normalt.</div>
+        <div id="focusColorList" class="focus-color-list"></div>
+      </div>
+    </div>
     <div id="loading" class="global-loading" aria-live="polite">
       <span class="loading-spinner" aria-hidden="true"></span>
       <span id="loadingText">Laddar rapport…</span>
@@ -443,6 +456,6 @@
   });
 </script>
 <script src="handlagda.js?v=14"></script>
-<script type="module" src="app.js?v=50"></script>
+<script type="module" src="app.js?v=51"></script>
 </body>
 </html>
