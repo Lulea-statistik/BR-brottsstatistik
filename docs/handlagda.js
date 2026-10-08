@@ -27,6 +27,13 @@
 
   const $ = id => document.getElementById(id);
 
+  function setLoadingStatus(id,text,isLoading){
+    const node=$(id);
+    if(!node)return;
+    node.textContent=text;
+    node.classList.toggle('loading-tint',Boolean(isLoading));
+  }
+
   function fmtNumber(value, percent=false){
     const n=Number(value);
     if(!Number.isFinite(n)) return '–';
@@ -661,7 +668,7 @@
     const sheetName=$('handledSheet').value;
     const targetKey=crimeKey(currentRow);
 
-    $('handledTrendStatus').textContent='Laddar tidsserie…';
+    setLoadingStatus('handledTrendStatus','Laddar tidsserie…',true);
 
     const entries=(manifest.files||[])
       .filter(x=>String(x.table_id)===String(table)&&x.region_code===region)
@@ -706,7 +713,7 @@
       options:chartOptions(measure.percent,'x')
     });
     $('handledTrendTitle').textContent='Utveckling över tid – '+String(currentRow[1]||'');
-    $('handledTrendStatus').textContent=measure.label+' · '+($('handledRegion').selectedOptions[0]?.textContent||region)+' · '+points.length+' år';
+    setLoadingStatus('handledTrendStatus',measure.label+' · '+($('handledRegion').selectedOptions[0]?.textContent||region)+' · '+points.length+' år',false);
   }
 
   async function loadSelection({preserveSheet=true,preserveCrime=true,preserveMeasure=true,updateTrend=true}={}){
@@ -718,7 +725,7 @@
       $('handledStatus').textContent='Ingen datafil finns för valt urval.';
       return;
     }
-    $('handledStatus').textContent='Laddar '+TABLE_LABELS[table]+'…';
+    setLoadingStatus('handledStatus','Laddar '+TABLE_LABELS[table]+'…',true);
     try{
       currentPayload=await loadJson(entry.path);
       const sheets=Object.keys(currentPayload.sheets||{});
@@ -736,11 +743,11 @@
       $('handledSheetLabel')?.classList.toggle('hidden',is300||is320);
       refreshMeasures(preserveMeasure&&!is320);
       refreshCrimeList(preserveCrime);
-      $('handledStatus').textContent='Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':visibleSheets.length+' deltabeller');
+      setLoadingStatus('handledStatus','Brå · '+currentPayload.year+' · '+(REGION_NAMES[currentPayload.region_code]||currentPayload.region_name)+' · '+(is320?'Samtliga handlagda brott':visibleSheets.length+' deltabeller'),false);
       renderCurrent({updateTrend});
     }catch(err){
       console.error(err);
-      $('handledStatus').textContent='Kunde inte läsa data: '+err.message;
+      setLoadingStatus('handledStatus','Kunde inte läsa data: '+err.message,false);
     }
   }
 
@@ -860,7 +867,7 @@
       });
     }catch(err){
       console.error(err);
-      $('handledStatus').textContent='Interaktiv data är ännu inte färdigbyggd: '+err.message;
+      setLoadingStatus('handledStatus','Interaktiv data är ännu inte färdigbyggd: '+err.message,false);
     }
   }
 
