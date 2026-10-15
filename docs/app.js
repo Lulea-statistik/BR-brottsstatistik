@@ -1180,20 +1180,22 @@ function mapYearRange(){
 function updateMapYearUi(){
   const enabled=Boolean(el('mapRangeEnabled')?.checked);
   el('mapSingleYear').disabled=enabled;
-  el('mapYearSliderRow').hidden=!enabled;
+  el('mapYearSliderRow').classList.toggle('is-disabled',!enabled);
   el('mapYearStart').disabled=!enabled;
   el('mapYearEnd').disabled=!enabled;
   const {start,end,multi}=mapYearRange();
   el('mapYearStartLabel').textContent=String(el('mapYearStart').value);
   el('mapYearEndLabel').textContent=String(el('mapYearEnd').value);
   const period=el('mapYearPeriod');
-  if(period)period.textContent=multi ? start+'–'+end : String(start);
+  if(period)period.textContent=String(el('mapYearStart').value)+'–'+String(el('mapYearEnd').value);
 
   const min=Number(el('mapYearStart').min);
   const max=Number(el('mapYearStart').max);
   const span=Math.max(1,max-min);
-  const left=((start-min)/span)*100;
-  const right=((end-min)/span)*100;
+  const sliderStart=Number(el('mapYearStart').value);
+  const sliderEnd=Number(el('mapYearEnd').value);
+  const left=((sliderStart-min)/span)*100;
+  const right=((sliderEnd-min)/span)*100;
   const control=el('mapYearControl');
   if(control){
     control.style.setProperty('--range-left',left+'%');
