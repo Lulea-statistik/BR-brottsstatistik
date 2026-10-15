@@ -3,6 +3,7 @@ import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
 let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false, mapInitialFitDone=false;
+let selectedMapMunicipality=null;
 const charts = {};
 let legislationTimelineCache=null;
 const FOCUS_COLOR_STORAGE='bra-focus-colors-v1';
@@ -1353,6 +1354,19 @@ function activePageName(){
   return document.querySelector('.page.active')?.id?.replace(/^page-/,'')||'overview';
 }
 
+function markSelectedMunicipality(){
+  if(!geoLayer)return;
+  geoLayer.eachLayer(layer=>{
+    const name=layer?.feature?.properties?.Kommun;
+    if(!name)return;
+    const selected=name===selectedMapMunicipality;
+    if(selected){
+      layer.setStyle({color:'#172c4c',weight:4,opacity:1,dashArray:null,fillOpacity:Math.max(.35,Number(layer.options.fillOpacity)||0)});
+      layer.bringToFront();
+    }
+  });
+}
+
 function refreshMapFocusStyles(){
   if(!geoLayer)return;
   geoLayer.eachLayer(layer=>{
@@ -1665,8 +1679,30 @@ async function renderMap(){
           ? '<br>Placering: '+fmt0.format(row.metricRank)+' av '+rankedTotal
           : '';
         layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText);
+        layer.on('click',()=>{
+          selectedMapMunicipality=selectedMapMunicipality===name?null:name;
+          // Restore the ordinary thematic styles before outlining the selected
+          // municipality with its actual GeoJSON boundary (not a bounds box).
+          geoLayer.eachLayer(featureLayer=>{
+            const selectedName=featureLayer?.feature?.properties?.Kommun;
+            const rowForName=byName.get(selectedName);
+            const raw=rowForName?Number(metricValue(rowForName,metric)):NaN;
+            const highlight=municipalityHighlight(selectedName);
+            const noValue=!rowForName||!Number.isFinite(Number(rowForName.count))||Number(rowForName.count)<=0;
+            featureLayer.setStyle({
+              color:noValue?'transparent':(highlight?.line||'#aab2bd'),
+              weight:noValue?0:(highlight?(highlight.kind==='norrbotten'?1.7:3):.7),
+              opacity:noValue?0:1,
+              fillColor:noValue?'transparent':continuousColor(raw,minValue,maxValue,metric),
+              fillOpacity:noValue?0:.82
+            });
+          });
+          markSelectedMunicipality();
+        });
       }
     }).addTo(map);
+    if(!visibleNames.has(selectedMapMunicipality))selectedMapMunicipality=null;
+    markSelectedMunicipality();
 
     if(el('page-map').classList.contains('active')){
       setTimeout(()=>{
