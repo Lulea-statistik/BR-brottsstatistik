@@ -1374,8 +1374,28 @@ function showSelectedMunicipalityInfo(clickLatLng=null){
   const bounds=selectedLayer.getBounds?.();
   const anchor=clickLatLng||(bounds?.isValid()?bounds.getCenter():null);
   if(!anchor)return;
+  // A subtle zoom control is available only in the municipality's pinned popup.
+  const popupBody=document.createElement('div');
+  const popupText=document.createElement('div');
+  popupText.innerHTML=content;
+  popupBody.appendChild(popupText);
+  if(bounds?.isValid()){
+    const zoomButton=document.createElement('button');
+    zoomButton.type='button';
+    zoomButton.textContent='+';
+    zoomButton.title='Zooma till '+selectedMapMunicipality;
+    zoomButton.setAttribute('aria-label','Zooma till '+selectedMapMunicipality);
+    zoomButton.style.cssText='display:block;margin:5px 0 0 auto;padding:0;width:22px;height:22px;border:1px solid #cbd5e1;border-radius:5px;background:#f8fafc;color:#475569;font-size:17px;line-height:19px;cursor:pointer;';
+    L.DomEvent.disableClickPropagation(zoomButton);
+    zoomButton.addEventListener('click',event=>{
+      event.stopPropagation();
+      map.invalidateSize(false);
+      map.fitBounds(bounds,{padding:[24,24],maxZoom:12,animate:true});
+    });
+    popupBody.appendChild(zoomButton);
+  }
   selectedMapPopup=L.popup({autoClose:false,closeOnClick:false,closeButton:false,offset:[0,-8]})
-    .setLatLng(anchor).setContent(content).openOn(map);
+    .setLatLng(anchor).setContent(popupBody).openOn(map);
 }
 
 function markSelectedMunicipality(){
