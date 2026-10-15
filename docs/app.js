@@ -1367,9 +1367,10 @@ function showSelectedMunicipalityInfo(clickLatLng=null){
   });
   if(!selectedLayer)return;
   const tooltip=selectedLayer.getTooltip();
-  const content=tooltip?.getContent();
+  const content=selectedLayer._pinnedInfoContent || tooltip?.getContent();
   if(!content)return;
   // The selected municipality displays a pinned popup, not a hover tooltip.
+  selectedLayer._pinnedInfoContent=content;
   selectedLayer.unbindTooltip();
   const bounds=selectedLayer.getBounds?.();
   const anchor=clickLatLng||(bounds?.isValid()?bounds.getCenter():null);
@@ -1379,21 +1380,32 @@ function showSelectedMunicipalityInfo(clickLatLng=null){
   const popupText=document.createElement('div');
   popupText.innerHTML=content;
   popupBody.appendChild(popupText);
-  if(bounds?.isValid()){
-    const zoomButton=document.createElement('button');
-    zoomButton.type='button';
-    zoomButton.textContent='+';
-    zoomButton.title='Zooma till '+selectedMapMunicipality;
-    zoomButton.setAttribute('aria-label','Zooma till '+selectedMapMunicipality);
-    zoomButton.style.cssText='display:block;margin:5px 0 0 auto;padding:0;width:22px;height:22px;border:1px solid #cbd5e1;border-radius:5px;background:#f8fafc;color:#475569;font-size:17px;line-height:19px;cursor:pointer;';
-    L.DomEvent.disableClickPropagation(zoomButton);
-    zoomButton.addEventListener('click',event=>{
+  const zoomControls=document.createElement('div');
+  zoomControls.style.cssText='display:flex;justify-content:flex-end;gap:4px;margin-top:5px;';
+  const addZoomButton=(label,title,targetBounds,maxZoom)=>{
+    if(!targetBounds?.isValid())return;
+    const button=document.createElement('button');
+    button.type='button';
+    button.textContent=label;
+    button.title=title;
+    button.setAttribute('aria-label',title);
+    button.style.cssText='padding:0;width:22px;height:22px;border:1px solid #cbd5e1;border-radius:5px;background:#f8fafc;color:#475569;font-size:14px;font-weight:600;line-height:20px;cursor:pointer;';
+    L.DomEvent.disableClickPropagation(button);
+    button.addEventListener('click',event=>{
       event.stopPropagation();
       map.invalidateSize(false);
-      map.fitBounds(bounds,{padding:[24,24],maxZoom:12,animate:true});
+      map.fitBounds(targetBounds,{padding:[4,4],maxZoom,animate:true});
     });
-    popupBody.appendChild(zoomButton);
+    zoomControls.appendChild(button);
+  };
+  addZoomButton('+','Zooma till '+selectedMapMunicipality,bounds,12);
+  const county=municipalityMeta(selectedMapMunicipality)?.Lan;
+  if(county){
+    const countyNames=new Set(MUNICIPAL_META.filter(item=>item.Lan===county).map(item=>item.Kommun));
+    addZoomButton('L','Zooma till '+county,boundsForMunicipalities(countyNames),10);
   }
+  addZoomButton('S','Zooma till Sverige',swedenDisplayBounds(),10);
+  popupBody.appendChild(zoomControls);
   selectedMapPopup=L.popup({autoClose:false,closeOnClick:false,closeButton:false,offset:[0,-8]})
     .setLatLng(anchor).setContent(popupBody).openOn(map);
 }
@@ -1583,7 +1595,7 @@ function latitudeOffsetForMeters(meters){
 function swedenDisplayBounds(){
   const bounds=swedenBounds();
   if(!bounds || !bounds.isValid())return bounds;
-  const marginLat=latitudeOffsetForMeters(10000);
+  const marginLat=0;
   return L.latLngBounds(
     [bounds.getSouth()-marginLat,bounds.getWest()],
     [bounds.getNorth()+marginLat,bounds.getEast()]
@@ -1603,7 +1615,7 @@ function fitMapToVisible({force=false}={}){
   const bounds=swedenDisplayBounds();
   if(bounds && bounds.isValid()){
     map.invalidateSize(false);
-    map.fitBounds(bounds,{padding:[8,8],animate:false});
+    map.fitBounds(bounds,{padding:[2,2],animate:false});
     mapInitialFitDone=true;
   }
 }
@@ -1757,7 +1769,8 @@ async function renderMap(){
             trendText='<br>Trend '+start+'–'+end+': data saknas för start- eller slutåret';
           }
         }
-        layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText+trendText);
+        layer._pinnedInfoContent='<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText+trendText;
+        layer.bindTooltip(layer._pinnedInfoContent);
         layer.on('click',event=>{
           // Keep the selected municipality pinned until another is clicked.
           selectedMapMunicipality=name;
