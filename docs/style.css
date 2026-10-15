@@ -678,3 +678,12 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
    browser's rectangular SVG bounding-box outline for pointer interaction,
    while retaining an accessible focus outline for keyboard navigation. */
 #crimeMap .leaflet-interactive:focus:not(:focus-visible){outline:none}
+
+/* Map: distinct single-year and optional range modes */
+#page-map .map-year-choice{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+#page-map .map-year-choice>label:first-child{display:flex;flex-direction:column;gap:4px;min-width:110px}
+#page-map .map-year-toggle{display:flex;align-items:center;gap:6px;white-space:nowrap;padding-bottom:6px;cursor:pointer}
+#page-map .map-year-toggle input{width:16px;height:16px;margin:0}
+#page-map .map-year-slider-row{flex-basis:100%;max-width:330px}
+#page-map .map-year-slider-row[hidden]{display:none}
+#page-map .map-year-slider-row .year-range-control{width:100%}
