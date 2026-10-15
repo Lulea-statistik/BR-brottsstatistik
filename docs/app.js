@@ -3,7 +3,7 @@ import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 
 let META, CATEGORIES, MUNICIPALITIES, MUNICIPAL_META, GEO;
 let db, conn, map, geoLayer, mapAutoBounds, profileRendered=false, mapInitialFitDone=false;
-let selectedMapMunicipality=null;
+let selectedMapMunicipality=null, selectedMapPopup=null;
 const charts = {};
 let legislationTimelineCache=null;
 const FOCUS_COLOR_STORAGE='bra-focus-colors-v1';
@@ -1354,6 +1354,30 @@ function activePageName(){
   return document.querySelector('.page.active')?.id?.replace(/^page-/,'')||'overview';
 }
 
+function showSelectedMunicipalityInfo(clickLatLng=null){
+  if(!map||!geoLayer)return;
+  if(selectedMapPopup){
+    map.closePopup(selectedMapPopup);
+    selectedMapPopup=null;
+  }
+  if(!selectedMapMunicipality)return;
+  let selectedLayer=null;
+  geoLayer.eachLayer(layer=>{
+    if(layer?.feature?.properties?.Kommun===selectedMapMunicipality)selectedLayer=layer;
+  });
+  if(!selectedLayer)return;
+  const tooltip=selectedLayer.getTooltip();
+  const content=tooltip?.getContent();
+  if(!content)return;
+  // The selected municipality displays a pinned popup, not a hover tooltip.
+  selectedLayer.unbindTooltip();
+  const bounds=selectedLayer.getBounds?.();
+  const anchor=clickLatLng||(bounds?.isValid()?bounds.getCenter():null);
+  if(!anchor)return;
+  selectedMapPopup=L.popup({autoClose:false,closeOnClick:false,closeButton:false,offset:[0,-8]})
+    .setLatLng(anchor).setContent(content).openOn(map);
+}
+
 function markSelectedMunicipality(){
   if(!geoLayer)return;
   geoLayer.eachLayer(layer=>{
@@ -1679,8 +1703,9 @@ async function renderMap(){
           ? '<br>Placering: '+fmt0.format(row.metricRank)+' av '+rankedTotal
           : '';
         layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText);
-        layer.on('click',()=>{
-          selectedMapMunicipality=selectedMapMunicipality===name?null:name;
+        layer.on('click',event=>{
+          // Keep the selected municipality pinned until another is clicked.
+          selectedMapMunicipality=name;
           // Restore the ordinary thematic styles before outlining the selected
           // municipality with its actual GeoJSON boundary (not a bounds box).
           geoLayer.eachLayer(featureLayer=>{
@@ -1698,11 +1723,13 @@ async function renderMap(){
             });
           });
           markSelectedMunicipality();
+          showSelectedMunicipalityInfo(event.latlng);
         });
       }
     }).addTo(map);
     if(!visibleNames.has(selectedMapMunicipality))selectedMapMunicipality=null;
     markSelectedMunicipality();
+    showSelectedMunicipalityInfo();
 
     if(el('page-map').classList.contains('active')){
       setTimeout(()=>{
