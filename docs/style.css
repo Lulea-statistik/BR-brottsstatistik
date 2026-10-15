@@ -673,3 +673,8 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .global-loading.loading-tint{
   padding:7px 10px;
 }
+
+/* Leaflet puts keyboard focus on the SVG path on mouse press. Suppress the
+   browser's rectangular SVG bounding-box outline for pointer interaction,
+   while retaining an accessible focus outline for keyboard navigation. */
+#map .leaflet-interactive:focus:not(:focus-visible){outline:none}
