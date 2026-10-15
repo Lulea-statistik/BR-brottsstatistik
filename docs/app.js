@@ -402,6 +402,8 @@ function setupControls(){
     el(id).max=String(maxYear);
     el(id).value=String(maxYear);
   });
+  fillSelect('mapSingleYear',META.available_years.slice().sort((a,b)=>b-a).map(y=>({value:String(y),text:String(y)})),String(maxYear));
+  el('mapYearStart').value=String(Math.max(minYear,maxYear-4));
   updateMapYearUi();
   updateProfileYearUi();
   if(el('changeBaseYear')){
@@ -449,6 +451,17 @@ function setupControls(){
   el('changeLevel').addEventListener('change',renderChangeRanking);
   el('changeBaseYear').addEventListener('input',()=>{updateChangeYearUi();renderChangeRanking(false);});
   el('changeBaseYear').addEventListener('change',()=>renderChangeRanking(true));
+  el('mapSingleYear').addEventListener('change',async()=>{updateMapYearUi();await refreshCrimeTreeForPage('map');await renderMap();});
+  el('mapRangeEnabled').addEventListener('change',async()=>{
+    if(el('mapRangeEnabled').checked){
+      const latest=Math.max(...META.available_years);
+      el('mapYearEnd').value=String(latest);
+      el('mapYearStart').value=String(Math.max(Math.min(...META.available_years),latest-4));
+    }
+    updateMapYearUi();
+    await refreshCrimeTreeForPage('map');
+    await renderMap();
+  });
   el('mapYearStart').addEventListener('input',()=>handleMapYearRange('start',false));
   el('mapYearEnd').addEventListener('input',()=>handleMapYearRange('end',false));
   el('mapYearStart').addEventListener('change',()=>handleMapYearRange('start',true));
@@ -1154,6 +1167,10 @@ function handleProfileYearRange(which,shouldRender){
 }
 
 function mapYearRange(){
+  if(!el('mapRangeEnabled')?.checked){
+    const year=Number(el('mapSingleYear')?.value||el('mapYearEnd').value);
+    return {start:year,end:year,multi:false};
+  }
   let start=Number(el('mapYearStart').value);
   let end=Number(el('mapYearEnd').value);
   if(start>end)[start,end]=[end,start];
@@ -1161,9 +1178,14 @@ function mapYearRange(){
 }
 
 function updateMapYearUi(){
+  const enabled=Boolean(el('mapRangeEnabled')?.checked);
+  el('mapSingleYear').disabled=enabled;
+  el('mapYearSliderRow').hidden=!enabled;
+  el('mapYearStart').disabled=!enabled;
+  el('mapYearEnd').disabled=!enabled;
   const {start,end,multi}=mapYearRange();
-  el('mapYearStartLabel').textContent=String(start);
-  el('mapYearEndLabel').textContent=String(end);
+  el('mapYearStartLabel').textContent=String(el('mapYearStart').value);
+  el('mapYearEndLabel').textContent=String(el('mapYearEnd').value);
   const period=el('mapYearPeriod');
   if(period)period.textContent=multi ? start+'–'+end : String(start);
 
