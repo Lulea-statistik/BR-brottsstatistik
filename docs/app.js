@@ -1640,6 +1640,26 @@ async function renderMap(){
       GROUP BY "Kommun"
     `);
 
+    // Endpoint trend is always measured in reported crimes per 100,000
+    // inhabitants, independently of the selected map aggregation metric.
+    const endpointRates=new Map();
+    if(multi){
+      const endpointData=await query(`
+        SELECT "Kommun", CAST("År" AS INTEGER) AS year,
+               CAST(MAX("Per100000") AS DOUBLE) AS rate
+        FROM read_parquet(${parquetFiles})
+        WHERE "Brott_ID"=${Number(crimeId)}
+          AND "År" IN (${start},${end})
+          AND "Antal">-555
+        GROUP BY "Kommun","År"
+      `);
+      endpointData.forEach(record=>{
+        const name=record.Kommun;
+        if(!endpointRates.has(name))endpointRates.set(name,{});
+        endpointRates.get(name)[Number(record.year)]=Number(record.rate);
+      });
+    }
+
     const visibleNames=mapFilterNames();
     data=data.filter(r=>visibleNames.has(r.Kommun));
 
@@ -1702,7 +1722,22 @@ async function renderMap(){
         const rankText=(!noCrime && row?.metricRank)
           ? '<br>Placering: '+fmt0.format(row.metricRank)+' av '+rankedTotal
           : '';
-        layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText);
+        let trendText='';
+        if(multi){
+          const endpoints=endpointRates.get(name)||{};
+          const first=endpoints[start],last=endpoints[end];
+          if(Number.isFinite(first)&&Number.isFinite(last)){
+            const difference=last-first;
+            const signed=(difference>0?'+':'')+fmt1.format(difference);
+            const percent=first!==0
+              ? ' ('+(difference>0?'+':'')+fmt1.format(difference/first*100)+' %)'
+              : ' (procentuell förändring ej beräkningsbar från 0)';
+            trendText='<br>Trend '+start+'–'+end+': '+signed+' brott per 100 000'+percent;
+          }else{
+            trendText='<br>Trend '+start+'–'+end+': data saknas för start- eller slutåret';
+          }
+        }
+        layer.bindTooltip('<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText+trendText);
         layer.on('click',event=>{
           // Keep the selected municipality pinned until another is clicked.
           selectedMapMunicipality=name;
