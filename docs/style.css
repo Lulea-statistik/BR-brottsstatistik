@@ -687,3 +687,12 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 #page-map .map-year-slider-row{flex-basis:100%;max-width:330px}
 #page-map .map-year-slider-row[hidden]{display:none}
 #page-map .map-year-slider-row .year-range-control{width:100%}
+
+/* Year-map controls: keep interval visible but clearly inactive until enabled */
+#page-map .controls .map-year-toggle{display:flex;flex-direction:row;align-items:center;gap:7px;padding:0 0 8px;cursor:pointer;color:var(--text)}
+#page-map .controls .map-year-toggle input{width:16px;height:16px;flex:none;accent-color:#2563eb}
+#page-map .map-year-choice{min-width:220px;gap:14px;align-items:flex-end}
+#page-map .map-year-choice select{min-width:175px;width:175px;max-width:175px}
+#page-map .map-year-slider-row{flex-basis:100%;width:330px;max-width:100%;margin-top:0;opacity:1;transition:opacity .15s}
+#page-map .map-year-slider-row.is-disabled{opacity:.35;filter:grayscale(1)}
+#page-map .map-year-slider-row.is-disabled .dual-range{pointer-events:none}
