@@ -193,7 +193,13 @@
 
   <section id="page-map" class="page">
     <div class="controls">
-      <label class="year-range-label">Årintervall
+      <div class="map-year-choice">
+        <label for="mapSingleYear">År
+          <select id="mapSingleYear" aria-label="Välj enskilt år"></select>
+        </label>
+        <label class="map-year-toggle"><input id="mapRangeEnabled" type="checkbox"> Årintervall</label>
+      </div>
+      <div id="mapYearSliderRow" class="map-year-slider-row" hidden>
         <div id="mapYearControl" class="year-range-control">
           <div class="year-range-head">
             <span class="year-side"><small>Från</small><strong id="mapYearStartLabel">–</strong></span>
@@ -207,7 +213,7 @@
             <input id="mapYearEnd" type="range" step="1" aria-label="Till år">
           </div>
         </div>
-      </label>
+      </div>
       <label>Brottskategori<select id="mapCrime"></select></label>
       <label>Län<select id="mapCounty"></select></label>
       <label>SKR-kommungrupp<select id="mapSkrGroup"></select></label>
