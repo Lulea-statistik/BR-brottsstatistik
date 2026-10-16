@@ -41,7 +41,14 @@ for candidate in candidates:
         data=get(candidate)
         icon=Image.open(BytesIO(data))
         icon.load()
-        (ROOT/"kommun-favicon.ico").write_bytes(data) if data[:4]==b"\\x00\\x00\\x01\\x00" else icon.convert("RGBA").save(ROOT/"kommun-favicon.png")
+        (ROOT/"kommun-favicon.ico").write_bytes(data) if data[:4]==bytes([0,0,1,0]) else icon.convert("RGBA").save(ROOT/"kommun-favicon.png")
+        page=ROOT/"index.html"
+        html=page.read_text(encoding="utf-8")
+        html=html.replace('src="lulea-statistik-logo.svg"','src="lulea-kommun-mark.png"')
+        favicon_file="kommun-favicon.ico" if data[:4]==bytes([0,0,1,0]) else "kommun-favicon.png"
+        favicon_type="image/x-icon" if favicon_file.endswith(".ico") else "image/png"
+        html=re.sub(r'<link rel="icon"[^>]*>','<link rel="icon" type="'+favicon_type+'" href="'+favicon_file+'?v=2">',html,count=1)
+        page.write_text(html,encoding="utf-8")
         print("Saved favicon from",candidate)
         break
     except Exception as ex:
