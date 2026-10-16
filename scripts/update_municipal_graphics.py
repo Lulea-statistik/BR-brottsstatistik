@@ -55,3 +55,5 @@ for candidate in candidates:
         print("Skipping",candidate,ex)
 else:
     raise RuntimeError("Unable to locate official site favicon")
+
+# Refresh workflow trigger for initial asset installation.
