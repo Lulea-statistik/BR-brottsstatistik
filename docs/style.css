@@ -8,7 +8,7 @@ button,input,select,textarea,table{font-family:var(--font-body)}
 
 :root{--bg:#f4f7fb;--card:#fff;--line:#d8dee8;--text:#172033;--muted:#667085;--blue:#2f6fed}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;background:#fff;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brandLogo{height:88px;width:auto;max-width:110px;flex:0 0 auto;display:block;object-fit:contain}.brandText{min-width:0}h1{margin:0 0 4px;font-size:24px}.topbar p{margin:0;color:var(--muted)}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 28px;background:#fff;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brandLogo{width:88px;height:88px;flex:0 0 88px;display:block;object-fit:contain}.brandText{min-width:0}h1{margin:0 0 4px;font-size:24px}.topbar p{margin:0;color:var(--muted)}
 .tabs{display:flex;gap:4px;padding:10px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
 .tab{border:0;background:transparent;padding:9px 14px;border-radius:6px;cursor:pointer}.tab.active{background:#e9efff;color:#173a83;font-weight:700}
 main{padding:18px}.page{display:none}.page.active{display:block}
@@ -21,7 +21,7 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 .swatch{display:inline-block;width:17px;height:10px;margin-right:6px;background:transparent;border:3px solid}.swatch.lulea{border-color:#dc2626}.swatch.boden{border-color:#d4a800}.swatch.norrbotten{border-color:#6b7280}
 .topbar-status{display:flex;align-items:center;gap:12px;margin-left:auto}.global-loading{display:flex;align-items:center;gap:7px;font-size:13px;color:#475569;visibility:visible;opacity:1;transition:opacity .15s ease}.global-loading.hidden{visibility:hidden;opacity:0}.loading-spinner{width:14px;height:14px;border:2px solid #cbd5e1;border-top-color:#246b9c;border-radius:50%;display:inline-block;animation:report-spin .8s linear infinite}@keyframes report-spin{to{transform:rotate(360deg)}}
 .prose{max-width:1000px}.prose p{line-height:1.55}
-@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.map-layout{grid-template-columns:minmax(0,720px);justify-content:center}.map{height:980px}.map-side{order:-1}.brandLogo{height:52px;width:auto;max-width:66px;flex-basis:auto}.topbar-status{gap:8px}.global-loading{font-size:12px}}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.map-layout{grid-template-columns:minmax(0,720px);justify-content:center}.map{height:980px}.map-side{order:-1}.brandLogo{width:52px;height:52px;flex-basis:52px}.topbar-status{gap:8px}.global-loading{font-size:12px}}
 @media(max-width:600px){main{padding:10px}.topbar{padding:14px}.tabs{padding:8px;overflow-x:auto}.cards{grid-template-columns:1fr}.controls{display:block}.controls label{margin-bottom:10px}select{width:100%;min-width:0}.map{height:72vh;min-height:560px;max-height:760px}}
 
 .native-crime-select{display:none}
