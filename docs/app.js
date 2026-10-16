@@ -451,6 +451,7 @@ function setupControls(){
   el('changeLevel').addEventListener('change',renderChangeRanking);
   el('changeBaseYear').addEventListener('input',()=>{updateChangeYearUi();renderChangeRanking(false);});
   el('changeBaseYear').addEventListener('change',()=>renderChangeRanking(true));
+  window.addEventListener('resize',()=>requestAnimationFrame(updateMapSliderWidth));
   el('mapSingleYear').addEventListener('change',async()=>{updateMapYearUi();await refreshCrimeTreeForPage('map');await renderMap();});
   el('mapRangeEnabled').addEventListener('change',async()=>{
     if(el('mapRangeEnabled').checked){
@@ -1177,12 +1178,21 @@ function mapYearRange(){
   return {start,end,multi:start!==end};
 }
 
+function updateMapSliderWidth(){
+  const row=el('mapYearSliderRow'),metric=el('mapMetric');
+  if(!row||!metric)return;
+  const rowRect=row.getBoundingClientRect(),metricRect=metric.getBoundingClientRect();
+  const width=metricRect.right-rowRect.left;
+  if(width>100)row.style.setProperty('--map-slider-width',Math.min(rowRect.width,width)+'px');
+}
+
 function updateMapYearUi(){
   const enabled=Boolean(el('mapRangeEnabled')?.checked);
   el('mapSingleYear').disabled=enabled;
   el('mapYearSliderRow').classList.toggle('is-disabled',!enabled);
   el('mapYearStart').disabled=!enabled;
   el('mapYearEnd').disabled=!enabled;
+  requestAnimationFrame(updateMapSliderWidth);
   const {start,end,multi}=mapYearRange();
   el('mapYearStartLabel').textContent=String(el('mapYearStart').value);
   el('mapYearEndLabel').textContent=String(el('mapYearEnd').value);
@@ -1788,9 +1798,9 @@ async function renderMap(){
             const percent=first!==0
               ? ' ('+(difference>0?'+':'')+fmt1.format(difference/first*100)+' %)'
               : ' (procentuell förändring ej beräkningsbar från 0)';
-            trendText='<br>Trend '+start+'–'+end+': '+signed+' brott per 100 000'+percent;
+            trendText='<br>'+signed+' brott per 100 000'+percent;
           }else{
-            trendText='<br>Trend '+start+'–'+end+': data saknas för start- eller slutåret';
+            trendText='<br>Data saknas för start- eller slutåret';
           }
         }
         layer._pinnedInfoContent='<b>'+name+'</b><br>'+label+rankText+'<br>Period: '+periodText+trendText;
