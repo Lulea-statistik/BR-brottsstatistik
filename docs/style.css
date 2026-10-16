@@ -696,3 +696,7 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 #page-map .map-year-slider-row{flex-basis:100%;width:330px;max-width:100%;margin-top:0;opacity:1;transition:opacity .15s}
 #page-map .map-year-slider-row.is-disabled{opacity:.35;filter:grayscale(1)}
 #page-map .map-year-slider-row.is-disabled .dual-range{pointer-events:none}
+
+/* Year interval stays below the filter row and ends at the metric dropdown. */
+#page-map .controls #mapYearSliderRow{order:99;flex:0 0 100%;width:100%;max-width:none;margin-top:0}
+#page-map #mapYearControl{width:100%;max-width:var(--map-slider-width,100%)}
