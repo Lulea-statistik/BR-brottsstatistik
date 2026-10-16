@@ -699,4 +699,5 @@ select{min-width:220px;max-width:540px;padding:8px 10px;border:1px solid var(--l
 
 /* Year interval stays below the filter row and ends at the metric dropdown. */
 #page-map .controls #mapYearSliderRow{order:99;flex:0 0 100%;width:100%;max-width:none;margin-top:0}
-#page-map #mapYearControl{width:100%;max-width:var(--map-slider-width,100%)}
+#page-map .controls #mapYearSliderRow #mapYearControl{width:min(100%,720px);max-width:720px}
+#page-map .controls #mapYearSliderRow .dual-range{width:100%;max-width:100%}
