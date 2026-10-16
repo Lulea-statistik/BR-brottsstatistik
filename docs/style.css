@@ -1,10 +1,6 @@
 
 /* Lulea webbtypografi: Inter for loptext, Protipo for rubriker/lankar nar fonten ar tillganglig. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@font-face{font-family:'protipo';font-style:normal;font-weight:400;font-display:swap;src:url('https://www.lulea.se/webdav/files/System/resources/fonts/protipo/Protipo-Regular.woff2') format('woff2');}
-@font-face{font-family:'protipo';font-style:normal;font-weight:500;font-display:swap;src:url('https://www.lulea.se/webdav/files/System/resources/fonts/protipo/Protipo-Medium.woff2') format('woff2');}
-@font-face{font-family:'protipo';font-style:normal;font-weight:600;font-display:swap;src:url('https://www.lulea.se/webdav/files/System/resources/fonts/protipo/Protipo-Semibold.woff2') format('woff2');}
-@font-face{font-family:'protipo';font-style:normal;font-weight:700;font-display:swap;src:url('https://www.lulea.se/webdav/files/System/resources/fonts/protipo/Protipo-Bold.woff2') format('woff2');}
 :root{--font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--font-heading:'protipo','Inter',system-ui,sans-serif;font-family:var(--font-body)}
 body{font-family:var(--font-body)}
 h1,h2,h3,h4,h5,h6,a,nav a{font-family:var(--font-heading)}
