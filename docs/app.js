@@ -917,7 +917,7 @@ function refreshProfileMunicipalities(){
   fillSelect('profileMunicipality',items,selected);
 }
 
-function drawFunnel(id,data,metric,selectedMunicipality){
+function drawFunnel(id,data,metric,selectedMunicipality,showAllSelected=false){
   const info=metricInfo(metric);
   destroyChart(id);
 
@@ -933,7 +933,7 @@ function drawFunnel(id,data,metric,selectedMunicipality){
       : Number(metricValue(y,metric))-Number(metricValue(x,metric)));
 
   let shown;
-  if(selectedMunicipality==='__ALL__'){
+  if(selectedMunicipality==='__ALL__' || showAllSelected){
     shown=ranked;
   }else{
     shown=ranked.filter((r,i)=>
@@ -1073,7 +1073,12 @@ async function renderOverview(){
     const skr=el('overviewSkrGroup').value;
     const scope=[county,skr].filter(Boolean).join(' · ') || 'Sverige';
     el('overviewChartTitle').textContent='Kommunjämförelse – '+scope;
-    drawFunnel('overviewChart',data,metric,municipality);
+    const referenceOnly=municipality!=='__ALL__' && !county && !skr;
+    const chartData=referenceOnly
+      ? data.filter(r=>r.Kommun===municipality || municipalityMeta(r.Kommun)?.Lan==='Norrbottens län')
+      : data;
+    if(referenceOnly)el('overviewChartTitle').textContent='Kommunjämförelse – Norrbottens kommuner och referenskommunen';
+    drawFunnel('overviewChart',chartData,metric,municipality,referenceOnly);
   }finally{setLoading(null);}
 }
 
