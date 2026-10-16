@@ -30,6 +30,13 @@ logo=Image.open(BytesIO(get(LOGO))).convert("RGBA")
 # Preserve transparent margins, use all of its vertical extent.
 crop_width=min(logo.width,round(logo.height*1.10))
 mark=logo.crop((0,0,crop_width,logo.height))
+pixels=Image.new("L",mark.size)
+pixels.putdata([255 if a > 24 and min(r,g,b) < 220 else 0 for r,g,b,a in mark.getdata()])
+bbox=pixels.getbbox()
+if bbox:
+    margin=3
+    mark=mark.crop((max(0,bbox[0]-margin),max(0,bbox[1]-margin),
+                    min(mark.width,bbox[2]+margin),min(mark.height,bbox[3]+margin)))
 mark.save(ROOT/"lulea-kommun-mark.png",optimize=True)
 print("Saved municipal mark",mark.size)
 
