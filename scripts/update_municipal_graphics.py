@@ -57,3 +57,5 @@ else:
     raise RuntimeError("Unable to locate official site favicon")
 
 # Refresh workflow trigger for initial asset installation.
+
+# Rerun graphics installation after corrected staging.
