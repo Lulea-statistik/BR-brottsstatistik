@@ -38,5 +38,5 @@
   "municipalities": 290,
   "bra_region_categories": 291,
   "storage": "Annual-only dataset; one Parquet file per year for municipalities existing in that year",
-  "updated_at": "2026-10-11T14:21:30+00:00"
+  "updated_at": "2026-10-18T12:10:50+00:00"
 }
