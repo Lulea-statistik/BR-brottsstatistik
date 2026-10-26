@@ -8,7 +8,7 @@ import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "data" / "history.csv"
 OUTPUT = ROOT / "docs" / "data" / "monthly_totals.json"
 YEAR = date.today().year
