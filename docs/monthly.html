@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Månadsutveckling – anmälda brott | Luleå Statistik</title>
+<link rel="icon" href="kommun-favicon.ico"><link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+.month-wrap{max-width:1280px;margin:auto}.month-controls{display:flex;gap:16px;flex-wrap:wrap;margin:15px 0}
+.month-controls label{display:flex;flex-direction:column;gap:6px}
+.month-chart{height:460px;position:relative}.month-chart canvas{width:100%!important;height:100%!important}
+.month-table{width:100%;border-collapse:collapse;margin-top:20px;font-variant-numeric:tabular-nums}
+.month-table th,.month-table td{padding:8px;border-bottom:1px solid #d8dee8;text-align:right}
+.month-table th:first-child,.month-table td:first-child{text-align:left}
+.month-table-wrap{overflow-x:auto}.month-note{line-height:1.6}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="brand"><img class="brandLogo" src="lulea-kommun-mark.png" alt=""><div class="brandText"><h1>Anmälda brott – månadsutveckling</h1><p>De fem senaste avslutade åren och innevarande år</p></div></div></header>
+<nav class="tabs"><a class="tab" href="./">Översikt</a><a class="tab active" href="monthly.html" aria-current="page">Månadsutveckling</a></nav>
+<main class="month-wrap">
+<section class="panel">
+<h2>Antal anmälda brott per månad</h2>
+<div class="month-controls"><label>Kommun<select id="municipality"><option>Luleå</option><option>Boden</option></select></label></div>
+<p id="status" role="status" aria-live="polite">Laddar månadsstatistik…</p>
+<div class="month-chart"><canvas id="monthlyChart" aria-label="Linjediagram över antal anmälda brott per månad"></canvas></div>
+<div class="month-table-wrap"><table class="month-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+</section>
+<section class="prose month-note"><h2>Metod och datakvalitet</h2>
+<p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, kategorin <strong>Totalt antal brott</strong>. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
+<p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Månadsserien täcker för närvarande <strong>Luleå och Boden</strong>; befintliga nationella kommunsiffror är årsdata och kan inte utan ny datainsamling delas upp per månad.</p>
+<p id="sourceDetails"></p>
+</section>
+</main>
+<script>
+const months=['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
+const fmt=new Intl.NumberFormat('sv-SE');
+let data,chart;
+async function init(){
+ try{
+  const response=await fetch('data/monthly_totals.json?nocache='+Date.now());
+  if(!response.ok)throw new Error('Månadsfilen saknas (HTTP '+response.status+').');
+  data=await response.json();
+  document.getElementById('municipality').addEventListener('change',render);
+  render();
+ }catch(e){document.getElementById('status').textContent='Månadsdata kunde inte laddas: '+e.message;}
+}
+function render(){
+ const town=document.getElementById('municipality').value;
+ const records=data.rows.filter(r=>r.kommun===town);
+ const years=Array.from({length:6},(_,i)=>data.start_year+i);
+ const lookup=new Map(records.map(r=>[r.year+'-'+r.month,r]));
+ const colors=['#64748b','#7c3aed','#0891b2','#15803d','#d97706','#dc2626'];
+ const datasets=years.map((y,i)=>({
+  label:String(y),data:months.map((_,j)=>lookup.get(y+'-'+(j+1))?.count??null),
+  borderColor:colors[i],backgroundColor:colors[i],borderWidth:y===data.end_year?3:2,
+  pointRadius:3,spanGaps:false,tension:0.12
+ }));
+ if(chart)chart.destroy();
+ chart=new Chart(document.getElementById('monthlyChart'),{
+  type:'line',data:{labels:months,datasets},
+  options:{responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt.format(c.parsed.y)+' brott'}}},
+   scales:{y:{beginAtZero:true,title:{display:true,text:'Antal anmälda brott'},ticks:{precision:0}},x:{title:{display:true,text:'Månad'}}}}
+ });
+ document.getElementById('thead').innerHTML='<tr><th>Månad</th>'+years.map(y=>'<th>'+y+'</th>').join('')+'</tr>';
+ document.getElementById('tbody').innerHTML=months.map((month,i)=>'<tr><td>'+month+'</td>'+years.map(y=>{
+  const r=lookup.get(y+'-'+(i+1));
+  return '<td>'+(r?fmt.format(r.count)+(r.preliminary?' *':''):'–')+'</td>';
+ }).join('')+'</tr>').join('');
+ const last=records.slice().sort((a,b)=>b.year-a.year||b.month-a.month)[0];
+ document.getElementById('status').textContent=last?'Senaste tillgängliga månad för '+town+': '+months[last.month-1].toLowerCase()+' '+last.year+'. * = preliminärt värde.':'Inga månadsobservationer för vald kommun.';
+ document.getElementById('sourceDetails').textContent='Dataperiod: '+data.start_year+'–'+data.end_year+'. Exporterad: '+new Date(data.generated_utc).toLocaleString('sv-SE')+'.';
+}
+init();
+</script>
+</body></html>
