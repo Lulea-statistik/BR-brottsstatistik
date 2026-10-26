@@ -39,3 +39,7 @@ Repo:t innehåller nu en webbrapport under `docs/` med fyra flikar:
 Rapporten läser de befintliga årsvisa Parquet-filerna direkt i webbläsaren med DuckDB-Wasm. Årskartan använder en förenklad kommungeometri som byggs vid deployment, i första hand från SCB:s öppna geodata.
 
 Workflowet **Build and deploy BRÅ dashboard** bygger webbdata och publicerar GitHub Pages.
+
+## Månadsutveckling
+
+`docs/monthly.html` visar 2021–2025 samt innevarande år 2026 med Brås **månatliga** observationer för Luleå och Boden. Sidan använder `docs/data/monthly_totals.json`, byggd från `data/history.csv` via `scripts/build_monthly_totals.py` vid dashboard-deploy. Opublicerade månader visas som luckor, inte noll. Nationell årsstatistik används inte för att uppskatta månadstal.

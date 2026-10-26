@@ -8,6 +8,9 @@ on:
       - "docs/index.html"
       - "docs/app.js"
       - "docs/style.css"
+      - "docs/monthly.html"
+      - "scripts/build_monthly_totals.py"
+      - "data/history.csv"
       - "data/annual_all/**"
       - "build_crime_dashboard.py"
       - "requirements.txt"
@@ -41,6 +44,9 @@ jobs:
 
       - name: Build dashboard data
         run: python build_crime_dashboard.py
+
+      - name: Build monthly crime data
+        run: python scripts/build_monthly_totals.py
 
       - name: Commit generated dashboard data
         shell: bash
