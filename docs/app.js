@@ -497,7 +497,7 @@ function setupControls(){
 }
 
 function setupTabs(){
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('button.tab[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===btn));
     document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
     el('page-'+btn.dataset.page).classList.add('active');
@@ -3490,6 +3490,11 @@ async function main(){
     await renderTrend();
     await renderChangeRanking(false);
     await renderMap();
+    const requestedPage=new URLSearchParams(window.location.search).get('page');
+    if(requestedPage && requestedPage!=='overview'){
+      const target=Array.from(document.querySelectorAll('button.tab[data-page]')).find(btn=>btn.dataset.page===requestedPage);
+      if(target)target.click();
+    }
   }catch(err){
     console.error(err);
     setLoading('Fel: '+err.message);
