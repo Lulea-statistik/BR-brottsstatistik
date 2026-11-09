@@ -1319,6 +1319,25 @@ function initMap(){
     maxZoom:19,
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
+
+  // A tooltip opened by hovering a municipality must not remain visible while
+  // the map is being panned. Click-selected municipality popups are separate.
+  let pointerDownOnMap=false;
+  const closeHoverTooltips=()=>{
+    map.closeTooltip();
+    if(geoLayer)geoLayer.eachLayer(layer=>layer.closeTooltip());
+  };
+  map.on('mousedown',()=>{
+    pointerDownOnMap=true;
+    closeHoverTooltips();
+  });
+  map.on('dragstart',closeHoverTooltips);
+  map.on('movestart',closeHoverTooltips);
+  map.on('tooltipopen',event=>{
+    if(pointerDownOnMap || map.dragging.moving())map.closeTooltip(event.tooltip);
+  });
+  document.addEventListener('mouseup',()=>{pointerDownOnMap=false;});
+  window.addEventListener('blur',()=>{pointerDownOnMap=false;});
 }
 
 function municipalityMeta(name){
