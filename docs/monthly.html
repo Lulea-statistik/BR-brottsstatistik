@@ -21,33 +21,100 @@
 <main class="month-wrap">
 <section class="panel">
 <h2>Antal anmälda brott per månad</h2>
-<div class="month-controls"><label>Kommun<select id="municipality"><option>Luleå</option><option>Boden</option></select></label></div>
+<div class="month-controls"><label>Lokalpolisområde<select id="policeArea" aria-label="Välj lokalpolisområde"></select></label><label>Kommun<select id="municipality" aria-label="Välj kommun"></select></label></div>
+<p id="policeAreaCoverage" class="muted" aria-live="polite"></p>
 <p id="status" role="status" aria-live="polite">Laddar månadsstatistik…</p>
 <div class="month-chart"><canvas id="monthlyChart" aria-label="Linjediagram över antal anmälda brott per månad"></canvas></div>
 <div class="month-table-wrap"><table class="month-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </section>
 <section class="prose month-note"><h2>Metod och datakvalitet</h2>
 <p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, kategorin <strong>Totalt antal brott</strong>. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
-<p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Månadsserien täcker för närvarande <strong>Luleå och Boden</strong>; befintliga nationella kommunsiffror är årsdata och kan inte utan ny datainsamling delas upp per månad.</p>
+<p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Lokalpolisområdesfiltret omfattar Norrbottens 14 kommuner i fyra lokalpolisområden. Månadsserien täcker för närvarande <strong>Luleå och Boden</strong>. Övriga kommuner visas som utan månadsdata, inte som noll. Befintliga nationella kommunsiffror är årsdata och kan inte utan ny datainsamling delas upp per månad. <a href="https://polisen.se/om-polisen/medborgarloften-och-lokal-samverkan/">Källa: Polismyndigheten, lokal samverkan</a>.</p>
 <p id="sourceDetails"></p>
 </section>
 </main>
 <script>
 const months=['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
 const fmt=new Intl.NumberFormat('sv-SE');
+const LOCAL_POLICE_AREAS={
+  "Luleå–Boden": [
+    "Luleå",
+    "Boden"
+  ],
+  "Norra Lappland": [
+    "Gällivare",
+    "Jokkmokk",
+    "Kiruna"
+  ],
+  "Piteå Älvdal": [
+    "Arjeplog",
+    "Arvidsjaur",
+    "Piteå",
+    "Älvsbyn"
+  ],
+  "Östra Norrbotten": [
+    "Haparanda",
+    "Kalix",
+    "Pajala",
+    "Överkalix",
+    "Övertorneå"
+  ]
+};
+// Current police geography. Monthly crime observations are only available
+// for municipalities actually present in monthly_totals.json.
 let data,chart;
+function availableMunicipalities(){
+ return new Set(data.rows.map(r=>r.kommun));
+}
+function setupPoliceAreaFilters(){
+ const areaSelect=document.getElementById('policeArea');
+ const municipalitySelect=document.getElementById('municipality');
+ const areas=Object.keys(LOCAL_POLICE_AREAS);
+ areaSelect.innerHTML=areas.map(area=>'<option value="'+area+'">'+area+'</option>').join('');
+ areaSelect.value='Luleå–Boden';
+ areaSelect.addEventListener('change',()=>{
+  fillMunicipalitiesForArea();
+  render();
+ });
+ municipalitySelect.addEventListener('change',render);
+ fillMunicipalitiesForArea('Luleå');
+}
+function fillMunicipalitiesForArea(preferred=''){
+ const area=document.getElementById('policeArea').value;
+ const municipalitySelect=document.getElementById('municipality');
+ const available=availableMunicipalities();
+ const municipalities=LOCAL_POLICE_AREAS[area]||[];
+ municipalitySelect.innerHTML=municipalities.map(name=>{
+  const hasData=available.has(name);
+  return '<option value="'+name+'">'+name+(hasData?'':' (månadsdata saknas)')+'</option>';
+ }).join('');
+ municipalitySelect.value=municipalities.includes(preferred)?preferred:(municipalities.find(name=>available.has(name))||municipalities[0]||'');
+ const count=municipalities.filter(name=>available.has(name)).length;
+ document.getElementById('policeAreaCoverage').textContent=
+  'Polisområde Norrbotten · '+area+' ('+municipalities.length+' kommuner). '+
+  'Månadsdata finns för '+count+' av '+municipalities.length+' kommuner i valt lokalpolisområde. Vald kommun visas separat, inte som ett summerat områdesvärde. '+
+  'Ingen uppskattning görs för kommuner utan månadsdata.';
+}
+function showMissingMonthlyData(town){
+ if(chart){chart.destroy();chart=null;}
+ document.getElementById('thead').innerHTML='';
+ document.getElementById('tbody').innerHTML='';
+ document.getElementById('status').textContent='Månadsdata saknas för '+town+'. Kommunen är kopplad till rätt lokalpolisområde, men ingår ännu inte i den publicerade månadsfilen.';
+ document.getElementById('sourceDetails').textContent='Källa till lokalpolisområden: Polismyndigheten. Månadsdata hämtas enbart från Brås inlästa kommunobservationer.';
+}
 async function init(){
  try{
   const response=await fetch('data/monthly_totals.json?nocache='+Date.now());
   if(!response.ok)throw new Error('Månadsfilen saknas (HTTP '+response.status+').');
   data=await response.json();
-  document.getElementById('municipality').addEventListener('change',render);
+  setupPoliceAreaFilters();
   render();
  }catch(e){document.getElementById('status').textContent='Månadsdata kunde inte laddas: '+e.message;}
 }
 function render(){
  const town=document.getElementById('municipality').value;
  const records=data.rows.filter(r=>r.kommun===town);
+ if(!records.length){showMissingMonthlyData(town);return;}
  const years=Array.from({length:6},(_,i)=>data.start_year+i);
  const lookup=new Map(records.map(r=>[r.year+'-'+r.month,r]));
  const colors=['#64748b','#7c3aed','#0891b2','#15803d','#d97706','#dc2626'];
