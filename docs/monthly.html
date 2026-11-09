@@ -29,7 +29,7 @@
 </section>
 <section class="prose month-note"><h2>Metod och datakvalitet</h2>
 <p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, kategorin <strong>Totalt antal brott</strong>. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
-<p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Lokalpolisområdesfiltret omfattar Norrbottens 14 kommuner i fyra lokalpolisområden. Månadsserien täcker för närvarande <strong>Luleå och Boden</strong>. Övriga kommuner visas som utan månadsdata, inte som noll. Befintliga nationella kommunsiffror är årsdata och kan inte utan ny datainsamling delas upp per månad. <a href="https://polisen.se/om-polisen/medborgarloften-och-lokal-samverkan/">Källa: Polismyndigheten, lokal samverkan</a>.</p>
+<p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Lokalpolisområdesfiltret omfattar Norrbottens 14 kommuner i fyra lokalpolisområden. Månadsserien täcker för närvarande <strong>Luleå och Boden</strong>. Kommunvalet <strong>Totalt</strong> summerar de ingående kommunerna bara för månader där samtliga har observationer; annars visas datalucka. Övriga kommuner visas som utan månadsdata, inte som noll. Befintliga nationella kommunsiffror är årsdata och kan inte utan ny datainsamling delas upp per månad. <a href="https://polisen.se/om-polisen/medborgarloften-och-lokal-samverkan/">Källa: Polismyndigheten, lokal samverkan</a>.</p>
 <p id="sourceDetails"></p>
 </section>
 </main>
@@ -77,22 +77,22 @@ function setupPoliceAreaFilters(){
   render();
  });
  municipalitySelect.addEventListener('change',render);
- fillMunicipalitiesForArea('Luleå');
+ fillMunicipalitiesForArea('total');
 }
 function fillMunicipalitiesForArea(preferred=''){
  const area=document.getElementById('policeArea').value;
  const municipalitySelect=document.getElementById('municipality');
  const available=availableMunicipalities();
  const municipalities=LOCAL_POLICE_AREAS[area]||[];
- municipalitySelect.innerHTML=municipalities.map(name=>{
+ municipalitySelect.innerHTML='<option value="total">Totalt</option>'+municipalities.map(name=>{
   const hasData=available.has(name);
   return '<option value="'+name+'">'+name+(hasData?'':' (månadsdata saknas)')+'</option>';
  }).join('');
- municipalitySelect.value=municipalities.includes(preferred)?preferred:(municipalities.find(name=>available.has(name))||municipalities[0]||'');
+ municipalitySelect.value=municipalities.includes(preferred)?preferred:'total';
  const count=municipalities.filter(name=>available.has(name)).length;
  document.getElementById('policeAreaCoverage').textContent=
   'Polisområde Norrbotten · '+area+' ('+municipalities.length+' kommuner). '+
-  'Månadsdata finns för '+count+' av '+municipalities.length+' kommuner i valt lokalpolisområde. Vald kommun visas separat, inte som ett summerat områdesvärde. '+
+  'Månadsdata finns för '+count+' av '+municipalities.length+' kommuner i valt lokalpolisområde. Totalt summerar alla kommuner när fullständiga månadsdata finns. '+
   'Ingen uppskattning görs för kommuner utan månadsdata.';
 }
 function showMissingMonthlyData(town){
@@ -113,8 +113,30 @@ async function init(){
 }
 function render(){
  const town=document.getElementById('municipality').value;
- const records=data.rows.filter(r=>r.kommun===town);
- if(!records.length){showMissingMonthlyData(town);return;}
+ const area=document.getElementById('policeArea').value;
+ const members=LOCAL_POLICE_AREAS[area]||[];
+ let records;
+ if(town==='total'){
+  const sums=new Map();
+  for(const row of data.rows.filter(r=>members.includes(r.kommun)&&r.count!=null)){
+   const key=row.year+'-'+row.month;
+   const item=sums.get(key)||{year:row.year,month:row.month,count:0,preliminary:false,contributors:new Set()};
+   item.count+=Number(row.count);
+   item.preliminary=item.preliminary||Boolean(row.preliminary);
+   item.contributors.add(row.kommun);
+   sums.set(key,item);
+  }
+  records=[...sums.values()].filter(item=>item.contributors.size===members.length);
+ }else{
+  records=data.rows.filter(r=>r.kommun===town);
+ }
+ if(!records.length){
+  showMissingMonthlyData(town==='total'?area+' (Totalt)':town);
+  if(town==='total'){
+   document.getElementById('status').textContent='Fullständiga månadsdata saknas för '+area+'. Totalt kräver observationer från samtliga '+members.length+' kommuner. Saknade värden räknas aldrig som noll.';
+  }
+  return;
+ }
  const years=Array.from({length:6},(_,i)=>data.start_year+i);
  const lookup=new Map(records.map(r=>[r.year+'-'+r.month,r]));
  const colors=['#64748b','#7c3aed','#0891b2','#15803d','#d97706','#dc2626'];
@@ -146,7 +168,8 @@ function render(){
   return '<td>'+(r?fmt.format(r.count)+(r.preliminary?' *':''):'–')+'</td>';
  }).join('')+'</tr>').join('');
  const last=records.slice().sort((a,b)=>b.year-a.year||b.month-a.month)[0];
- document.getElementById('status').textContent=last?'Senaste tillgängliga månad för '+town+': '+months[last.month-1].toLowerCase()+' '+last.year+'. * = preliminärt värde.':'Inga månadsobservationer för vald kommun.';
+ const selectedLabel=town==='total'?'Totalt för '+area:town;
+ document.getElementById('status').textContent=last?'Senaste tillgängliga månad för '+selectedLabel+': '+months[last.month-1].toLowerCase()+' '+last.year+'. * = preliminärt värde.':'Inga månadsobservationer för vald kommun.';
  document.getElementById('sourceDetails').textContent='Dataperiod: '+data.start_year+'–'+data.end_year+'. Exporterad: '+new Date(data.generated_utc).toLocaleString('sv-SE')+'.';
 }
 init();
