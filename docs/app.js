@@ -1320,10 +1320,6 @@ function initMap(){
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Close only transient hover tooltips during map interactions.
-  // Do not intercept mousedown or tooltipopen: those can disrupt Leaflet
-  // dragging and zoom handling. Click-selected popups remain untouched.
-  map.on('dragstart zoomstart',()=>map.closeTooltip());
 }
 
 function municipalityMeta(name){
