@@ -43,3 +43,7 @@ Workflowet **Build and deploy BRÅ dashboard** bygger webbdata och publicerar Gi
 ## Månadsutveckling
 
 `docs/monthly.html` visar 2021–2025 samt innevarande år 2026 med Brås **månatliga** observationer för Luleå och Boden. Sidan använder `docs/data/monthly_totals.json`, byggd från `data/history.csv` via `scripts/build_monthly_totals.py` vid dashboard-deploy. Opublicerade månader visas som luckor, inte noll. Nationell årsstatistik används inte för att uppskatta månadstal.
+
+## Månadsdata för hela Norrbotten
+
+`scrape_bra_monthly_norrbotten.py` hämtar månatligt **totalt antal anmälda brott (Brott_ID 13192)** för de 14 kommunerna, separat från befintlig Luleå/Boden-historik. Filen `data/monthly_norrbotten.csv` sammanförs vid dashboardbygget med äldre historik. Vid olika antal för samma kommun, år och månad avbryts bygget (ingen tyst överskrivning). Alla uppgifter måste komma från Brå och saknade månader förblir saknade. Uppdateras via ett särskilt GitHub Actions-flöde.
