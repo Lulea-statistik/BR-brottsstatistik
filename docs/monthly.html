@@ -51,11 +51,21 @@ function render(){
  const years=Array.from({length:6},(_,i)=>data.start_year+i);
  const lookup=new Map(records.map(r=>[r.year+'-'+r.month,r]));
  const colors=['#64748b','#7c3aed','#0891b2','#15803d','#d97706','#dc2626'];
- const datasets=years.map((y,i)=>({
-  label:String(y),data:months.map((_,j)=>lookup.get(y+'-'+(j+1))?.count??null),
-  borderColor:colors[i],backgroundColor:colors[i],borderWidth:y===data.end_year?3:2,
-  pointRadius:3,spanGaps:false,tension:0.12
- }));
+ // Use the selected municipality's latest year with actual observations.
+ const latestDataYear=records.reduce(
+  (latest,r)=>r.count!=null?Math.max(latest,Number(r.year)):latest,
+  -Infinity
+ );
+ const datasets=years.map((y,i)=>{
+  const isLatest=y===latestDataYear;
+  const color=colors[i]+(isLatest?'':'80'); // 50% opacity for older years
+  return {
+   label:String(y),data:months.map((_,j)=>lookup.get(y+'-'+(j+1))?.count??null),
+   borderColor:color,backgroundColor:color,
+   borderWidth:isLatest?8:4, // Original widths 3/2px +2px for all, +3px more for latest
+   pointRadius:3,spanGaps:false,tension:0.12
+  };
+ });
  if(chart)chart.destroy();
  chart=new Chart(document.getElementById('monthlyChart'),{
   type:'line',data:{labels:months,datasets},
