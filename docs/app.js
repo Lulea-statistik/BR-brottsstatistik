@@ -1320,6 +1320,26 @@ function initMap(){
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
 
+  // The map can move beneath the pointer without firing mouseout on a
+  // municipality. Close all feature tooltips when panning or zooming starts.
+  // Keep click-pinned popups untouched and never intercept pointer events.
+  let mapIsMoving=false;
+  const closeMunicipalityTooltips=()=>{
+    if(geoLayer)geoLayer.eachLayer(layer=>layer.closeTooltip());
+  };
+  map.on('dragstart zoomstart',()=>{
+    mapIsMoving=true;
+    closeMunicipalityTooltips();
+  });
+  map.on('dragend zoomend',()=>{
+    closeMunicipalityTooltips();
+    mapIsMoving=false;
+  });
+  map.on('tooltipopen',event=>{
+    if(mapIsMoving && event.tooltip?._source){
+      event.tooltip._source.closeTooltip();
+    }
+  });
 }
 
 function municipalityMeta(name){
