@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "data" / "history.csv"
+NORTH = ROOT / "data" / "monthly_norrbotten.csv"
 OUTPUT = ROOT / "docs" / "data" / "monthly_totals.json"
 YEAR = date.today().year
 FIRST = YEAR - 5
@@ -35,6 +36,31 @@ with SOURCE.open(encoding="utf-8-sig", newline="") as handle:
                  "preliminary": row["Preliminär"].lower() in ("true", "1", "ja")}
         if key in series and series[key] != value:
             raise ValueError(f"Conflicting monthly observations: {key}")
+        series[key] = value
+
+# Prefer the separately fetched Norrbotten-wide monthly source for new regions.
+# Preserve existing Luleå/Boden observations and fail on discrepancies.
+if NORTH.exists():
+    north_series = {}
+    with NORTH.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                municipality = row["kommun"].strip()
+                year, month = int(row["year"]), int(row["month"])
+                count = int(row["count"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise RuntimeError("Invalid Norrbotten monthly record") from exc
+            if not (FIRST <= year <= YEAR and 1 <= month <= 12 and count >= 0):
+                continue
+            key = (municipality, year, month)
+            value = {"kommun": municipality, "year": year, "month": month,
+                     "count": count, "preliminary": row["preliminary"].strip().lower() in ("true", "1", "ja")}
+            if key in north_series and north_series[key] != value:
+                raise RuntimeError(f"Conflicting Norrbotten rows: {key}")
+            north_series[key] = value
+    for key, value in north_series.items():
+        if key in series and series[key]["count"] != value["count"]:
+            raise RuntimeError(f"Brå monthly mismatch for {key}: history={series[key]['count']}, Norrbotten={value['count']}")
         series[key] = value
 
 if not series:
