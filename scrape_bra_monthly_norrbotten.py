@@ -35,7 +35,7 @@ def resolve_regions(topic):
             short = str(getattr(region, "label_short", "") or "")
             # Match municipality name as a separate word, allowing e.g. Bodens kommun.
             candidate = re.escape(name) + ("s?" if name == "Boden" else "")
-            if any(re.search(r"\\b" + candidate + r"\\s+kommun\\b", t, re.I)
+            if any(re.search(r"\b" + candidate + r"\s+kommun\b", t, re.I)
                    for t in (label, short)):
                 found.append(region)
         if len(found) != 1:
