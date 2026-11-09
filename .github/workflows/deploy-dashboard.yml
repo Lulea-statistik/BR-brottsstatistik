@@ -11,6 +11,7 @@ on:
       - "docs/monthly.html"
       - "scripts/build_monthly_totals.py"
       - "data/history.csv"
+      - "data/monthly_norrbotten.csv"
       - "data/annual_all/**"
       - "build_crime_dashboard.py"
       - "requirements.txt"
