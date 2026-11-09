@@ -1320,24 +1320,10 @@ function initMap(){
     attribution:'&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // A tooltip opened by hovering a municipality must not remain visible while
-  // the map is being panned. Click-selected municipality popups are separate.
-  let pointerDownOnMap=false;
-  const closeHoverTooltips=()=>{
-    map.closeTooltip();
-    if(geoLayer)geoLayer.eachLayer(layer=>layer.closeTooltip());
-  };
-  map.on('mousedown',()=>{
-    pointerDownOnMap=true;
-    closeHoverTooltips();
-  });
-  map.on('dragstart',closeHoverTooltips);
-  map.on('movestart',closeHoverTooltips);
-  map.on('tooltipopen',event=>{
-    if(pointerDownOnMap || map.dragging.moving())map.closeTooltip(event.tooltip);
-  });
-  document.addEventListener('mouseup',()=>{pointerDownOnMap=false;});
-  window.addEventListener('blur',()=>{pointerDownOnMap=false;});
+  // Close only transient hover tooltips during map interactions.
+  // Do not intercept mousedown or tooltipopen: those can disrupt Leaflet
+  // dragging and zoom handling. Click-selected popups remain untouched.
+  map.on('dragstart zoomstart',()=>map.closeTooltip());
 }
 
 function municipalityMeta(name){
