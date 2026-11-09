@@ -92,8 +92,9 @@ function fillMunicipalitiesForArea(preferred=''){
  const count=municipalities.filter(name=>available.has(name)).length;
  document.getElementById('policeAreaCoverage').textContent=
   'Polisområde Norrbotten · '+area+' ('+municipalities.length+' kommuner). '+
-  'Månadsdata finns för '+count+' av '+municipalities.length+' kommuner i valt lokalpolisområde. Totalt summerar alla kommuner när fullständiga månadsdata finns. '+
-  'Ingen uppskattning görs för kommuner utan månadsdata.';
+  'Månadsdata finns för '+count+' av '+municipalities.length+' kommuner i valt lokalpolisområde. '+
+  (count===municipalities.length?'Totalt omfattar samtliga kommuner när varje månad är komplett. ':count>0?'Totalt kan bara visas för månader där samtliga kommuner har observationer; övriga månader lämnas tomma. ':'Totalt saknar fullständiga månadsobservationer i detta område. ')+
+  'Saknade uppgifter räknas inte som noll.';
 }
 function showMissingMonthlyData(town){
  if(chart){chart.destroy();chart=null;}
