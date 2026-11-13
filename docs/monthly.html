@@ -29,7 +29,7 @@
 <main class="month-wrap">
 <section class="panel">
 <h2>Antal anmälda brott per månad</h2>
-<div class="month-controls"><label>Län<select id="county" aria-label="Välj län"><option value="Norrbotten">Norrbotten</option></select></label><label>Lokalpolisområde<select id="policeArea" aria-label="Välj lokalpolisområde"></select></label><label>Kommun<select id="municipality" aria-label="Välj kommun"></select></label></div>
+<div class="month-controls"><label>Län<select id="county" aria-label="Välj län"><option value="Norrbotten">Norrbotten</option></select></label><label>Lokalpolisområde<select id="policeArea" aria-label="Välj lokalpolisområde"></select></label><label>Kommun<select id="municipality" aria-label="Välj kommun"></select></label><label>Brottskategori<select id="crimeCategory" aria-label="Välj brottskategori"></select></label></div>
 <p id="policeAreaCoverage" class="muted" aria-live="polite"></p>
 <p id="status" role="status" aria-live="polite">Laddar månadsstatistik…</p>
 <div class="month-chart"><canvas id="monthlyChart" aria-label="Linjediagram över antal anmälda brott per månad"></canvas></div>
@@ -39,7 +39,7 @@
 </details>
 </section>
 <section class="prose month-note"><h2>Metod och datakvalitet</h2>
-<p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, kategorin <strong>Totalt antal brott</strong>. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
+<p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, vald brottskategori (förvalt: <strong>Totalt antal brott</strong>). Kategoriurvalet bygger på publicerade månadsobservationer, inte på årsdata. För andra brottstyper kan kommunernas täckning vara begränsad; ofullständiga polisområdes- och länstotaler redovisas inte. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
 <p>Innevarande års data kan vara preliminära och revideras. Uppgifterna avser anmälda brott, inte antalet brott som slutligen fastställts. Länsfiltret omfattar tills vidare endast <strong>Norrbotten</strong>. Lokalpolisområdesfiltret omfattar länets 14 kommuner i fyra lokalpolisområden. Välj <strong>Totalt – hela länet</strong> under lokalpolisområde för att se hela Norrbotten. Kommunvalet <strong>Totalt – valt område</strong> summerar kommunerna i det valda området. Summering redovisas endast för månader där alla ingående kommuner har observationer; annars visas en datalucka, aldrig en nolla. Månadsfilens täckning beräknas automatiskt utifrån tillgängliga uppgifter. Befintliga nationella årsdata kan inte utan ny datainsamling delas upp per månad. <a href="https://polisen.se/om-polisen/medborgarloften-och-lokal-samverkan/">Källa: Polismyndigheten, lokal samverkan</a>.</p>
 <p id="sourceDetails"></p>
 </section>
@@ -74,6 +74,42 @@ const LOCAL_POLICE_AREAS={
 // Current police geography. Monthly crime observations are only available
 // for municipalities actually present in monthly_totals.json.
 let data,chart;
+function setupCrimeCategoryFilter(){
+ const selector=document.getElementById('crimeCategory');
+ const categories=(data.categories||[{id:13192,name:'Totalt antal brott',parent:null,level:1}])
+  .slice().sort((a,b)=>a.name.localeCompare(b.name,'sv'));
+ const byId=new Map(categories.map(cat=>[cat.id,cat]));
+ const roots=categories.filter(cat=>cat.parent==null||!byId.has(cat.parent));
+ const children=new Map();
+ for(const cat of categories){
+  if(cat.parent!=null&&byId.has(cat.parent)){
+   if(!children.has(cat.parent))children.set(cat.parent,[]);
+   children.get(cat.parent).push(cat);
+  }
+ }
+ const options=[];
+ function add(cat,depth,seen=new Set()){
+  if(seen.has(cat.id))return;
+  options.push({cat,depth});
+  const next=new Set(seen);next.add(cat.id);
+  for(const sub of (children.get(cat.id)||[]).sort((a,b)=>a.name.localeCompare(b.name,'sv')))add(sub,depth+1,next);
+ }
+ for(const cat of roots)add(cat,0);
+ selector.replaceChildren();
+ for(const {cat,depth} of options){
+  const opt=document.createElement('option');
+  opt.value=String(cat.id);
+  opt.textContent='  '.repeat(depth)+(depth?'↳ ':'')+cat.name+(cat.ceased?' [upphört]':'');
+  selector.appendChild(opt);
+ }
+ selector.value='13192';
+ selector.addEventListener('change',render);
+}
+function categoryName(){
+ const selector=document.getElementById('crimeCategory');
+ return selector.options[selector.selectedIndex]?.textContent.trim()||'vald brottskategori';
+}
+
 function availableMunicipalities(){
  return new Set(data.rows.map(r=>r.kommun));
 }
@@ -120,17 +156,19 @@ async function init(){
   if(!response.ok)throw new Error('Månadsfilen saknas (HTTP '+response.status+').');
   data=await response.json();
   setupPoliceAreaFilters();
+  setupCrimeCategoryFilter();
   render();
  }catch(e){document.getElementById('status').textContent='Månadsdata kunde inte laddas: '+e.message;}
 }
 function render(){
  const town=document.getElementById('municipality').value;
+ const crimeId=Number(document.getElementById('crimeCategory').value);
  const area=document.getElementById('policeArea').value;
  const members=area==='all'?Object.values(LOCAL_POLICE_AREAS).flat():LOCAL_POLICE_AREAS[area]||[];
  let records;
  if(town==='total'){
   const sums=new Map();
-  for(const row of data.rows.filter(r=>members.includes(r.kommun)&&r.count!=null)){
+  for(const row of data.rows.filter(r=>members.includes(r.kommun)&&Number(r.crime_id??13192)===crimeId&&r.count!=null)){
    const key=row.year+'-'+row.month;
    const item=sums.get(key)||{year:row.year,month:row.month,count:0,preliminary:false,contributors:new Set()};
    item.count+=Number(row.count);
@@ -140,12 +178,12 @@ function render(){
   }
   records=[...sums.values()].filter(item=>item.contributors.size===members.length);
  }else{
-  records=data.rows.filter(r=>r.kommun===town);
+  records=data.rows.filter(r=>r.kommun===town&&Number(r.crime_id??13192)===crimeId);
  }
  if(!records.length){
-  showMissingMonthlyData(town==='total'?(area==='all'?'Norrbotten':area)+' (Totalt)':town);
+  showMissingMonthlyData((town==='total'?(area==='all'?'Norrbotten':area)+' (Totalt)':town)+' – '+categoryName());
   if(town==='total'){
-   document.getElementById('status').textContent='Fullständiga månadsdata saknas för '+(area==='all'?'Norrbotten':area)+'. Totalt kräver observationer från samtliga '+members.length+' kommuner. Saknade värden räknas aldrig som noll.';
+   document.getElementById('status').textContent='Fullständiga månadsdata saknas för '+categoryName()+' i '+(area==='all'?'Norrbotten':area)+'. Totalt kräver observationer från samtliga '+members.length+' kommuner. Saknade värden räknas aldrig som noll.';
   }
   return;
  }
@@ -198,7 +236,8 @@ function render(){
  }).join('')+'</tr>').join('');
  const last=records.slice().sort((a,b)=>b.year-a.year||b.month-a.month)[0];
  const selectedLabel=town==='total'?'Totalt för '+(area==='all'?'Norrbottens län':area):town;
- document.getElementById('status').textContent=last?'Senaste tillgängliga månad för '+selectedLabel+': '+months[last.month-1].toLowerCase()+' '+last.year+'. * = preliminärt värde.':'Inga månadsobservationer för vald kommun.';
+ document.getElementById('monthlyChart').setAttribute('aria-label','Månadsutveckling för '+categoryName()+' – '+selectedLabel);
+ document.getElementById('status').textContent=last?'Brottskategori: '+categoryName()+'. Senaste tillgängliga månad för '+selectedLabel+': '+months[last.month-1].toLowerCase()+' '+last.year+'. * = preliminärt värde.':'Inga månadsobservationer för vald kommun.';
  document.getElementById('sourceDetails').textContent='Dataperiod: '+data.start_year+'–'+data.end_year+'. Exporterad: '+new Date(data.generated_utc).toLocaleString('sv-SE')+'.';
 }
 init();
