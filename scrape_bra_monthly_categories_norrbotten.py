@@ -38,7 +38,7 @@ MAX_LEVEL = int(os.getenv("MONTHLY_MAX_CRIME_LEVEL", "0"))
 def regions_by_id(topic):
     selected = {}
     for name in MUNICIPALITIES:
-        pattern = re.compile(r"\\b" + re.escape(name) + (r"s?" if name == "Boden" else "") + r"\\s+kommun\\b", re.I)
+        pattern = re.compile(r"\b" + re.escape(name) + (r"s?" if name == "Boden" else "") + r"\s+kommun\b", re.I)
         candidates = [
             region for region in topic.regions
             if any(pattern.search(str(getattr(region, field, "") or "")) for field in ("label", "label_short"))
