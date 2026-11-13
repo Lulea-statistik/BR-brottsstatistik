@@ -58,8 +58,9 @@ with SOURCE.open(encoding="utf-8-sig", newline="") as handle:
             raise ValueError(f"Conflicting monthly observations: {key}")
         series[key] = value
 
-# Prefer the separately fetched Norrbotten-wide monthly source for new regions.
-# Preserve existing Luleå/Boden observations and fail on discrepancies.
+# Prefer the latest Brå monthly source for all Norrbotten municipalities.
+# Old Luleå/Boden history is retained as a comparison, not an immutable reference:
+# Brå can revise already published monthly counts. Report these changes explicitly.
 if NORTH.exists():
     north_series = {}
     with NORTH.open(encoding="utf-8-sig", newline="") as handle:
@@ -78,10 +79,16 @@ if NORTH.exists():
             if key in north_series and north_series[key] != value:
                 raise RuntimeError(f"Conflicting Norrbotten rows: {key}")
             north_series[key] = value
+    total_revisions = []
     for key, value in north_series.items():
         if key in series and series[key]["count"] != value["count"]:
-            raise RuntimeError(f"Brå monthly mismatch for {key}: history={series[key]['count']}, Norrbotten={value['count']}")
+            total_revisions.append((key, series[key]["count"], value["count"]))
         series[key] = value
+    print(f"Brå total-crime revisions vs historical file: {len(total_revisions)}")
+    for key, old_count, new_count in total_revisions[:25]:
+        print(f"  Revised {key}: history={old_count}, current={new_count}, delta={new_count-old_count:+d}")
+    if len(total_revisions) > 25:
+        print(f"  ...and {len(total_revisions)-25} further revised observations")
 
 # Prefer latest dedicated monthly-category extraction for all Norrbotten municipalities.
 # Count is a per-category value: parent and child categories must NEVER be summed.
