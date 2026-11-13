@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "data" / "history.csv"
 NORTH = ROOT / "data" / "monthly_norrbotten.csv"
+NORTH_CATEGORIES = ROOT / "data" / "monthly_norrbotten_categories.csv"
 OUTPUT = ROOT / "docs" / "data" / "monthly_totals.json"
 YEAR = date.today().year
 FIRST = YEAR - 5
@@ -82,8 +83,47 @@ if NORTH.exists():
             raise RuntimeError(f"Brå monthly mismatch for {key}: history={series[key]['count']}, Norrbotten={value['count']}")
         series[key] = value
 
+# Prefer latest dedicated monthly-category extraction for all Norrbotten municipalities.
+# Count is a per-category value: parent and child categories must NEVER be summed.
+if NORTH_CATEGORIES.exists():
+    category_rows = {}
+    with NORTH_CATEGORIES.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                municipality = row["kommun"].strip()
+                year, month = int(row["year"]), int(row["month"])
+                crime_id, count = int(row["crime_id"]), int(row["count"])
+            except (KeyError, ValueError, TypeError) as exc:
+                raise RuntimeError("Invalid Norrbotten monthly-category row") from exc
+            if not (FIRST <= year <= YEAR and 1 <= month <= 12):
+                continue
+            if crime_id not in category_names or crime_id == 13192:
+                raise RuntimeError(f"Unexpected category ID in monthly-category data: {crime_id}")
+            if municipality not in {"Arjeplog", "Arvidsjaur", "Boden", "Gällivare", "Haparanda", "Jokkmokk", "Kalix", "Kiruna", "Luleå", "Pajala", "Piteå", "Älvsbyn", "Överkalix", "Övertorneå"} or count < 0:
+                raise RuntimeError(f"Invalid municipality/count: {municipality}, {count}")
+            key = (municipality, year, month, crime_id)
+            value = {
+                "kommun": municipality, "year": year, "month": month,
+                "crime_id": crime_id, "count": count,
+                "preliminary": row["preliminary"].strip().lower() in ("true", "1", "ja"),
+            }
+            if key in category_rows and category_rows[key] != value:
+                raise RuntimeError(f"Conflicting monthly-category row: {key}")
+            category_rows[key] = value
+    if not category_rows:
+        raise RuntimeError("Monthly-category file exists but has no usable rows")
+    # Brå revises statistics. Prefer refreshed monthly observations instead of older
+    # history.csv data, but leave separately verified total crime ID 13192 untouched.
+    revisions = sum(
+        1 for key, val in category_rows.items()
+        if key in series and series[key]["count"] != val["count"]
+    )
+    if revisions:
+        print(f"Using {revisions} revised monthly category counts from dedicated source")
+    series.update(category_rows)
+
 if not series:
-    raise RuntimeError("No monthly total crime observations found; refusing empty export")
+    raise RuntimeError("No monthly crime observations found; refusing empty export")
 present_ids = {key[3] for key in series}
 visible_ids = set(present_ids)
 for cid in list(present_ids):
