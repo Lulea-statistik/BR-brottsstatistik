@@ -15,13 +15,30 @@ OUTPUT = ROOT / "docs" / "data" / "monthly_totals.json"
 YEAR = date.today().year
 FIRST = YEAR - 5
 series = {}
+category_names = {}
+with (ROOT / "data" / "categories.csv").open(encoding="utf-8-sig", newline="") as category_stream:
+    for cat in csv.DictReader(category_stream):
+        if cat.get("Tillgänglig_månad_kvartal", "").strip().lower() != "true":
+            continue
+        try:
+            cid = int(cat["Brott_ID"])
+        except (TypeError, ValueError):
+            continue
+        parent = cat.get("Förälder_ID", "")
+        category_names[cid] = {
+            "id": cid, "name": cat["Brott"],
+            "parent": int(float(parent)) if parent.strip() else None,
+            "level": int(cat["Brottsnivå"]),
+            "ceased": cat.get("Upphört", "").strip().lower() == "true",
+        }
 with SOURCE.open(encoding="utf-8-sig", newline="") as handle:
     for row in csv.DictReader(handle):
-        if row["Periodtyp"] != "Månad" or row["Brott_ID"] != "13192":
+        if row["Periodtyp"] != "Månad":
             continue
         try:
             year = int(row["År"])
             month = int(float(row["Månad"]))
+            crime_id = int(row["Brott_ID"])
             count = float(row["Antal"].replace(",", "."))
         except (ValueError, TypeError, KeyError, AttributeError):
             continue
@@ -30,8 +47,10 @@ with SOURCE.open(encoding="utf-8-sig", newline="") as handle:
         municipality = row["Kommun"].strip()
         if municipality not in ("Luleå", "Boden"):
             continue
-        key = (municipality, year, month)
-        value = {"kommun": municipality, "year": year, "month": month,
+        if crime_id not in category_names:
+            continue
+        key = (municipality, year, month, crime_id)
+        value = {"kommun": municipality, "year": year, "month": month, "crime_id": crime_id,
                  "count": int(count),
                  "preliminary": row["Preliminär"].lower() in ("true", "1", "ja")}
         if key in series and series[key] != value:
@@ -52,8 +71,8 @@ if NORTH.exists():
                 raise RuntimeError("Invalid Norrbotten monthly record") from exc
             if not (FIRST <= year <= YEAR and 1 <= month <= 12 and count >= 0):
                 continue
-            key = (municipality, year, month)
-            value = {"kommun": municipality, "year": year, "month": month,
+            key = (municipality, year, month, 13192)
+            value = {"kommun": municipality, "year": year, "month": month, "crime_id": 13192,
                      "count": count, "preliminary": row["preliminary"].strip().lower() in ("true", "1", "ja")}
             if key in north_series and north_series[key] != value:
                 raise RuntimeError(f"Conflicting Norrbotten rows: {key}")
@@ -65,7 +84,15 @@ if NORTH.exists():
 
 if not series:
     raise RuntimeError("No monthly total crime observations found; refusing empty export")
-payload = {"source": "Brå anmälda brott, månad, totalt antal brott (Brott_ID 13192)",
+present_ids = {key[3] for key in series}
+visible_ids = set(present_ids)
+for cid in list(present_ids):
+    parent = category_names.get(cid, {}).get("parent")
+    while parent is not None and parent in category_names and parent not in visible_ids:
+        visible_ids.add(parent)
+        parent = category_names[parent]["parent"]
+payload = {"source": "Brå anmälda brott per månad; kategorier från Brås månadsklassificering",
+           "categories": [category_names[cid] for cid in sorted(visible_ids) if cid in category_names],
            "generated_utc": datetime.now(timezone.utc).isoformat(),
            "start_year": FIRST, "end_year": YEAR,
            "rows": [series[key] for key in sorted(series)]}
