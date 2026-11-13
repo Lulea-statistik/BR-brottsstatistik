@@ -148,7 +148,7 @@ function render(){
  );
  const datasets=years.map((y,i)=>{
   const isLatest=y===latestDataYear;
-  const color=colors[i]+(isLatest?'':'80'); // 50% opacity for older years
+  const color=isLatest?'#000000':colors[i]+'80'; // Latest data year black; older years 50% opacity
   return {
    label:String(y),data:months.map((_,j)=>lookup.get(y+'-'+(j+1))?.count??null),
    borderColor:color,backgroundColor:color,
@@ -160,6 +160,7 @@ function render(){
  chart=new Chart(document.getElementById('monthlyChart'),{
   type:'line',data:{labels:months,datasets},
   options:{responsive:true,maintainAspectRatio:false,
+   interaction:{mode:'index',intersect:false,axis:'x'},
    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt.format(c.parsed.y)+' brott'}}},
    scales:{y:{beginAtZero:true,title:{display:true,text:'Antal anmälda brott'},ticks:{precision:0}},x:{title:{display:true,text:'Månad'}}}}
  });
