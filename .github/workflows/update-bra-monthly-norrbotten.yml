@@ -29,11 +29,13 @@ jobs:
         run: python scrape_bra_monthly_norrbotten.py
       - name: Fetch detailed monthly crime categories for 14 municipalities
         run: python scrape_bra_monthly_categories_norrbotten.py
+      - name: Build updated monthly dashboard from fetched categories
+        run: python scripts/build_monthly_totals.py
       - name: Commit refreshed source data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/monthly_norrbotten.csv data/monthly_norrbotten_categories.csv
+          git add data/monthly_norrbotten.csv data/monthly_norrbotten_categories.csv docs/data/monthly_totals.json
           if git diff --cached --quiet; then
             echo "No changes"
             exit 0
