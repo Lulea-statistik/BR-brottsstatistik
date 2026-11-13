@@ -13,6 +13,14 @@
 .month-table th,.month-table td{padding:8px;border-bottom:1px solid #d8dee8;text-align:right}
 .month-table th:first-child,.month-table td:first-child{text-align:left}
 .month-table-wrap{overflow-x:auto}.month-note{line-height:1.6}
+.month-table-details{margin-top:20px;border:1px solid #d8dee8;border-radius:10px;background:#fff;overflow:hidden}
+.month-table-details summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:13px 16px;font-size:15px;font-weight:650;color:#1f2937;list-style:none;background:#f8fafc;user-select:none}
+.month-table-details summary::-webkit-details-marker{display:none}
+.month-table-details summary:after{content:'Visa tabell  +';font-size:14px;font-weight:600;color:#334155}
+.month-table-details[open] summary:after{content:'Dölj tabell  −'}
+.month-table-details summary:hover{background:#eef2f7}
+.month-table-details summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+.month-table-details .month-table-wrap{padding:0 12px 12px}.month-table-details .month-table{margin-top:0}
 </style>
 </head>
 <body>
@@ -25,7 +33,10 @@
 <p id="policeAreaCoverage" class="muted" aria-live="polite"></p>
 <p id="status" role="status" aria-live="polite">Laddar månadsstatistik…</p>
 <div class="month-chart"><canvas id="monthlyChart" aria-label="Linjediagram över antal anmälda brott per månad"></canvas></div>
+<details class="month-table-details" id="monthlyTableDetails">
+<summary>Tabell – anmälda brott per månad</summary>
 <div class="month-table-wrap"><table class="month-table"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+</details>
 </section>
 <section class="prose month-note"><h2>Metod och datakvalitet</h2>
 <p>Källa: Brottsförebyggande rådet (Brå), anmälda brott per månad, kategorin <strong>Totalt antal brott</strong>. Varje årsserie visas januari–december. Innevarande år visas endast för publicerade månader; saknade månader visas som luckor, inte som noll.</p>
@@ -152,8 +163,11 @@ function render(){
   return {
    label:String(y),data:months.map((_,j)=>lookup.get(y+'-'+(j+1))?.count??null),
    borderColor:color,backgroundColor:color,
-   borderWidth:isLatest?8:4, // Original widths 3/2px +2px for all, +3px more for latest
-   pointRadius:3,spanGaps:false,tension:0.12
+   borderWidth:isLatest?5:4, // Thinner black stroke reduces chunky/pixelated appearance.
+   borderCapStyle:'round',borderJoinStyle:'round',borderAlign:'center',
+   pointRadius:isLatest?2:3,pointHoverRadius:7,
+   spanGaps:false,tension:0.28, // Smoother curves; no interpolation across missing months.
+   cubicInterpolationMode:'default'
   };
  });
  if(chart)chart.destroy();
