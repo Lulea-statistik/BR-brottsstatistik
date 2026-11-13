@@ -8,7 +8,7 @@
 <style>
 .month-wrap{max-width:1280px;margin:auto}.month-controls{display:flex;gap:16px;flex-wrap:wrap;margin:15px 0}
 .month-controls label{display:flex;flex-direction:column;gap:6px}
-.month-chart{height:460px;position:relative}.month-chart canvas{width:100%!important;height:100%!important}
+.month-chart{height:510px;position:relative}.month-chart canvas{display:block;width:100%!important;height:100%!important}@media(max-width:700px){.month-chart{height:430px}}
 .month-table{width:100%;border-collapse:collapse;margin-top:20px;font-variant-numeric:tabular-nums}
 .month-table th,.month-table td{padding:8px;border-bottom:1px solid #d8dee8;text-align:right}
 .month-table th:first-child,.month-table td:first-child{text-align:left}
@@ -160,9 +160,22 @@ function render(){
  chart=new Chart(document.getElementById('monthlyChart'),{
   type:'line',data:{labels:months,datasets},
   options:{responsive:true,maintainAspectRatio:false,
+   // Render above CSS pixel density on standard displays while respecting Retina devices.
+   devicePixelRatio:Math.min(3,Math.max(2,window.devicePixelRatio||1)),
+   animation:{duration:180},layout:{padding:{top:12,right:14,bottom:4,left:8}},
    interaction:{mode:'index',intersect:false,axis:'x'},
-   plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt.format(c.parsed.y)+' brott'}}},
-   scales:{y:{beginAtZero:true,title:{display:true,text:'Antal anmälda brott'},ticks:{precision:0}},x:{title:{display:true,text:'Månad'}}}}
+   elements:{line:{borderJoinStyle:'round',borderCapStyle:'round'},point:{hoverRadius:7,hoverBorderWidth:2}},
+   plugins:{
+    legend:{position:'bottom',align:'center',labels:{color:'#334155',font:{family:'Inter, Segoe UI, Arial, sans-serif',size:13,weight:'600'},padding:20,usePointStyle:true,pointStyle:'line',boxWidth:32,boxHeight:12}},
+    tooltip:{backgroundColor:'#172033',titleColor:'#fff',bodyColor:'#f1f5f9',borderColor:'#475569',borderWidth:1,padding:12,cornerRadius:8,
+     titleFont:{family:'Inter, Segoe UI, Arial, sans-serif',size:14,weight:'700'},
+     bodyFont:{family:'Inter, Segoe UI, Arial, sans-serif',size:13,weight:'500'},displayColors:true,
+     callbacks:{label:c=>c.dataset.label+': '+fmt.format(c.parsed.y)+' brott'}}
+   },
+   scales:{
+    y:{beginAtZero:true,border:{display:false},grid:{color:'#e7edf3',lineWidth:1,drawTicks:false},title:{display:true,text:'Antal anmälda brott',color:'#334155',padding:{bottom:12},font:{family:'Inter, Segoe UI, Arial, sans-serif',size:14,weight:'600'}},ticks:{precision:0,color:'#475569',padding:10,font:{family:'Inter, Segoe UI, Arial, sans-serif',size:13,weight:'500'},callback:value=>fmt.format(value)}},
+    x:{border:{display:false},grid:{display:false},title:{display:true,text:'Månad',color:'#334155',padding:{top:12},font:{family:'Inter, Segoe UI, Arial, sans-serif',size:14,weight:'600'}},ticks:{color:'#475569',maxRotation:45,minRotation:0,autoSkip:false,padding:9,font:{family:'Inter, Segoe UI, Arial, sans-serif',size:12,weight:'500'}}}
+   }}
  });
  document.getElementById('thead').innerHTML='<tr><th>Månad</th>'+years.map(y=>'<th>'+y+'</th>').join('')+'</tr>';
  document.getElementById('tbody').innerHTML=months.map((month,i)=>'<tr><td>'+month+'</td>'+years.map(y=>{
